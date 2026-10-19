@@ -1,0 +1,18 @@
+# 文物精灵 —— Python 侧依赖清单
+# 说明：站点本身是纯静态页面（HTML/CSS/JS），打开即用，不需要安装任何依赖。
+#      下面这些只在「本地生成素材 / 一键部署 / 自动化验收」时才用得到。
+#
+# 安装：
+#     python -m pip install -r requirements.txt
+
+# ---- 一键部署到自己的服务器（tools/_push_files.py、tools/_remote_deploy.py）----
+paramiko>=3.0
+
+# ---- 自动化验收脚本：连无头浏览器截图 / 取 DOM 探针 ----
+websocket-client>=1.6
+
+# ---- 素材处理：批量转 webp、裁切、拼图 ----
+Pillow>=10.0
+
+# ---- 可选：生成配音/音频时用到 ----
+# requests>=2.31
