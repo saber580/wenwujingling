@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>文物精灵 · 山河长卷 · 完整版</title>
+<link rel="stylesheet" href="css/style.css?v=20261023e" />
+<link rel="stylesheet" href="css/red-v2.css?v=red25">
+<link rel="stylesheet" href="css/red-inner.css?v=ri8">
+<link rel="stylesheet" href="css/bg-paint.css?v=bp4">
+<link rel="stylesheet" href="css/intro-scroll.css?v=sc9">
+<link rel="stylesheet" href="css/mobile.css?v=m2">
+<style>
+/* ===== 对战舞台校准（只作用于本页） =====
+   1) 原来的 .unit 写死 132px，名字一长就向外溢出、被舞台的 overflow:hidden 切掉一截；
+      左右两边溢出方向相反，看着就像"缺了一块"。这里让名牌在牌位内部换行。
+   2) 立绘原始朝向大多朝左：对手镜像会把它转成背对玩家（"左右颠倒"）。
+      改为我方镜像（面向右侧对手）、对手保持原样（面向左方玩家），双方面对面。 */
+.unit{width:min(210px,44%)}
+.unit .nametag{white-space:normal;line-height:1.22;word-break:break-word;padding:0 6px}
+.unit .nametag em{display:inline-block;max-width:100%;box-sizing:border-box;white-space:nowrap}
+.unit .hpbar{width:100%;box-sizing:border-box;margin:5px 0 0}
+.unit.foe .hpbar i{margin-left:auto}
+.unit .body,.unit .flip{height:120px}
+.unit.mine .flip{transform:scaleX(-1)}
+.unit.foe .flip{transform:none}
+@media (max-width:620px){
+  .stage{height:240px}
+  .unit{width:min(172px,46%)}
+  .unit .body,.unit .flip{height:98px}
+  .unit .sprite{width:94px;height:94px;max-width:94px;max-height:94px}
+  .unit .nametag{font-size:11px}
+  .unit .nametag em{display:block;width:max-content;max-width:100%;margin:2px auto 0;font-size:9px;padding:0 5px}
+  .unit .hpbar span{font-size:8.5px}
+}
+
+/* ===== 折扇藏品册（只作用于本页；上方圆窗展示不动） =====
+   卡片仍由 red-v2.js 绕下方轴心旋转轮播，这里只换皮：
+   宣纸扇面 + 红扇骨 + 云雷暗纹；中心朱木扇柄；选中扇面垂挂中国结扇穗并带扫光。 */
+.rh-fan{padding-bottom:2px}
+/* 朱红漆座：托住整把扇 */
+.rh-fan::before{
+  background:
+    linear-gradient(180deg,#E4604C 0 2px,#A5181C 2px 8px,#6E0B0E 8px 100%),
+    radial-gradient(ellipse at 50% 100%,rgba(52,0,4,.4) 0%,rgba(52,0,4,.16) 46%,rgba(52,0,4,0) 74%);
+  background-repeat:no-repeat,no-repeat;
+  background-size:min(240px,34%) 10px,auto;
+  background-position:center bottom,center bottom;
+}
+/* 中央朱木扇柄（替换原金色扇轴） */
+.rh-fan::after{
+  content:"";position:absolute;left:50%;bottom:-44px;transform:translateX(-50%);
+  width:15px;height:74px;z-index:60;border-radius:7px 7px 5px 5px;
+  background:
+    radial-gradient(circle at 50% 7px,#FFEFC9 0 2.6px,#D9AF64 2.6px 4.6px,transparent 5px),
+    linear-gradient(180deg,#F0D494 0 9px,#C89A4E 9px 12px,transparent 12px),
+    linear-gradient(90deg,#6E0B0E 0,#A5181C 22%,#D95B48 46%,#B32822 68%,#6E0B0E 100%);
+  background-repeat:no-repeat;
+  box-shadow:0 8px 16px rgba(50,0,3,.5),inset 0 0 0 1px rgba(255,214,150,.28);
+}
+.rh-fan-hint{margin-top:46px}
+/* 两侧淡金浮动光点，暗示可左右切换 */
+.rh-fanbar-in::before,.rh-fanbar-in::after{
+  content:"";position:absolute;bottom:64px;width:7px;height:7px;border-radius:50%;
+  background:radial-gradient(circle,#FFE9B8 0 38%,rgba(255,214,150,.35) 70%,transparent 72%);
+  pointer-events:none;animation:fhFloat 4.2s ease-in-out infinite;
+}
+.rh-fanbar-in::before{left:8%}
+.rh-fanbar-in::after{right:8%;animation-delay:1.6s}
+@keyframes fhFloat{0%,100%{transform:translateY(0);opacity:.35}50%{transform:translateY(-14px);opacity:.9}}
+/* 扇面卡：纸面裱在扇骨上——两侧红骨边 + 透骨细线 + 云雷暗纹 + 拱顶 */
+.rh-fancard{
+  border-radius:46px 46px 5px 5px / 16px 16px 4px 4px;
+  overflow:visible;
+  background:
+    linear-gradient(90deg,rgba(140,16,18,.95) 0 3px,rgba(140,16,18,0) 3px 8px,rgba(140,16,18,0) calc(100% - 8px),rgba(140,16,18,.95) calc(100% - 8px) 100%),
+    linear-gradient(90deg,transparent calc(50% - 1.5px),rgba(165,24,28,.5) calc(50% - 1.5px) calc(50% + 1.5px),transparent calc(50% + 1.5px)),
+    url("装饰/云雷纹条.webp") repeat-x center bottom/auto 12px,
+    linear-gradient(180deg,#FFFCF2 0%,#FBF0D6 55%,#F3DFB8 100%);
+  border:1px solid rgba(150,84,30,.3);
+}
+/* 内衬鎏金细框 */
+.rh-fancard::before{
+  content:"";position:absolute;inset:4px 4px 5px;pointer-events:none;z-index:1;
+  border:1px solid rgba(200,154,82,.4);
+  border-radius:42px 42px 3px 3px / 13px 13px 2px 2px;
+  background:linear-gradient(180deg,rgba(255,252,240,.5),rgba(255,252,240,0) 30%);
+}
+/* 红扇骨尾：从纸面底沿伸向轴心，与相邻扇骨收拢于扇柄 */
+.rh-fancard::after{
+  content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  width:6px;height:58px;z-index:0;pointer-events:none;
+  background:linear-gradient(90deg,#6E0B0E,#C0392F 45%,#8E1216);
+  border-radius:0 0 3px 3px;
+  box-shadow:inset 0 0 0 .5px rgba(255,214,150,.2);
+}
+/* 选中扇面：鎏金描边 + 悬浮阴影 */
+.rh-fancard.is-sel{
+  border-color:rgba(255,244,222,.95);
+  box-shadow:0 24px 48px rgba(56,0,4,.48),0 0 0 2px rgba(255,214,150,.8),0 0 34px rgba(255,226,170,.55);
+}
+.rh-fancard.is-sel::after{
+  width:7px;height:66px;
+}
+/* 选中扇面的中国结扇穗：挂在扇面底沿偏左，避开中央扇柄与扇骨，轻摆 */
+.rh-fancard.is-sel .fc-era::after{
+  content:"";position:absolute;top:100%;left:26%;z-index:4;pointer-events:none;
+  width:12px;height:40px;transform-origin:50% 0;transform:translateX(-50%);
+  background:
+    radial-gradient(circle at 50% 18px,#F2D795 0 3.4px,#8E1216 3.4px 5.2px,transparent 5.6px),
+    radial-gradient(circle at 50% 4px,#C22A24 0 4.2px,#8E1216 4.2px 6px,transparent 6.4px),
+    linear-gradient(180deg,#B32220 0,#8E1216 100%),
+    repeating-linear-gradient(90deg,#8E1216 0 2px,#C22A24 2px 3.8px);
+  background-repeat:no-repeat,no-repeat,no-repeat,repeat-y;
+  background-size:12px 12px,12px 12px,3px 16px,8px 18px;
+  background-position:center 12px,center top,center top,center bottom;
+  animation:fhSway 3.8s ease-in-out infinite;
+}
+.rh-fancard.is-sel::after{
+  background:linear-gradient(90deg,#7E1013,#D95B48 45%,#A5181C);
+}
+/* 选中扇面边缘扫光 */
+.rh-fancard.is-sel .fc-art::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+  background:linear-gradient(112deg,transparent 32%,rgba(255,246,220,.42) 46%,rgba(255,255,255,.6) 50%,rgba(255,246,220,.42) 54%,transparent 68%);
+  background-size:280% 100%;
+  animation:fhSweep 3.4s ease-in-out infinite;
+}
+@keyframes fhSway{0%,100%{transform:translateX(-50%) rotate(4.5deg)}50%{transform:translateX(-50%) rotate(-4.5deg)}}
+@keyframes fhSweep{0%{background-position:130% 0}60%,100%{background-position:-45% 0}}
+/* 文字排版微调：名下加一道鎏金短线 */
+.rh-fancard .fc-name{margin-top:3px}
+.rh-fancard .fc-era{position:relative;padding-top:3px}
+.rh-fancard .fc-era::before{
+  content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:26px;height:1px;background:linear-gradient(90deg,rgba(200,154,82,0),#C89A4E,rgba(200,154,82,0));
+}
+.rh-fancard .fc-no{
+  position:absolute;top:7px;left:9px;align-self:auto;
+  font-size:9px;color:#9E1216;letter-spacing:1px;
+  border-bottom:1px solid rgba(158,18,22,.4);padding-bottom:1px;
+}
+@media (max-width:760px){
+  .rh-fan::after{bottom:-32px;height:58px;width:13px}
+  .rh-fancard.is-sel .fc-era::after{height:32px;background-size:11px 11px,11px 11px,2.5px 13px,7px 15px}
+  .rh-fan-hint{margin-top:34px}
+  .rh-fancard::after{height:44px;width:5px}
+}
+
+/* ===== 开卷重排（只作用于本页；js/app.js 与 css/style.css 不动）=====
+   原状为什么乱：底图本身就是「水墨金月」的青绿山水，而 JS 又用 SVG 往上叠了三层灰绿远山
+   和一轮淡日 —— 两套山水相压就糊成一片；标题与四句横跨 1080px 且无衬底，压在明暗交界处
+   读不清；16 颗朝代珠体量 62/68/78 交错、名签没有底色，在山峦上漂得毫无章法。
+   重排三件事：
+   ① 背景明显 —— 隐去 SVG 的远山与淡日，只留一条「留白＋石青」的河，把水墨金月放出来；
+   ② 文字清楚 —— 题字收进一块宣纸题签（米白衬底＋鎏金双框＋朱红上下线＋朱印），
+      正文排成 2×2，整体压在长河之上；
+   ③ 节点融入 —— 16 颗统一体量的「河中玉璧」沿河成列，金边白晕＋朝代名签有底有框，
+      河源立「历史长河」竖题，让夏→清真正成为长卷的一部分。 */
+.intro-paper{background:#e9e2d3}
+/* 底图：淡入 + 缓慢推镜（34s 往复） */
+.intro-paper::before{
+  content:"";position:absolute;inset:-2%;opacity:0;
+  background:
+    radial-gradient(circle at 60% 36%,rgba(255,226,152,.32) 0%,rgba(255,214,132,.12) 34%,rgba(255,206,120,0) 58%),
+    url("背景/开卷-水墨金月.webp") center/cover no-repeat;
+  animation:introArt 34s ease-in-out infinite;
+  will-change:transform,opacity;
+}
+@keyframes introArt{
+  0%{opacity:0;transform:scale(1.015)}
+  7%{opacity:1;transform:scale(1.04)}
+  50%{opacity:1;transform:scale(1.115) translate(-1.4%,-1%)}
+  100%{opacity:1;transform:scale(1.03) translate(1.2%,.7%)}
+}
+/* 暗角放轻：背景要看得见，文字靠题签衬底来保证 */
+.intro-paper::after{
+  z-index:1;
+  background:
+    radial-gradient(ellipse at 50% 44%,rgba(28,20,12,0) 60%,rgba(28,20,12,.15) 100%),
+    linear-gradient(180deg,rgba(30,22,14,.09),rgba(30,22,14,0) 22%);
+}
+/* 三层云雾横向漂移 */
+.intro-cloud{
+  background-image:radial-gradient(ellipse at 50% 50%,rgba(246,250,252,.42),rgba(246,250,252,.16) 46%,rgba(246,250,252,0) 72%);
+  background-color:transparent;opacity:1;
+  animation:introMist 30s linear infinite;
+}
+.intro-cloud.c1{left:-14%;top:48%;width:62%;height:34%;animation-duration:34s;opacity:.5}
+.intro-cloud.c2{right:-16%;bottom:8%;width:70%;height:30%;animation-duration:44s;animation-delay:-9s;opacity:.6}
+.intro-cloud.c3{left:18%;top:14%;width:54%;height:26%;animation-duration:52s;animation-delay:-22s;opacity:.4}
+@keyframes introMist{
+  0%{transform:translateX(-4%) translateY(0) scaleX(1)}
+  50%{transform:translateX(6%) translateY(-1.2%) scaleX(1.06)}
+  100%{transform:translateX(-4%) translateY(0) scaleX(1)}
+}
+
+/* ① 长河：只留一条河 —— 隐去与底图重复的三层远山与淡日，山腰雾减半 */
+.intro-river .mtn{display:none}
+.intro-river>circle{display:none}
+.intro-river ellipse{opacity:.5}
+/* 留白 → 石青 → 金线流逝：三段叠出一条在浓墨山与亮水面都看得清的河 */
+.intro-river .river.b0{stroke:rgba(255,251,238,.58);stroke-width:78}
+.intro-river .river.b1{stroke:rgba(150,186,192,.34);stroke-width:46}
+.intro-river .river.b2{stroke:rgba(96,146,164,.55);stroke-width:24}
+.intro-flow{stroke:rgba(206,160,86,.85);stroke-width:2.6;stroke-dasharray:3 16}
+.intro-river .intro-ripple path{stroke:rgba(72,116,128,.45)}
+.intro-river .intro-bird{stroke:rgba(96,88,70,.42)}
+
+/* ② 题签：宣纸题跋式衬底，托住标题与四句 */
+.intro-inner{
+  top:clamp(10px,2.8vh,34px);
+  width:min(880px,90vw);box-sizing:border-box;
+  padding:clamp(14px,2vh,22px) clamp(20px,3vw,38px) clamp(16px,2.2vh,24px);
+  background:
+    linear-gradient(180deg,rgba(255,253,247,.94) 0%,rgba(252,246,232,.9) 62%,rgba(249,240,219,.92) 100%);
+  border:1px solid rgba(196,150,74,.7);
+  border-radius:4px;
+  box-shadow:
+    0 0 0 4px rgba(255,250,238,.32),
+    0 0 0 5px rgba(196,150,74,.32),
+    0 22px 50px rgba(70,40,16,.3),
+    inset 0 0 40px rgba(255,252,240,.5);
+  z-index:6;
+}
+/* 上下各压一道朱红细线（两端渐隐，像装裱的绫边） */
+.intro-inner::before,.intro-inner::after{
+  content:"";position:absolute;left:12px;right:12px;height:2px;pointer-events:none;
+  background:linear-gradient(90deg,rgba(165,24,28,0),#A5181C 16%,#C0392F 50%,#A5181C 84%,rgba(165,24,28,0));
+}
+.intro-inner::before{top:6px}
+.intro-inner::after{bottom:6px}
+/* 正文排成 2×2，行短、字号起得来，读得清 */
+.intro-lines{
+  position:relative;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:clamp(14px,2.4vw,34px);row-gap:clamp(3px,.8vh,9px);
+  align-items:start;justify-items:center;
+  margin:clamp(8px,1.6vh,16px) 0 0;
+  font-size:clamp(14.5px,1.35vw,19.5px);line-height:1.92;letter-spacing:.1em;
+  color:#3B2418;text-shadow:0 1px 0 rgba(255,252,244,.85);
+}
+.intro-lines br{display:none}
+/* 题签右下角钤一枚朱印 */
+.intro-lines::after{
+  content:"";position:absolute;right:clamp(-18px,-1.4vw,-8px);bottom:clamp(-30px,-3.4vh,-16px);
+  width:clamp(30px,2.6vw,40px);height:clamp(30px,2.6vw,40px);pointer-events:none;
+  background:url("装饰/印章.webp") no-repeat center/contain;
+  opacity:.92;filter:drop-shadow(0 3px 6px rgba(70,40,16,.3));
+}
+.intro-head{
+  color:#7C2A12;letter-spacing:.12em;
+  text-shadow:0 1px 0 rgba(255,252,244,.9),0 0 22px rgba(255,236,190,.55);
+}
+.intro-reading .intro-line.lit{color:#A50F17}
+
+/* ③ 历史长河的节点：统一体量的河中玉璧，沿河成列 */
+.intro-dyn{z-index:2}
+/* 河源立一方竖题，点明这一条是什么 */
+.intro-dyn::before{
+  content:"历史长河";position:absolute;left:3.4%;top:38%;z-index:90;
+  writing-mode:vertical-rl;
+  font-family:"STKaiti","KaiTi","楷体",serif;
+  font-size:clamp(12.5px,1.1vw,16.5px);font-weight:700;letter-spacing:.3em;
+  color:#7C2A12;padding:9px 4px 11px;border-radius:3px;
+  background:linear-gradient(180deg,rgba(255,252,243,.92),rgba(250,240,220,.88));
+  border:1px solid rgba(176,124,62,.55);
+  box-shadow:0 4px 14px rgba(70,40,16,.22),inset 0 0 0 1px rgba(255,255,255,.6);
+}
+/* 统一体量（覆盖 JS 内联的 62/68/78 交错），去掉大小不一造成的散乱 */
+.intro-node{--art:66px!important}
+.intro-art::before{
+  inset:-34%;
+  background:radial-gradient(circle,rgba(255,253,246,.96) 30%,rgba(255,250,235,.62) 54%,rgba(255,250,235,0) 78%);
+}
+.intro-art img{
+  border:2px solid rgba(198,150,74,.9);
+  box-shadow:0 0 0 3px rgba(255,250,240,.55),0 16px 26px -12px rgba(70,40,16,.6);
+}
+/* 朝代名签：有底有框，压在浓墨山上也读得出 */
+.intro-node b{
+  font-size:12.5px;letter-spacing:.06em;color:#6B3410;text-shadow:none;
+  background:linear-gradient(180deg,rgba(255,252,243,.96),rgba(250,240,220,.92));
+  border:1px solid rgba(176,124,62,.6);border-radius:3px;
+  padding:1px 7px;margin-top:1px;
+  box-shadow:0 3px 9px rgba(70,40,16,.26),inset 0 0 0 1px rgba(255,255,255,.72);
+}
+/* 沿河挂靠：节点锚点 cy 落在文物中心。名签翻到文物之上的那一行(河上沿)，
+   文物会被名签往下推 27px，这里补回来，使上下两行与河边的间距对称(各约 28px)。 */
+.intro-node:nth-child(even) .intro-in{flex-direction:column-reverse}
+.intro-node:nth-child(even){transform:translate(-50%,calc(var(--art) / -2 - 27px))}
+/* 一缕虚线把每颗玉璧牵回河边，节点就"挂"在长河上了 */
+.intro-node:nth-child(even)::after{
+  content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);
+  width:1px;height:28px;pointer-events:none;
+  background:repeating-linear-gradient(180deg,rgba(176,124,62,.58) 0 3px,rgba(176,124,62,0) 3px 7px);
+}
+.intro-node:nth-child(odd)::after{
+  content:"";position:absolute;left:50%;bottom:100%;transform:translateX(-50%);
+  width:1px;height:28px;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(176,124,62,.58) 0 3px,rgba(176,124,62,0) 3px 7px);
+}
+/* 矮屏：收紧题签，别压到长河第一排节点 */
+@media (max-height:660px){
+  .intro-inner{top:8px;padding:10px 24px 12px}
+  .intro-lines{row-gap:2px;line-height:1.78;margin-top:6px;font-size:clamp(13.5px,1.2vw,17px)}
+  .intro-head{font-size:clamp(24px,3.4vw,38px)}
+}
+@media (max-width:900px){
+  .intro-inner{width:min(760px,92vw)}
+  .intro-lines{grid-template-columns:1fr;row-gap:2px}
+  .intro-lines::after{display:none}
+  .intro-dyn::before{display:none}
+  .intro-node{--art:48px!important}
+}
+@media (max-width:640px){
+  .intro-inner{top:8px;padding:12px 16px 14px;width:94vw}
+  .intro-node{--art:44px!important}
+  .intro-node b{font-size:10.5px;padding:0 5px}
+  .intro-node:nth-child(even){transform:translate(-50%,calc(var(--art) / -2 - 22px))}
+  .intro-node:nth-child(even)::after,.intro-node:nth-child(odd)::after{height:20px}
+  .intro-river .river.b0{stroke-width:56}
+  .intro-river .river.b1{stroke-width:34}
+  .intro-river .river.b2{stroke-width:18}
+}
+/* ===== 首页 · 初始七友 · 七张票券（uiverse TICKET 结构 · 中国红鎏金）=====
+   结构照 uiverse.io/cards 的 TICKET 卡：notes / header(含 symbol) / body / footer / bg。
+   颜色改成朱红漆面 + 鎏金：齿孔与左右撕票口用 mask 真切，文字与条码走米金。 */
+.rh-fanbar{padding-bottom:4px}
+.rh-fanbar-in::before,.rh-fanbar-in::after{display:none}
+.rh-tickets-head{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin:0 0 18px;font-family:"STKaiti","KaiTi","楷体",serif;
+  color:#FFF3DC;font-size:13px;letter-spacing:.3em;
+}
+.rh-tickets-head span,.rh-tickets-head b{
+  position:relative;
+  background:linear-gradient(180deg,#C0392F 0%,#A5181C 52%,#7E1013 100%);
+  border:1px solid rgba(255,214,150,.55);border-radius:3px;
+  box-shadow:0 5px 12px rgba(46,0,3,.45),inset 0 0 0 1px rgba(255,236,196,.18);
+  padding:3px 14px 3px 17px;
+}
+.rh-tickets-head b{
+  padding:3px 8px;font-family:"Segoe UI",sans-serif;font-size:9px;font-weight:700;
+  letter-spacing:.1em;color:#FFE3AE;
+}
+.rh-tickets-head i{width:clamp(26px,6vw,88px);height:1px;
+  background:linear-gradient(90deg,rgba(255,214,150,0),rgba(255,214,150,.75),rgba(255,214,150,0))}
+.rh-tickets-head b{font-family:"Segoe UI",sans-serif;font-size:9.5px;font-weight:700;
+  letter-spacing:.16em;color:rgba(255,232,190,.66);text-indent:0}
+/* 扇座、扇轴、扇柄撤掉 */
+.rh-fanbar .rh-fan{height:auto;padding:0}
+.rh-fanbar .rh-fan::before,.rh-fanbar .rh-fan::after{display:none}
+.rh-fanbar .rh-cards{
+  position:relative;inset:auto;
+  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:clamp(5px,.95vw,15px);justify-items:center;
+  max-width:min(1180px,95%);margin:0 auto;padding:0;
+  perspective:1000px;perspective-origin:50% 42%;
+}
+/* —— 票本体 —— */
+.rh-fanbar .rh-fancard.rh-ticket{
+  --perf:5px;         /* 上下齿孔半径 */
+  --cut:58px;         /* 左右撕票口高度 */
+  --ty:0px;--rx:0deg;--ry:0deg;--sc:1;
+  --mx:50%;--my:50%;--gl:0;
+  position:relative;left:auto;right:auto;top:auto;bottom:auto;
+  display:flex;flex-direction:column;align-items:stretch;
+  width:100%;max-width:142px;aspect-ratio:.64;height:auto;
+  margin:0;padding:10px 8px 8px;box-sizing:border-box;
+  border:none;border-radius:7px;background:none;overflow:visible;
+  filter:drop-shadow(0 9px 15px rgba(46,0,3,.34));
+  transform:translateY(var(--ty)) rotateX(var(--rx)) rotateY(var(--ry)) scale(var(--sc));
+  transition:transform .3s cubic-bezier(.2,.8,.3,1),filter .3s;
+  cursor:pointer;
+}
+/* 纸面：真齿孔 + 左右半圆撕口 */
+.rh-fanbar .rh-ticket .bg{
+  position:absolute;inset:0;z-index:0;border-radius:inherit;
+  background:
+    radial-gradient(72% 56% at 8% -4%,rgba(255,198,132,.78) 0%,rgba(255,198,132,0) 64%),
+    radial-gradient(64% 50% at 96% 4%,rgba(255,96,64,.50) 0%,rgba(255,96,64,0) 62%),
+    radial-gradient(74% 58% at 2% 100%,rgba(74,4,8,.88) 0%,rgba(74,4,8,0) 66%),
+    radial-gradient(80% 56% at 99% 94%,rgba(160,16,20,.78) 0%,rgba(160,16,20,0) 64%),
+    linear-gradient(163deg,#C8453A 0%,#AB1D21 32%,#951a1e 60%,#7C1418 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,214,150,.30),inset 0 0 30px rgba(90,0,6,.34);
+  mask:
+    radial-gradient(circle var(--perf) at var(--perf) 0,   #0000 96%,#000 100%) top left    / calc(var(--perf)*2) 100% repeat-x,
+    radial-gradient(circle var(--perf) at var(--perf) var(--perf), #0000 96%,#000 100%) bottom left / calc(var(--perf)*2) 100% repeat-x,
+    radial-gradient(circle 6px at 0 var(--cut),   #0000 97%,#000 100%) no-repeat,
+    radial-gradient(circle 6px at 100% var(--cut), #0000 97%,#000 100%) no-repeat;
+  mask-composite:intersect,intersect,intersect,intersect;
+}
+.rh-fanbar .rh-ticket::before,.rh-fanbar .rh-ticket::after{display:none}
+/* 指针跟随高光（放在纸面上，会被 mask 一起裁掉） */
+.rh-fanbar .rh-ticket .bg::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(circle at var(--mx) var(--my),
+    rgba(255,255,255,.55) 0%,rgba(255,240,200,.18) 34%,rgba(255,255,255,0) 64%);
+  mix-blend-mode:screen;opacity:var(--gl);transition:opacity .28s;
+}
+/* 音符暗纹 */
+.rh-fanbar .rh-ticket .notes{
+  position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;
+  font-size:2.3rem;line-height:1.15;letter-spacing:2px;
+  color:rgba(255,226,170,.15);mix-blend-mode:overlay;
+  transform:translateY(26%);
+}
+.rh-fanbar .rh-ticket .notes:nth-child(2){transform:translateY(52%)}
+.rh-fanbar .rh-ticket .notes:nth-child(3){transform:translateY(78%)}
+/* 抬头 */
+.rh-fanbar .rh-ticket .header{
+  position:relative;z-index:2;display:block;text-align:center;
+  font-family:"Arial Black","Segoe UI Black",Impact,sans-serif;
+  font-size:13px;font-weight:900;letter-spacing:.06em;text-indent:.06em;
+  color:#FFF0D2;transform:scaleY(1.06);
+  text-shadow:0 1px 0 rgba(58,0,4,.55);
+  padding-bottom:6px;border-bottom:1.5px dotted rgba(255,226,170,.55);
+}
+.rh-fanbar .rh-ticket .symbol{
+  position:absolute;right:-2px;top:5px;
+  transform:rotate(185deg);font-size:10px;line-height:1;
+  color:rgba(255,232,190,.7);
+}
+/* 票身：名字 + 立绘 */
+.rh-fanbar .rh-ticket .body{
+  position:relative;z-index:2;flex:1 1 0;min-height:0;
+  display:flex;flex-direction:column;align-items:stretch;padding-top:2px;
+}
+.rh-fanbar .rh-ticket .tk-name{
+  display:block;max-width:100%;
+  font-family:"STKaiti","KaiTi","楷体",serif;font-weight:800;
+  font-size:clamp(12px,1.05vw,15px);letter-spacing:.1em;text-indent:.1em;
+  color:#FFE0A8;text-shadow:0 1px 0 rgba(58,0,4,.6);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
+}
+.rh-fanbar .rh-ticket .tk-name.long{font-size:clamp(9.5px,.86vw,12px);letter-spacing:.02em;text-indent:.02em}
+.rh-fanbar .rh-ticket .tk-art{
+  position:relative;flex:1 1 0;width:100%;min-height:0;overflow:hidden;margin-top:2px;
+}
+.rh-fanbar .rh-ticket .tk-art img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:contain;object-position:50% 50%;
+  filter:drop-shadow(0 4px 8px rgba(70,30,10,.35));
+}
+.rh-fanbar .rh-ticket .fc-art::after{display:none}
+/* 票脚：年代 + 鎏金条码 + 票号 */
+.rh-fanbar .rh-ticket .footer{
+  position:relative;z-index:2;display:flex;align-items:flex-end;
+  justify-content:space-between;gap:5px;padding-top:3px;
+}
+.rh-fanbar .rh-ticket .era{
+  font-size:8px;line-height:1.1;color:rgba(255,242,218,.96);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.rh-fanbar .rh-ticket .barcode{
+  flex:none;width:34px;height:12px;
+  background:repeating-linear-gradient(90deg,
+    rgba(255,226,170,.92) 0 1.3px,transparent 1.3px 2.4px,
+    rgba(255,226,170,.92) 2.4px 3.2px,transparent 3.2px 4.2px,
+    rgba(255,226,170,.92) 4.2px 5.9px,transparent 5.9px 7px);
+}
+.rh-fanbar .rh-ticket .tk-no{
+  position:absolute;top:9px;right:10px;z-index:2;
+  font-family:"Segoe UI",sans-serif;font-size:6.4px;font-weight:700;
+  letter-spacing:.06em;color:rgba(255,232,190,.62);
+}
+/* 态 */
+.rh-fanbar .rh-ticket:hover{
+  --ty:-6px;
+  filter:drop-shadow(0 18px 24px rgba(46,0,3,.42)) brightness(1.03);
+}
+.rh-fanbar .rh-ticket.is-sel{
+  --ty:-11px;
+  filter:drop-shadow(0 20px 26px rgba(46,0,3,.48)) drop-shadow(0 0 12px rgba(255,226,170,.5));
+}
+.rh-fanbar .rh-ticket.is-sel:hover{--ty:-14px}
+.rh-fanbar .rh-ticket.is-sel .tk-name{color:#FFF6DC}
+.rh-fanbar .rh-ticket.is-sel .header{border-bottom-color:rgba(255,232,190,.9)}
+.rh-fan-hint{margin-top:14px;color:rgba(255,242,214,.72);text-shadow:0 1px 3px rgba(46,0,3,.75)}
+/* 窄屏：一行改横滑，票不变形 */
+@media (max-width:760px){
+  .rh-fanbar .rh-cards{display:flex;overflow-x:auto;gap:8px;justify-content:flex-start;
+    max-width:100%;padding:2px 12px 8px;scrollbar-width:none;-ms-overflow-style:none}
+  .rh-fanbar .rh-cards::-webkit-scrollbar{display:none}
+  .rh-fanbar .rh-fancard.rh-ticket{flex:0 0 92px;max-width:none;aspect-ratio:.62}
+  .rh-fanbar .rh-ticket .tk-name{font-size:11.5px}
+  .rh-fanbar .rh-ticket .header{font-size:8px;letter-spacing:.12em;text-indent:.12em}
+  .rh-fanbar .rh-ticket .tk-no{display:none}
+  .rh-fanbar .rh-ticket .barcode{width:26px;height:10px}
+}
+@media (max-width:620px){
+  .rh-tickets-head{font-size:12px;margin-bottom:6px}
+  .rh-fan-hint{margin-top:8px}
+}
+</style>
+</head>
+<body data-bg="e" class="intro-on bg-paint">
+  <!-- 扉页 · 双扇牌阵(进入正式版前的封面;主按钮进入后强制先看开场画卷;flyleaf.js 负责牌阵交互) -->
+  <div class="flyleaf" id="flyleaf" aria-label="文物精灵扉页 · 双扇牌阵">
+    <div class="fl-bgchar" aria-hidden="true">靈</div>
+    <div class="fl-wrap">
+      <header class="fl-top">
+        <div class="fl-brand">
+          <img class="fl-logo" src="装饰/神兽标志.webp" alt="文物精灵">
+          <div><b>文物精灵</b><small>RELIC SOUL · 扉页</small></div>
+        </div>
+        <div class="spacer"></div>
+        <span class="fl-chip"><i></i>双扇牌阵 · 扉页</span>
+      </header>
+
+      <section class="fl-hero">
+        <div class="fl-eyebrow">燕 赵 拾 遗 · 数 字 文 物 图 鉴</div>
+        <div class="fl-title">文物精灵</div>
+        <p class="fl-sub">双 扇 牌 阵 <span class="fl-seal-mini">冀</span> 十 四 件 国 宝 · 一 扇 一 世 界</p>
+        <div class="fl-cta">
+          <div class="btn-wrapper">
+            <button type="button" class="btn" onclick="flyleafEnter()" aria-label="进入正式版">
+              <span class="frame" aria-hidden="true">
+                <span class="point top left"></span>
+                <span class="point top right"></span>
+                <span class="point bottom left"></span>
+                <span class="point bottom right"></span>
+              </span>
+              <span class="txt-box">
+                <span class="txt">进入正式版</span>
+                <span class="txt">开启 · 山河长卷</span>
+              </span>
+            </button>
+            <div class="txt-secondary" id="hint1">点击 · 推门而入</div>
+            <div class="txt-secondary" id="hint2">进入后先看开场画卷</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="fl-stage" id="flStage" aria-label="双扇文物精灵牌阵">
+        <button type="button" class="fl-toggle" id="flToggle">收 扇</button>
+        <div class="fl-arc a" aria-hidden="true"></div>
+        <div class="fl-arc b" aria-hidden="true"></div>
+        <div class="fl-deck" id="flDeck">
+          <div class="fl-fan a" id="flFanA" data-dir="a"></div>
+          <div class="fl-fan b" id="flFanB" data-dir="b"></div>
+          <div class="fl-core" aria-hidden="true">冀</div>
+        </div>
+      </section>
+
+      <div class="fl-readout" id="flReadout" aria-live="polite">
+        <div class="fl-k"><b>双扇</b>悬停 · 点选</div>
+        <div>
+          <div class="fl-t" id="flRoTitle">上扇 · 初始七友<em>下扇 · 镇馆七珍</em></div>
+          <p class="fl-d" id="flRoDesc">把十四件文物排成两把扇子:上面是随时能陪你的初始七友,下面是从十三站里挑出的七件国宝。点一张牌,读它的故事。</p>
+        </div>
+      </div>
+      <p class="fl-hint">跟随指针微倾 · 点选读档 · ← → 换牌 · Esc 收起</p>
+      <div class="fl-foot">文物精灵 · 扉页 · 2026</div>
+    </div>
+  </div>
+  <script>document.body.classList.add("flyleaf-on");</script>
+
+  <!-- 开场卷轴(全屏遮罩:上下滑动 → 清明上河长卷左右展开,十六朝文物沿历史长河入卷;旁白以字幕压在卷下沿,读完自动收卷) -->
+  <div class="sc-intro" id="intro">
+    <div class="sc-wrap" id="scWrap">
+      <div class="sc-scene">
+        <header class="sc-hud">
+          <div class="sc-brand">
+            <span class="sc-seal" aria-hidden="true">精灵</span>
+            <div>
+              <h1>山河长卷</h1>
+              <small>RELIC SOUL · 燕赵拾遗</small>
+            </div>
+          </div>
+          <nav class="sc-ctrls" aria-label="画卷控制">
+            <button type="button" class="sc-btn" id="scAuto" onclick="introAutoToggle()" title="自动展卷(空格)">自动展卷</button>
+            <button type="button" class="sc-btn sc-skip" onclick="introSkip()">跳过画卷 ≫</button>
+          </nav>
+        </header>
+        <section class="sc-stage" id="scStage">
+          <div class="sc-rod l" id="scRodL" aria-hidden="true"></div>
+          <div class="sc-paper" id="scPaper">
+            <video class="sc-video" id="scVideo" muted playsinline preload="auto" poster="背景/清明上河图卷.webp" disablepictureinpicture disableremoteplayback aria-hidden="true"><source src="背景/清明上河图卷.mp4" type="video/mp4"></video>
+            <div class="sc-art" id="scArt"></div>
+            <i class="sc-curl l" aria-hidden="true"></i>
+            <i class="sc-curl r" aria-hidden="true"></i>
+          </div>
+          <div class="sc-rod r" id="scRodR" aria-hidden="true"></div>
+          <div class="sc-sub" id="scSub" aria-live="polite">
+            <span class="sc-line">文物有话说，千古述流光。</span>
+            <span class="sc-line">沉睡千年的古物，一朝苏醒。</span>
+            <span class="sc-line">青铜上的绿锈，陶面上的指纹，玉石里还留着未散的凉意。</span>
+            <span class="sc-line">它们曾在燕赵的城阙下听过更鼓，在漳河渡口见过归帆。</span>
+            <span class="sc-line">见过烽烟四起，也见过市井太平。</span>
+            <span class="sc-line">工匠的名字早已散佚，手上的温度还留在纹路里。</span>
+            <span class="sc-line">一炉火，一双手，一千年的光阴。</span>
+            <span class="sc-line">跨越岁月长河，自燕赵大地而来。</span>
+            <span class="sc-line">每一道裂纹，是一句没说完的话；</span>
+            <span class="sc-line">每一处斑驳，是一段被掩去的年月。</span>
+            <span class="sc-line">向你诉说埋藏在器物之中的千年故事。</span>
+            <span class="sc-line">谁在灯下铸鼎，谁在城头执戈，谁把家书刻进砖石。</span>
+            <span class="sc-line">如今它们在此静候，只等你俯身来听。</span>
+            <span class="sc-line">你若细看，那些故事还在一寸寸地亮着。</span>
+            <span class="sc-line">随君寻访博物，邂逅文物精灵，共览华夏文脉。</span>
+          </div>
+        </section>
+        <footer class="sc-rail">
+          <div class="sc-labels" id="scLabels"></div>
+          <div class="sc-bar" id="scBar" title="点击跳转 · 按住左右拖动翻卷">
+            <div class="sc-thumb" id="scThumb"><div class="sc-win" id="scWin"></div></div>
+            <div class="sc-marks" id="scMarks"></div>
+          </div>
+        </footer>
+      </div>
+      <div class="sc-spacer" id="scSpacer"></div>
+    </div>
+    <button type="button" class="sc-btn sc-voice" id="introVoice" hidden onclick="introVoiceOn()">🔊 开启旁白</button>
+  </div>
+
+  <!-- 顶部导航 · 红版合并栏目(首页 / 精灵 / 探索 / AI 工坊 + 登录 / 音乐) -->
+  <header class="topbar rh-topbar">
+    <div class="brand" onclick="location.hash='#/'">
+      <img class="brand-logo" src="装饰/神兽标志.webp" alt="文物精灵">
+      <div>
+        <b>文物精灵</b>
+        <small>RELIC SOUL · 燕赵拾遗</small>
+      </div>
+      <span class="rh-preset-tag">山河长卷 · 完整版</span>
+    </div>
+    <nav class="topnav">
+      <a class="nav-item" href="#/" data-nav="mine">首页</a>
+      <div class="nav-item nav-dd" data-nav="codex">
+        <button type="button" class="nav-btn" onclick="toggleDD(event, this)">
+          精灵
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
+        </button>
+        <div class="nav-drop">
+          <a href="#/" onclick="return navGo('home-mine')">✨ 我的精灵</a>
+          <a href="#/codex">📖 文物图鉴</a>
+          <a href="#/" onclick="return navGo('home-attr')">◈ 属性图鉴</a>
+        </div>
+      </div>
+      <div class="nav-item nav-dd" data-nav="more">
+        <button type="button" class="nav-btn" onclick="toggleDD(event, this)">
+          探索
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
+        </button>
+        <div class="nav-drop">
+          <a href="#/" onclick="return navGo('home-map')">🗺 河北地图</a>
+          <a href="#/" onclick="return navGo('home-stations')">📍 打卡站点</a>
+          <a href="#/museums">🏛 河北的博物馆</a>
+          <a href="#/creative">🎁 文创灵感</a>
+        </div>
+      </div>
+      <div class="nav-item nav-dd" data-nav="poster">
+        <button type="button" class="nav-btn" onclick="toggleDD(event, this)">
+          AI 工坊
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
+        </button>
+        <div class="nav-drop drop-right">
+          <a href="#/alive" class="aw-nav-first">✨ 活态苏醒 · 文物聊天</a>
+          <a href="#/mystery">📜 燕赵史事推演局</a>
+          <a href="#/poster">📸 AI打卡海报</a>
+          <a href="#/restore">🧩 AI文物修复</a>
+          <a href="#/tea">🍵 AI精灵茶话会</a>
+          <a href="#/dye">🎨 AI赋彩</a>
+          <a href="#/ident">🔍 AI文物识别</a>
+          <a href="#/heart">🃏 心仪卡工坊</a>
+          <a href="#/guide">🗺 AI旅游攻略</a>
+          <a href="#/" onclick="return aiCfgOpen()">☁️ 云端 AI</a>
+        </div>
+      </div>
+      <a class="nav-item auth-btn" id="authBtn" href="#/" onclick="return authOpen()" title="登录 / 注册:登录后直接用本站 AI">👤 登录 / 注册</a>
+    </nav>
+    <div class="bgm" id="bgm">
+      <button type="button" class="bgm-btn" id="bgmBtn" onclick="bgmToggle()" title="背景音乐:五首切换 / 关闭" aria-label="背景音乐">♪</button>
+      <div class="bgm-panel" id="bgmPanel" hidden>
+        <div class="bgm-head">背景音乐 · 点一首开始</div>
+        <button type="button" class="bgm-row" onclick="bgmPick(0)"><span>1 · 玉月巡游</span><i>♪</i></button>
+        <button type="button" class="bgm-row" onclick="bgmPick(1)"><span>2 · 王朝终章</span><i>♪</i></button>
+        <button type="button" class="bgm-row cur" onclick="bgmPick(2)"><span>3 · 华夏之美</span><i>♪</i></button>
+        <button type="button" class="bgm-row" onclick="bgmPick(3)"><span>4 · 琴语晨思</span><i>♪</i></button>
+        <button type="button" class="bgm-row" onclick="bgmPick(4)"><span>5 · 睡莲</span><i>♪</i></button>
+        <button type="button" class="bgm-off" onclick="bgmOff()">✕ 关闭音乐</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 蓝金山水 · 动态网站背景(固定层,不参与内容交互;五套国风方案:一·青绿山水 / 二·水墨烟雨 / 三·鎏金宫阙 / 四·天青青花 / 五·中国红(默认)) -->
+  <div class="bg-art" aria-hidden="true">
+    <div class="bg-art-img"></div>
+    <div class="bg-water"></div>
+    <div class="bg-art-veil"></div>
+    <div class="bg-art-paper"></div>
+    <div class="bg-mtn"></div>
+    <div class="bg-sun"></div>
+    <div class="bg-mist m1"></div>
+    <div class="bg-mist m2"></div>
+    <div class="bg-birds"></div>
+    <div class="bg-cloud c1"></div>
+    <div class="bg-cloud c2"></div>
+    <div class="bg-bloom"></div>
+    <div class="bg-crack"></div>
+    <div class="bg-art-dust" id="bgDust"></div>
+  </div>
+
+  <!-- 主视图 -->
+  <main id="app"></main>
+
+  <!-- 弹层容器 -->
+  <div id="overlay" class="overlay hidden"></div>
+
+  <!-- 尾页(深色版式):左品牌 + 标语 / 右三栏链接 / 底部版权行 -->
+  <footer class="foot">
+    <div class="foot-in">
+      <div class="foot-brand">
+        <div class="foot-logo">
+          <img class="brand-logo" src="装饰/神兽标志.webp" alt="文物精灵">
+          <b>文物精灵</b>
+          <span class="en">RELIC SOUL</span>
+        </div>
+        <p>让每一个中国文物,都鲜活起来。</p>
+      </div>
+      <div class="foot-cols">
+        <div class="fc"><b>功能</b>
+          <a href="#/">我的精灵</a>
+          <a href="#/codex">文物图鉴</a>
+          <a href="#/" onclick="return navGo('home-attr')">属性图鉴</a>
+        </div>
+        <div class="fc"><b>探索</b>
+          <a href="#/museums">河北的博物馆</a>
+          <a href="#/creative">文创灵感</a>
+          <a href="#/poster">AI 打卡海报</a>
+        </div>
+        <div class="fc"><b>关于</b>
+          <span>关于本站 · 大学 AI 网页作品</span>
+          <span>文物资料为科普整理,以博物馆官方为准</span>
+          <span>演示项目 · 2026</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bar">
+      <span>© 2026 文物精灵 RELIC SOUL · 本站为产品原型演示</span>
+      <span class="fb-r"><em>部分内容为演示数据</em><em>河北 · 中国</em></span>
+    </div>
+  </footer>
+
+  <!-- AQ-WIDGET-START · AI 红舞狮「小答」· 踩梅花桩来回跳(点开即聊 / 会答疑 / 会带路 / 会出题考官 / 可拖拽) -->
+  <div class="aq" id="aq">
+    <div class="aq-ball" id="aqBall" title="AI 红舞狮 · 点我聊聊天" onpointerdown="aqDragStart(event)" onpointermove="aqDragMove(event)" onpointerup="aqDragEnd(event)" onpointercancel="aqDragEnd(event)">
+      <span class="aq-glow"></span>
+      <span class="aq-spark s1">✦</span>
+      <span class="aq-spark s2">✦</span>
+      <span class="aq-spark s3">✦</span>
+      <div class="aq-poles">
+        <span class="aq-pole p1"><i class="aq-seat"></i><i class="aq-shaft"></i></span>
+        <span class="aq-pole p2"><i class="aq-seat"></i><i class="aq-shaft"></i></span>
+        <span class="aq-pole p3"><i class="aq-seat"></i><i class="aq-shaft"></i></span>
+      </div>
+      <div class="aq-hop">
+        <div class="aq-jump">
+          <div class="aq-face">
+            <img class="aq-lion" src="装饰/红舞狮.webp" alt="AI 答疑红舞狮" draggable="false">
+          </div>
+        </div>
+      </div>
+      <span class="aq-badge">答</span>
+      <span class="aq-tip" id="aqTip">你好呀!我是红舞狮小答,点我聊聊天 ✨</span>
+    </div>
+    <div class="aq-panel" id="aqPanel" hidden>
+      <div class="aq-head">
+        <img class="aq-headava" src="装饰/红舞狮头.webp" alt="">
+        <div class="aq-ht"><b>AI 红舞狮 · 小答</b><small>会答疑 · 会带路 · 会出题</small></div>
+        <span class="aq-score" id="aqScore">连对 0 · 最佳 0</span>
+        <button type="button" class="aq-x" onclick="aqClose()" aria-label="收起">✕</button>
+      </div>
+      <div class="aq-body" id="aqBody"></div>
+      <div class="aq-chips" id="aqChips"></div>
+      <div class="aq-input">
+        <input id="aqIn" placeholder="问我:怎么捉精灵 / 带我去看铁狮子…" onkeydown="if(event.key==='Enter')aqSend(this.value)">
+        <button type="button" class="aq-btn" onclick="aqSend(document.getElementById('aqIn').value)">发送</button>
+      </div>
+    </div>
+  </div>
+  <!-- AQ-WIDGET-END -->
+
+  <script src="js/data.js?v=20261023a"></script>
+  <script src="js/save-id.js"></script>
+  <script src="js/qrcode.js"></script>
+  <script src="js/ident-direct.js?v=20261019"></script>
+  <script src="js/app.js?v=20261023f"></script>
+  <script src="js/vendor/workbuddy-cloud-sdk.js"></script>
+  <script src="js/cloud-ai.js?v=ca10"></script>
+  <script src="js/bg-paint.js?v=bp4"></script>
+  <script src="js/flyleaf.js?v=20261020f"></script>
+  <script src="js/red-v2.js?v=red23"></script>
+<script src="js/guide.js?v=gi1"></script>
+<script src="js/red-inner.js?v=ri8"></script>
+
+<script src="js/aw-live.js?v=aw4"></script>
+<script src="js/aw-mystery.js?v=my2"></script>
+<script src="js/aw-craft.js?v=cf4"></script>
+<script src="js/mobile-nav.js?v=m4"></script>
+</body>
+</html>

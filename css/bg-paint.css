@@ -1,0 +1,228 @@
+/* =========================================================
+   动态山河背景 · 试作预设（只在 body.bg-paint 下生效）
+   把「背景/文物精灵网页设计 (6)」这幅满工山水做成会动整页背景。
+   原「朱墙月洞」预设一行未改，任何页面加 bg-paint 类即可启用。
+   ========================================================= */
+
+/* ---- 一 · 铺底：首页原本把背景层藏了，这里放出来 ---- */
+body.bg-paint{background:#2A0A08}
+body.bg-paint .bg-art{display:block;background:#2A0A08}
+
+/* 旧五套方案的绘制层全部让位给这幅画 */
+body.bg-paint .bg-art-img,
+body.bg-paint .bg-water,
+body.bg-paint .bg-mtn,
+body.bg-paint .bg-sun,
+body.bg-paint .bg-cloud,
+body.bg-paint .bg-crack,
+body.bg-paint .bg-bloom,
+body.bg-paint .bg-mist,
+body.bg-paint .bg-birds{display:none!important}
+body.bg-paint .bg-art-paper{opacity:.16}
+body.bg-paint .bg-art-veil{
+  opacity:1;
+  background:
+    radial-gradient(122% 88% at 50% 44%,rgba(38,6,4,0) 42%,rgba(30,3,3,.46) 100%),
+    linear-gradient(180deg,rgba(30,3,3,.34) 0%,rgba(30,3,3,.05) 24%,rgba(30,3,3,.07) 72%,rgba(28,2,2,.38) 100%);
+}
+
+/* ---- 二 · 会动的那几层（js/bg-paint.js 注入） ---- */
+.bgp{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+
+/* 底图：极缓推镜，72 秒一个来回 */
+.bgp-base{
+  position:absolute;inset:-4%;
+  background:url("../装饰/背景-山河祥云.webp") center 60%/cover no-repeat;
+  transform-origin:52% 58%;will-change:transform;
+  animation:bgpZoom 72s ease-in-out infinite alternate;
+}
+@keyframes bgpZoom{
+  0%{transform:scale(1.02) translate3d(0,0,0)}
+  100%{transform:scale(1.115) translate3d(-1.3%,-1.5%,0)}
+}
+
+/* 上层：同一幅画的预模糊版，只留天空段，反向慢移 → 云在走、山不动 */
+.bgp-sky{
+  position:absolute;inset:-6%;
+  background:url("../装饰/背景-山河祥云-雾.webp") center 52%/cover no-repeat;
+  opacity:.52;transform-origin:50% 18%;will-change:transform;
+  -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.5) 38%,rgba(0,0,0,0) 66%);
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.5) 38%,rgba(0,0,0,0) 66%);
+  animation:bgpSky 104s ease-in-out infinite alternate;
+}
+@keyframes bgpSky{
+  0%{transform:scale(1.04) translate3d(0,0,0)}
+  100%{transform:scale(1.12) translate3d(2.6%,-1.2%,0)}
+}
+
+/* 两道雾带：纯渐变椭圆（不用 filter:blur），横向缓移，一快一慢拉出纵深 */
+.bgp-mist{position:absolute;height:30vh;opacity:.5;
+  background:radial-gradient(58% 50% at 50% 50%,rgba(255,248,232,.5),rgba(255,246,228,.18) 52%,rgba(255,246,228,0) 76%)}
+.bgp-mist.m1{left:-16%;right:16%;top:30%;animation:bgpDriftA 62s ease-in-out infinite alternate}
+.bgp-mist.m2{left:14%;right:-18%;top:56%;height:24vh;opacity:.34;animation:bgpDriftB 88s ease-in-out infinite alternate}
+@keyframes bgpDriftA{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(11%,-2.5%,0)}}
+@keyframes bgpDriftB{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-13%,2%,0)}}
+
+/* 晨光：左上暖光呼吸，screen 叠色，不压暗画面 */
+.bgp-glow{position:absolute;inset:0;mix-blend-mode:screen;
+  background:
+    radial-gradient(46vw 46vw at 20% 12%,rgba(255,224,160,.20),rgba(255,224,160,0) 64%),
+    radial-gradient(40vw 40vw at 84% 76%,rgba(255,186,126,.14),rgba(255,186,126,0) 68%);
+  animation:bgpGlow 36s ease-in-out infinite alternate}
+@keyframes bgpGlow{0%{opacity:.45;transform:scale(1)}100%{opacity:.95;transform:scale(1.05)}}
+
+/* 花瓣：几片慢慢飘落，呼应画里的花树 */
+.bgp-petal{position:absolute;top:-6vh;border-radius:60% 40% 56% 44%/54% 62% 38% 46%;
+  background:radial-gradient(circle at 34% 28%,#FFEDE4 0%,#F6C9C6 52%,#E8A9AE 100%);
+  opacity:0;will-change:transform;animation:bgpFall linear infinite}
+@keyframes bgpFall{
+  0%{transform:translate3d(0,-8vh,0) rotate(0deg);opacity:0}
+  8%{opacity:var(--o,.5)}
+  88%{opacity:var(--o,.5)}
+  100%{transform:translate3d(-9vw,112vh,0) rotate(300deg);opacity:0}
+}
+
+/* ---- 三 · 页面本身的「皮肤」：朱墙改成通透，让画透出来 ---- */
+/* 顶栏：实心朱红太抢，改成半透的漆红 + 磨砂，画从底下透一层 */
+body.bg-paint .topbar.rh-topbar{
+  background:linear-gradient(180deg,rgba(126,8,14,.9) 0%,rgba(112,6,12,.82) 100%);
+  -webkit-backdrop-filter:blur(12px) saturate(1.08);backdrop-filter:blur(12px) saturate(1.08);
+  box-shadow:0 12px 30px rgba(26,0,3,.44);
+}
+body.bg-paint .rh-hero{background:none}
+/* 左半压一层暖黑，题字更清楚；右侧月洞留亮 */
+body.bg-paint .rh-hero::before{
+  background:
+    linear-gradient(100deg,rgba(34,3,4,.74) 0%,rgba(34,3,4,.46) 34%,rgba(34,3,4,.10) 62%,rgba(34,3,4,.26) 100%),
+    radial-gradient(64% 58% at 16% 68%,rgba(26,2,3,.5),rgba(26,2,3,0) 72%);
+  opacity:1;-webkit-mask-image:none;mask-image:none;
+}
+body.bg-paint .rh-hero::after{opacity:.34}
+body.bg-paint .rh-hero-bg::before,
+body.bg-paint .rh-hero-bg::after{opacity:.6}
+
+/* 说明牌改成半透的绢，压在画上不突兀 */
+body.bg-paint .rh-plate{
+  background:linear-gradient(180deg,rgba(255,252,243,.94),rgba(248,233,203,.9));
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+}
+
+/* 内容区：宣纸卷只留七八成，画从纸下继续往下走（不然背景只存在于首屏） */
+body.bg-paint .rh-main{
+  background:
+    url("../装饰/宣纸纹.webp") repeat,
+    linear-gradient(180deg,rgba(253,245,229,.84) 0%,rgba(250,236,211,.88) 42%,rgba(245,228,199,.92) 100%);
+  border-top:1px solid rgba(226,186,120,.5);
+  box-shadow:0 -20px 48px rgba(24,2,3,.3),inset 0 1px 0 rgba(255,246,226,.55);
+}
+body.bg-paint .rh-sec{position:relative}
+
+/* =========================================================
+   四 · 扉页（#flyleaf）· 金线山河
+   把「背景/文物精灵网页设计 (7)」这幅墨地描金祥云做成会动的封面。
+   原扉页渐变底与牌阵一行未改，只是把静态底换成会呼吸的一幅画。
+   ========================================================= */
+
+/* 层级重排：底图 0 → 噪点 1 → 暗角 2 → 内容 3 */
+body.bg-paint #flyleaf{background:#0a0f0d}
+body.bg-paint #flyleaf::before{z-index:1}
+body.bg-paint #flyleaf::after{z-index:2}
+body.bg-paint #flyleaf .fl-wrap{z-index:3}
+body.bg-paint #flyleaf .fl-bgchar{z-index:2;opacity:.42}
+
+.flbg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+  background:radial-gradient(120% 100% at 50% 30%,#141a16 0%,#0a0f0d 100%)}
+
+/* 底图：68 秒一个来回的极缓推镜，像镜头在画上慢慢移 */
+.flbg-base{
+  position:absolute;inset:-5%;
+  background:url("../装饰/扉页-金线山河.webp") center 54%/cover no-repeat;
+  transform-origin:50% 56%;will-change:transform;
+  animation:flbgZoom 68s ease-in-out infinite alternate;
+}
+@keyframes flbgZoom{
+  0%{transform:scale(1.02) translate3d(0,0,0)}
+  100%{transform:scale(1.12) translate3d(-1.1%,-1.6%,0)}
+}
+
+/* 云气：同一幅画的预模糊版反向漂，让祥云真的在走 */
+.flbg-mist{
+  position:absolute;inset:-8%;
+  background:url("../装饰/扉页-金线山河-雾.webp") center 46%/cover no-repeat;
+  opacity:.40;mix-blend-mode:screen;transform-origin:46% 40%;will-change:transform;
+  -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.55) 34%,rgba(0,0,0,.12) 62%,rgba(0,0,0,.5) 100%);
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.55) 34%,rgba(0,0,0,.12) 62%,rgba(0,0,0,.5) 100%);
+  animation:flbgMist 112s ease-in-out infinite alternate;
+}
+@keyframes flbgMist{
+  0%{transform:scale(1.04) translate3d(0,0,0)}
+  100%{transform:scale(1.13) translate3d(3.2%,-1.4%,0)}
+}
+
+/* 两道暖雾带：纯渐变椭圆，横向一快一慢，拉出前后景纵深 */
+.flbg-fog{position:absolute;height:32vh;opacity:.34;
+  background:radial-gradient(56% 50% at 50% 50%,rgba(255,241,208,.34),rgba(255,236,196,.12) 54%,rgba(255,236,196,0) 78%)}
+.flbg-fog.f1{left:-18%;right:14%;top:26%;animation:flbgFogA 74s ease-in-out infinite alternate}
+.flbg-fog.f2{left:12%;right:-20%;top:58%;height:26vh;opacity:.24;animation:flbgFogB 96s ease-in-out infinite alternate}
+@keyframes flbgFogA{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(12%,-2.4%,0)}}
+@keyframes flbgFogB{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-14%,2.2%,0)}}
+
+/* 金辉：金线被灯照着的那口气，36 秒呼吸一次 */
+.flbg-glow{position:absolute;inset:0;mix-blend-mode:screen;
+  background:
+    radial-gradient(48vw 40vw at 22% 16%,rgba(255,224,160,.17),rgba(255,224,160,0) 66%),
+    radial-gradient(44vw 44vw at 80% 78%,rgba(255,198,136,.13),rgba(255,198,136,0) 68%);
+  animation:flbgGlow 36s ease-in-out infinite alternate}
+@keyframes flbgGlow{0%{opacity:.52;transform:scale(1)}100%{opacity:1;transform:scale(1.05)}}
+
+/* 流金：一道极淡的金光斜扫而过，17 秒一次，扫完停一会 */
+.flbg-sweep{
+  position:absolute;top:-35%;bottom:-35%;left:-60%;width:56%;
+  background:linear-gradient(100deg,
+    rgba(255,222,150,0) 0%,rgba(255,226,160,.06) 40%,
+    rgba(255,243,203,.16) 50%,rgba(255,226,160,.06) 60%,rgba(255,222,150,0) 100%);
+  mix-blend-mode:screen;opacity:0;will-change:transform;
+  animation:flbgSweep 17s cubic-bezier(.42,0,.42,1) infinite;
+}
+@keyframes flbgSweep{
+  0%,64%{transform:translate3d(0,0,0) rotate(9deg);opacity:0}
+  68%{opacity:1}
+  96%{opacity:.5}
+  100%{transform:translate3d(210vw,0,0) rotate(9deg);opacity:0}
+}
+
+/* 金屑：细小的金色尘埃慢慢上浮，像香火气 */
+.flbg-mote{position:absolute;bottom:-4vh;border-radius:50%;opacity:0;will-change:transform;
+  background:radial-gradient(circle,rgba(255,240,205,1) 0%,rgba(226,180,96,.9) 46%,rgba(200,150,60,0) 100%);
+  box-shadow:0 0 8px rgba(255,214,140,.65);animation:flbgRise linear infinite}
+@keyframes flbgRise{
+  0%{transform:translate3d(0,0,0) scale(.55);opacity:0}
+  14%{opacity:var(--o,.5)}
+  78%{opacity:var(--o,.42)}
+  100%{transform:translate3d(var(--dx,2vw),-108vh,0) scale(1);opacity:0}
+}
+
+/* 压暗层：题字与牌阵要压得住画，四周留住金线 */
+.flbg-veil{position:absolute;inset:0;
+  background:
+    radial-gradient(108% 82% at 50% 48%,rgba(7,10,8,.52) 0%,rgba(7,10,8,.38) 44%,rgba(6,9,7,.10) 100%),
+    linear-gradient(180deg,rgba(6,9,7,.50) 0%,rgba(6,9,7,.05) 24%,rgba(6,9,7,.10) 62%,rgba(5,8,6,.46) 82%,rgba(5,8,6,.68) 100%);
+}
+
+/* 尊重系统「减少动态」设置 */
+@media (prefers-reduced-motion:reduce){
+  body.bg-paint .bgp-base,
+  body.bg-paint .bgp-sky,
+  body.bg-paint .bgp-mist,
+  body.bg-paint .bgp-glow,
+  body.bg-paint .bgp-petal{animation:none!important}
+  body.bg-paint .bgp-petal{display:none}
+  body.bg-paint .flbg-base,
+  body.bg-paint .flbg-mist,
+  body.bg-paint .flbg-fog,
+  body.bg-paint .flbg-glow,
+  body.bg-paint .flbg-sweep,
+  body.bg-paint .flbg-mote{animation:none!important}
+  body.bg-paint .flbg-sweep,
+  body.bg-paint .flbg-mote{display:none}
+}

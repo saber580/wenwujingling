@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#120c08">
+<title>考古挖掘 · 文物精灵</title>
+<style>
+  :root{
+    --bg:#120c08;
+    --panel:#24170f;
+    --panel-2:#312015;
+    --line:#5a3a22;
+    --line-2:#7a5230;
+    --gold:#f0c15c;
+    --gold-2:#b47a2a;
+    --cream:#f7e7c3;
+    --muted:#b99a72;
+    --dim:#7f624a;
+    --red:#d13a2f;
+    --green:#78c0a8;
+    --blue:#89b4d8;
+    --pixel:"Zpix","Fusion Pixel 12px proportional SC","Microsoft YaHei","SimHei",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(900px 500px at 50% -20%,rgba(209,58,47,.22),transparent 68%),
+      radial-gradient(700px 500px at 100% 100%,rgba(180,122,42,.08),transparent 70%),
+      var(--bg);
+    color:var(--cream);
+    font-family:var(--pixel);
+    font-size:14px;
+    line-height:1.65;
+    letter-spacing:.3px;
+    -webkit-font-smoothing:none;
+    text-rendering:optimizeSpeed;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:90;
+    pointer-events:none;
+    opacity:.12;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.16) 0 1px,transparent 1px 3px);
+    mix-blend-mode:soft-light;
+  }
+  button{font-family:inherit}
+  .shell{max-width:1280px;margin:0 auto;padding:20px 18px 26px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:13px;min-width:0}
+  .brand-mark{
+    width:52px;height:52px;flex:none;
+    display:grid;place-items:center;
+    background:linear-gradient(180deg,#e0493c,#a8211d);
+    border:3px solid var(--gold);
+    box-shadow:4px 4px 0 #000,inset 0 0 0 3px rgba(255,235,196,.16);
+    color:#fff6dd;
+    font-size:27px;
+    font-weight:900;
+    text-shadow:2px 2px 0 #640b09;
+  }
+  h1{margin:0;font-size:23px;line-height:1.15;letter-spacing:5px;color:var(--gold);text-shadow:3px 3px 0 #000}
+  .brand p{margin:4px 0 0;font-size:9px;letter-spacing:2.4px;color:var(--dim);white-space:nowrap}
+  .top-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{
+    appearance:none;
+    border:2px solid var(--line-2);
+    background:var(--panel-2);
+    color:var(--cream);
+    padding:8px 13px;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:1.2px;
+    cursor:pointer;
+    box-shadow:3px 3px 0 #000;
+    transition:transform .12s,background .12s,border-color .12s;
+    image-rendering:pixelated;
+  }
+  .btn:hover{background:#3b2617;border-color:var(--gold-2);color:#fff4d4}
+  .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+  .btn:focus-visible{outline:2px solid var(--cream);outline-offset:2px}
+  .btn.primary{background:linear-gradient(180deg,#dc4a3e,#a91d1a);border-color:#f0a283;color:#fff7e5;text-shadow:1px 1px 0 #5b0808;padding:10px 20px;font-size:13px}
+  .btn.primary:hover{background:linear-gradient(180deg,#ef5b4d,#b9231e);border-color:#ffd6b8}
+  .btn.ghost{background:#1b110b}
+  .stage{display:grid;grid-template-columns:206px minmax(0,1fr) 206px;gap:16px;align-items:start;margin-top:18px}
+  .side{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .panel{
+    background:var(--panel);
+    border:3px solid var(--line);
+    box-shadow:5px 5px 0 #000;
+    padding:12px;
+    min-width:0;
+  }
+  .panel-title{
+    margin:0 0 10px;
+    padding:0 0 7px;
+    border-bottom:2px solid var(--line);
+    color:var(--gold);
+    font-size:10px;
+    letter-spacing:2.4px;
+    font-weight:800;
+    text-transform:uppercase;
+  }
+  .stat{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:7px 0}
+  .stat span{font-size:10px;letter-spacing:1.4px;color:var(--dim)}
+  .stat b{font-size:17px;line-height:1;color:var(--cream);text-shadow:2px 2px 0 #000}
+  .stat b.hot{color:var(--gold)}
+  .meter{height:11px;padding:2px;border:2px solid var(--line);background:#130c08;margin:4px 0 10px}
+  .meter i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold-2),var(--gold));transition:width .18s}
+  .tool-row{display:flex;align-items:center;gap:9px;margin:9px 0}
+  .tool-key{
+    width:30px;height:30px;flex:none;
+    display:grid;place-items:center;
+    border:2px solid var(--gold-2);
+    background:#1a100a;
+    color:var(--gold);
+    font-size:12px;
+    font-weight:900;
+  }
+  .tool-row b,.tool-probe b{display:block;font-size:12px;line-height:1.25;color:var(--cream)}
+  .tool-row small,.tool-probe small{display:block;font-size:9px;line-height:1.3;color:var(--dim);letter-spacing:.6px}
+  .tool-probe{
+    width:100%;
+    display:flex;align-items:center;gap:9px;
+    text-align:left;
+    margin-top:8px;
+    padding:6px;
+    border:2px solid var(--line);
+    background:#1a100a;
+    color:var(--cream);
+    cursor:pointer;
+    box-shadow:3px 3px 0 #000;
+    transition:background .12s,border-color .12s,opacity .12s;
+  }
+  .tool-probe:hover:not(:disabled){background:#2b1a10;border-color:var(--gold-2)}
+  .tool-probe:disabled{opacity:.42;cursor:not-allowed}
+  .tool-probe:focus-visible{outline:2px solid var(--cream);outline-offset:2px}
+  .board-card{min-width:0;width:100%;max-width:100%;background:var(--panel);border:3px solid var(--line);box-shadow:7px 7px 0 #000;overflow:hidden}
+  .board-head{
+    display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;
+    padding:9px 12px;
+    border-bottom:2px solid var(--line);
+    font-size:10px;letter-spacing:1.6px;color:var(--gold);
+  }
+  .board-head span:last-child{color:var(--dim);letter-spacing:1px}
+  .board-head .mini-hud{color:var(--muted);letter-spacing:.8px;font-size:9px}
+  .canvas-wrap{position:relative;background:#160f09;padding:8px 8px 36px;overflow:hidden;min-width:0}
+  canvas#dig{
+    display:block;
+    width:100%;max-width:100%;height:auto;
+    border:2px solid #3b2517;
+    background:#160f09;
+    image-rendering:pixelated;
+    touch-action:manipulation;
+    cursor:crosshair;
+  }
+  .toast{
+    position:absolute;
+    left:50%;bottom:5px;
+    transform:translateX(-50%) translateY(4px);
+    width:max-content;
+    max-width:calc(100% - 20px);
+    padding:7px 13px;
+    border:2px solid var(--gold-2);
+    background:rgba(18,12,8,.94);
+    color:var(--cream);
+    font-size:11px;
+    letter-spacing:.8px;
+    text-align:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .16s,transform .16s;
+    box-shadow:3px 3px 0 #000;
+    z-index:5;
+  }
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .board-foot{display:flex;flex-wrap:wrap;gap:7px 14px;padding:9px 12px;border-top:2px solid var(--line);font-size:9px;color:var(--dim);letter-spacing:.8px}
+  .tray{display:grid;grid-template-columns:1fr;gap:8px}
+  .slot{
+    display:grid;
+    grid-template-columns:48px 1fr;
+    grid-template-rows:auto auto;
+    align-items:center;
+    gap:0 8px;
+    min-height:60px;
+    padding:6px;
+    border:2px dashed var(--line);
+    background:#1a100a;
+  }
+  .slot canvas{grid-row:1/3;width:48px;height:48px;image-rendering:pixelated;background:#130c08;border:2px solid #352116}
+  .slot b{align-self:end;font-size:11px;line-height:1.2;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .slot small{align-self:start;font-size:9px;line-height:1.3;color:#6d513b}
+  .slot.found{border-style:solid;border-color:var(--gold-2);background:#22150c}
+  .slot.found b{color:var(--gold)}
+  .slot.found small{color:var(--muted)}
+  .note p{margin:0 0 9px;font-size:11px;line-height:1.8;color:var(--muted)}
+  .note p:last-child{margin-bottom:0}
+  .note .dim{color:var(--dim);font-size:10px}
+  .foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px;color:var(--dim);font-size:9px;letter-spacing:1.2px}
+  .modal{
+    position:fixed;inset:0;z-index:100;
+    display:none;place-items:center;
+    padding:18px;
+    background:rgba(8,5,3,.84);
+    backdrop-filter:blur(3px);
+  }
+  .modal.on{display:grid}
+  .modal-card{
+    width:min(560px,100%);
+    max-height:calc(100vh - 36px);
+    overflow:auto;
+    padding:22px;
+    border:4px solid var(--gold-2);
+    background:var(--panel);
+    box-shadow:10px 10px 0 #000;
+  }
+  .eyebrow{margin:0 0 7px;color:var(--gold);font-size:10px;letter-spacing:3px;font-weight:800}
+  .modal-card h2{margin:0 0 9px;font-size:22px;line-height:1.35;letter-spacing:2px;color:var(--cream);text-shadow:2px 2px 0 #000}
+  .modal-card p{margin:0 0 12px;font-size:12px;line-height:1.9;color:var(--muted)}
+  .modal-card .dim{color:var(--dim);font-size:10px}
+  .rules{list-style:none;display:grid;gap:7px;margin:14px 0;padding:0}
+  .rules li{padding:7px 10px;border-left:4px solid var(--red);background:#1a100a;font-size:12px;color:var(--muted)}
+  .rules b{color:var(--gold)}
+  .relic-icon{display:grid;place-items:center;margin:6px auto 10px;width:112px;height:112px;border:3px solid var(--line);background:#1a100a;box-shadow:4px 4px 0 #000}
+  .relic-icon canvas{width:96px;height:96px;image-rendering:pixelated}
+  #relicModal .modal-card h2{text-align:center}
+  .relic-era{text-align:center;color:var(--gold);font-size:11px;letter-spacing:2px;margin-bottom:8px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:16px}
+  .end-score{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+  .end-score div{padding:10px;border:2px solid var(--line);background:#1a100a}
+  .end-score span{display:block;font-size:9px;color:var(--dim);letter-spacing:1.2px}
+  .end-score b{font-size:24px;color:var(--gold);text-shadow:2px 2px 0 #000}
+  @media(max-width:1050px){
+    .stage{grid-template-columns:minmax(0,1fr);width:100%;max-width:100%}
+    .board-card{order:1;width:100%}
+    .side{order:2;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .side.right{order:3;grid-template-columns:1fr 1fr}
+    .tray{grid-template-columns:repeat(3,1fr)}
+    .slot{grid-template-columns:1fr;text-align:center;padding:6px;min-height:0}
+    .slot canvas{grid-row:auto;margin:0 auto 4px}
+    .slot b{white-space:normal}
+  }
+  @media(max-width:620px){
+    .shell{padding:12px 10px 20px}
+    .top{gap:10px}
+    .brand-mark{width:44px;height:44px;font-size:23px}
+    h1{font-size:19px;letter-spacing:3px}
+    .brand p{font-size:8px;letter-spacing:1.8px}
+    .top-actions{width:100%;justify-content:flex-end}
+    .stage{gap:10px;margin-top:12px}
+    .side,.side.right{grid-template-columns:1fr;gap:10px}
+    .panel{padding:10px}
+    .board-head{padding:7px 9px;font-size:9px}
+    .canvas-wrap{padding:5px 5px 36px}
+    .board-foot{padding:7px 9px;gap:5px 10px;font-size:8px}
+    .tray{grid-template-columns:repeat(3,1fr);gap:6px}
+    .slot{padding:5px}
+    .slot canvas{width:40px;height:40px}
+    .slot b{font-size:9px}
+    .slot small{font-size:8px}
+    .modal-card{padding:16px}
+    .modal-card h2{font-size:18px}
+    .end-score b{font-size:20px}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">考</div>
+      <div>
+        <h1>考古挖掘</h1>
+        <p>ARCHAEOLOGY DIG · T01 探方 · 文物精灵</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn ghost" id="helpBtn" type="button">玩法</button>
+      <button class="btn ghost" id="muteBtn" type="button">音效 开</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <aside class="side">
+      <section class="panel">
+        <h2 class="panel-title">探方状态</h2>
+        <div class="stat"><span>体力</span><b id="energy">100</b></div>
+        <div class="meter"><i id="energyBar"></i></div>
+        <div class="stat"><span>剩余时间</span><b id="clock">02:00</b></div>
+        <div class="stat"><span>已发现</span><b id="found">0 / 3</b></div>
+        <div class="stat"><span>当前得分</span><b id="score" class="hot">0</b></div>
+        <div class="stat"><span>最佳分</span><b id="best">0</b></div>
+      </section>
+      <section class="panel">
+        <h2 class="panel-title">工具</h2>
+        <div class="tool-row"><span class="tool-key">铲</span><div><b>小铲</b><small>挖一层 · 5 体力</small></div></div>
+        <div class="tool-row"><span class="tool-key">刷</span><div><b>毛刷</b><small>清一次 · 1 体力</small></div></div>
+        <button class="tool-probe" id="probeBtn" type="button">
+          <span class="tool-key">探</span>
+          <span><b>探针</b><small id="probeText">2 次 · 12 体力</small></span>
+        </button>
+      </section>
+    </aside>
+
+    <section class="board-card" aria-label="考古探方">
+      <div class="board-head"><span>T01 · 南壁探方</span><span class="mini-hud" id="miniHud">体力 100 · 02:00 · 0/3</span><span id="statusText">等待开工</span></div>
+      <div class="canvas-wrap">
+        <canvas id="dig" width="720" height="480" tabindex="0" role="application" aria-label="考古探方。点击土格挖土, 点击露出的文物清灰。方向键移动, Enter 操作, P 探针。"></canvas>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+      <div class="board-foot">
+        <span>点击土格 · 挖掉一层</span>
+        <span>点击文物 · 刷净入册</span>
+        <span>方向键 + Enter · 键盘操作</span>
+        <span>P · 探针</span>
+      </div>
+    </section>
+
+    <aside class="side right">
+      <section class="panel">
+        <h2 class="panel-title">入册文物</h2>
+        <div class="tray" id="tray">
+          <div class="slot" data-slot="0"><canvas width="48" height="48"></canvas><b>?</b><small>未发现</small></div>
+          <div class="slot" data-slot="1"><canvas width="48" height="48"></canvas><b>?</b><small>未发现</small></div>
+          <div class="slot" data-slot="2"><canvas width="48" height="48"></canvas><b>?</b><small>未发现</small></div>
+        </div>
+      </section>
+      <section class="panel note">
+        <h2 class="panel-title">领队提示</h2>
+        <p>先用小铲揭土, 见到器物后换毛刷。别把力气全花在空方上。</p>
+        <p class="dim">最佳分只存本机, 不上传。音效可以关。</p>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="foot">
+    <span>文物精灵 · 考古挖掘原型</span>
+    <span>0 外链 · 0 密钥 · 可离线</span>
+  </footer>
+</div>
+
+<div class="modal on" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="modal-card">
+    <p class="eyebrow">T01 · 考古挖掘</p>
+    <h2 id="helpTitle">先挖土, 再清灰, 最后入册。</h2>
+    <p>24 格探方, 每格 3 层土。找到 3 件文物, 刷净后收入图鉴。</p>
+    <ul class="rules">
+      <li><b>小铲 5</b> · 点土格, 挖掉一层</li>
+      <li><b>毛刷 1</b> · 点露出的文物, 连刷 2 次</li>
+      <li><b>探针 12</b> · 高亮一件未发现文物 3 秒</li>
+    </ul>
+    <p class="dim">体力 100 · 时间 120 秒 · 空方也有陶片 · 3 件文物全部入册即通关</p>
+    <div class="modal-actions">
+      <button class="btn primary" id="startBtn" type="button">开始挖掘</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="relicModal" role="dialog" aria-modal="true" aria-labelledby="relicName">
+  <div class="modal-card">
+    <p class="eyebrow">RELIC FOUND · 文物入册</p>
+    <div class="relic-icon"><canvas id="relicCanvas" width="96" height="96"></canvas></div>
+    <h2 id="relicName">五铢钱</h2>
+    <div class="relic-era" id="relicEra">西汉</div>
+    <p id="relicDesc"></p>
+    <div class="modal-actions">
+      <button class="btn primary" id="relicClose" type="button">收入图鉴</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="endModal" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+  <div class="modal-card">
+    <p class="eyebrow" id="endEyebrow">T01 · 探方记录</p>
+    <h2 id="endTitle">探方完成</h2>
+    <p id="endText">三件文物全部入册。</p>
+    <div class="end-score" aria-live="polite">
+      <div><span>本局得分</span><b id="endScore">0</b></div>
+      <div><span>最佳分</span><b id="endBest">0</b></div>
+    </div>
+    <p class="dim" id="endDetail"></p>
+    <div class="modal-actions">
+      <button class="btn primary" id="againBtn" type="button">再挖一次</button>
+      <button class="btn ghost" id="endCloseBtn" type="button">看看探方</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var canvas = document.getElementById("dig");
+  var ctx = canvas.getContext("2d");
+  var W = 720, H = 480, COLS = 6, ROWS = 4, TILE = 100, GAP = 8, OX = 40, OY = 28;
+  ctx.imageSmoothingEnabled = false;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var energyEl = $("energy"), energyBar = $("energyBar"), clockEl = $("clock");
+  var foundEl = $("found"), scoreEl = $("score"), bestEl = $("best");
+  var statusText = $("statusText"), miniHud = $("miniHud"), probeBtn = $("probeBtn"), probeText = $("probeText");
+  var toastEl = $("toast"), helpModal = $("helpModal"), relicModal = $("relicModal");
+  var endModal = $("endModal"), relicName = $("relicName"), relicEra = $("relicEra");
+  var relicDesc = $("relicDesc"), relicCanvas = $("relicCanvas"), relicCtx = relicCanvas.getContext("2d");
+  var endTitle = $("endTitle"), endText = $("endText"), endScore = $("endScore"), endBest = $("endBest");
+  var endDetail = $("endDetail"), muteBtn = $("muteBtn");
+  relicCtx.imageSmoothingEnabled = false;
+
+  var SPRITES = {
+    coin: {
+      pal: {"1":"#f0c15c","2":"#b47a2a","3":"#fff0b8"},
+      rows: [
+        "................",
+        ".....111111.....",
+        "...1111111111...",
+        "..111111111111..",
+        ".11111111111111.",
+        ".11110000001111.",
+        "1111000000001111",
+        "1111000000001111",
+        "1111000000001111",
+        "1111000000001111",
+        ".11110000001111.",
+        ".11111111111111.",
+        "..111111111111..",
+        "...1111111111...",
+        ".....111111.....",
+        "................"
+      ]
+    },
+    vase: {
+      pal: {"1":"#e8f3f0","2":"#3e6f8f","3":"#8db8d8"},
+      rows: [
+        "................",
+        "......2222......",
+        "......2112......",
+        ".....211112.....",
+        "....21111112....",
+        "...2111111112...",
+        "..211111111112..",
+        "..211133331112..",
+        "..211333333112..",
+        "..211333333112..",
+        "...2113333112...",
+        "....21111112....",
+        ".....211112.....",
+        "......2112......",
+        "......2222......",
+        "................"
+      ]
+    },
+    jade: {
+      pal: {"1":"#9ad8b4","2":"#3f8f6a","3":"#d6f5df"},
+      rows: [
+        "................",
+        ".....111111.....",
+        "...1111111111...",
+        "..111......111..",
+        ".111........111.",
+        ".11..........11.",
+        "111..........111",
+        "111..........111",
+        "111..........111",
+        ".11..........11.",
+        ".111........111.",
+        "..111......111..",
+        "...1111111111...",
+        ".....111111.....",
+        "................",
+        "................"
+      ]
+    },
+    lamp: {
+      pal: {"1":"#e8b957","2":"#8e5a20","3":"#fff0b8"},
+      rows: [
+        "................",
+        ".....222222.....",
+        "....21111112....",
+        "....21111112....",
+        "...2111111112...",
+        "...2111331112...",
+        "...2111111112...",
+        "...2111111112...",
+        "..211111111112..",
+        "..211111111112..",
+        "..211111111112..",
+        "..211111111112..",
+        "..222222222222..",
+        ".22222222222222.",
+        "..222222222222..",
+        "................"
+      ]
+    },
+    mirror: {
+      pal: {"1":"#c88f4c","2":"#76502a","3":"#f6d68a"},
+      rows: [
+        "................",
+        ".....111111.....",
+        "...1111111111...",
+        "..111122221111..",
+        ".11112222221111.",
+        ".11122233222111.",
+        "1111222332222111",
+        "1111222332222111",
+        "1111222332222111",
+        ".11122233222111.",
+        ".11112222221111.",
+        "..111122221111..",
+        "...1111111111...",
+        ".....111111.....",
+        "................",
+        "................"
+      ]
+    }
+  };
+
+  var RELICS = [
+    {id:"wuzhu", name:"五铢钱", era:"西汉", value:100, sprite:"coin", desc:"方孔圆钱,汉代流通七百余年,是寿命最长的古钱之一。"},
+    {id:"qinghua", name:"青花瓷", era:"元 · 明", value:100, sprite:"vase", desc:"白地青花,一笔一画都来自窑火。器身画片常见缠枝莲与海水江崖。"},
+    {id:"yuzhui", name:"玉坠", era:"新石器至今", value:100, sprite:"jade", desc:"温润的玉,是中国人最早的审美之一。穿孔系绳,可佩可藏。"},
+    {id:"gongdeng", name:"长信宫灯", era:"西汉", value:120, sprite:"lamp", desc:"满城汉墓出土。灯烟顺着宫女衣袖进入灯体,兼顾照明与环保。"},
+    {id:"tongjing", name:"铜镜", era:"汉 · 唐", value:100, sprite:"mirror", desc:"照见古人衣冠,也照见今日考古。镜背常见星云纹与神兽纹。"}
+  ];
+
+  var state = {
+    status: "ready",
+    energy: 100,
+    time: 120,
+    probes: 2,
+    collected: [],
+    shards: 0,
+    paused: false,
+    cursor: {c:0, r:0},
+    hover: null,
+    hint: -1,
+    hintUntil: 0,
+    particles: [],
+    emptyStreak: 0,
+    best: 0
+  };
+  var cells = [];
+  var toastTimer = 0;
+  var lastTime = performance.now();
+  var hudCache = "";
+  var muted = false;
+  var audioCtx = null;
+  var reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  function readBest(){
+    try { return Math.max(0, Number(localStorage.getItem("relic-dig-best")) || 0); }
+    catch(e){ return 0; }
+  }
+  function saveBest(v){
+    try { localStorage.setItem("relic-dig-best", String(v)); } catch(e){}
+  }
+
+  function shuffle(a){
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function rand(seed){
+    var x = Math.sin(seed * 12.9898) * 43758.5453;
+    return x - Math.floor(x);
+  }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function makeCells(){
+    cells = [];
+    for(var i=0;i<COLS*ROWS;i++){
+      cells.push({
+        i:i,
+        c:i % COLS,
+        r:Math.floor(i / COLS),
+        layers:3,
+        relic:null,
+        shard:false,
+        brush:0,
+        collected:false,
+        revealed:false,
+        seed:i * 97 + 13
+      });
+    }
+    var picked = shuffle(Array.from({length:COLS*ROWS}, function(_,i){ return i; })).slice(0,3);
+    var relics = shuffle(RELICS.slice()).slice(0,3);
+    picked.forEach(function(idx, k){
+      cells[idx].relic = relics[k];
+    });
+    var used = {};
+    picked.forEach(function(i){ used[i] = true; });
+    var rest = shuffle(Array.from({length:COLS*ROWS}, function(_,i){ return i; })).filter(function(i){ return !used[i]; }).slice(0,5);
+    rest.forEach(function(i){ cells[i].shard = true; });
+  }
+
+  function resetGame(){
+    state.status = "ready";
+    state.energy = 100;
+    state.time = 120;
+    state.probes = 2;
+    state.collected = [];
+    state.shards = 0;
+    state.paused = false;
+    state.cursor = {c:0, r:0};
+    state.hover = null;
+    state.hint = -1;
+    state.hintUntil = 0;
+    state.particles = [];
+    state.emptyStreak = 0;
+    state.best = readBest();
+    makeCells();
+    hideModal(relicModal);
+    hideModal(endModal);
+    resetTray();
+    updateHUD(true);
+    draw(performance.now());
+  }
+
+  function startGame(){
+    resetGame();
+    hideModal(helpModal);
+    state.status = "playing";
+    state.paused = false;
+    lastTime = performance.now();
+    canvas.focus({preventScroll:true});
+    toast("开工。先挖三层土, 探针能帮你找方向。");
+    tone(320, .08, "square", .025);
+    updateHUD(true);
+  }
+
+  function resetTray(){
+    var slots = document.querySelectorAll(".slot");
+    for(var i=0;i<slots.length;i++){
+      var slot = slots[i];
+      slot.classList.remove("found");
+      var b = slot.querySelector("b");
+      var small = slot.querySelector("small");
+      if(b) b.textContent = "?";
+      if(small) small.textContent = "未发现";
+      var c = slot.querySelector("canvas");
+      if(c){
+        var cc = c.getContext("2d");
+        cc.imageSmoothingEnabled = false;
+        cc.clearRect(0,0,48,48);
+        cc.fillStyle = "#1a100a";
+        cc.fillRect(0,0,48,48);
+        cc.fillStyle = "#5a3a22";
+        cc.fillRect(4,4,40,2);
+        cc.fillRect(4,42,40,2);
+        cc.fillRect(4,4,2,40);
+        cc.fillRect(42,4,2,40);
+      }
+    }
+  }
+
+  function drawSlot(index, relic){
+    var slot = document.querySelector('.slot[data-slot="' + index + '"]');
+    if(!slot) return;
+    slot.classList.add("found");
+    var b = slot.querySelector("b");
+    var small = slot.querySelector("small");
+    if(b) b.textContent = relic.name;
+    if(small) small.textContent = relic.era;
+    var c = slot.querySelector("canvas");
+    if(c){
+      var cc = c.getContext("2d");
+      cc.imageSmoothingEnabled = false;
+      cc.clearRect(0,0,48,48);
+      drawSpriteOn(cc, relic.sprite, 24, 24, 3, 1);
+    }
+  }
+
+  function updateHUD(force){
+    var roundedTime = Math.ceil(state.time);
+    var key = [state.energy, roundedTime, state.collected.length, state.shards, state.probes, state.status, state.paused ? 1 : 0].join("|");
+    if(!force && key === hudCache) return;
+    hudCache = key;
+    energyEl.textContent = String(Math.max(0, state.energy));
+    energyBar.style.width = clamp(state.energy,0,100) + "%";
+    clockEl.textContent = formatTime(roundedTime);
+    foundEl.textContent = state.collected.length + " / 3";
+    scoreEl.textContent = String(currentScore());
+    bestEl.textContent = String(state.best);
+    miniHud.textContent = "体力 " + Math.max(0, state.energy) + " · " + formatTime(roundedTime) + " · " + state.collected.length + "/3";
+    probeText.textContent = state.probes + " 次 · 12 体力";
+    probeBtn.disabled = state.status !== "playing" || state.paused || state.probes <= 0 || state.energy < 12;
+    if(state.status === "ready") statusText.textContent = "等待开工";
+    else if(state.status === "ended") statusText.textContent = "探方收工";
+    else statusText.textContent = state.paused ? "清理中 · 暂停" : "发掘中";
+  }
+
+  function currentScore(){
+    var base = state.shards * 10;
+    for(var i=0;i<state.collected.length;i++) base += state.collected[i].value;
+    return base;
+  }
+  function finalScore(win){
+    var score = currentScore() + Math.max(0, state.energy) * 2;
+    if(win) score += Math.max(0, Math.floor(state.time)) * 3;
+    return Math.max(0, score);
+  }
+  function formatTime(sec){
+    sec = Math.max(0, Math.floor(sec));
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("on");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("on"); }, 2200);
+  }
+
+  function showModal(el){
+    el.classList.add("on");
+  }
+  function hideModal(el){
+    el.classList.remove("on");
+  }
+
+  function cellAtPoint(px, py){
+    for(var i=0;i<cells.length;i++){
+      var c = cells[i];
+      var x = OX + c.c * (TILE + GAP);
+      var y = OY + c.r * (TILE + GAP);
+      if(px >= x && px <= x + TILE && py >= y && py <= y + TILE) return c;
+    }
+    return null;
+  }
+
+  function eventPoint(e){
+    var r = canvas.getBoundingClientRect();
+    return {
+      x:(e.clientX - r.left) * (W / r.width),
+      y:(e.clientY - r.top) * (H / r.height)
+    };
+  }
+
+  function dig(cell){
+    if(state.status !== "playing" || state.paused) return;
+    if(!cell) return;
+    if(cell.layers === 0){
+      if(cell.relic && !cell.collected) brush(cell);
+      else toast("这格已经到底了, 换一块。");
+      return;
+    }
+    if(state.energy < 5){
+      toast("体力见底, 先清理已发现的文物。");
+      checkEnd();
+      return;
+    }
+    state.energy -= 5;
+    cell.layers--;
+    spawnDust(OX + cell.c * (TILE + GAP) + TILE / 2, OY + cell.r * (TILE + GAP) + TILE / 2, "#a8794c", 8);
+    tone(150 + cell.layers * 30, .045, "square", .02);
+
+    if(cell.layers === 0){
+      if(cell.relic){
+        cell.revealed = true;
+        state.hint = -1;
+        state.emptyStreak = 0;
+        spawnSparkles(OX + cell.c * (TILE + GAP) + TILE / 2, OY + cell.r * (TILE + GAP) + TILE / 2, 7);
+        tone(660, .12, "triangle", .035);
+        toast("有东西! 换毛刷, 慢一点。");
+      } else if(cell.shard){
+        cell.collected = true;
+        state.shards += 1;
+        state.emptyStreak = 0;
+        spawnDust(OX + cell.c * (TILE + GAP) + TILE / 2, OY + cell.r * (TILE + GAP) + TILE / 2, "#c98b5e", 7);
+        tone(420, .06, "square", .02);
+        toast("陶片 +10, 继续。");
+      } else {
+        state.emptyStreak += 1;
+        if(state.emptyStreak >= 5){
+          cell.shard = true;
+          cell.collected = true;
+          state.shards += 1;
+          state.emptyStreak = 0;
+          toast("连续空方, 捡到一片陶片 +10。");
+        } else {
+          toast(state.emptyStreak >= 3 ? "连续空方, 试试探针。" : "空方, 只有碎土。");
+        }
+      }
+    }
+    updateHUD(true);
+  }
+
+  function brush(cell){
+    if(state.status !== "playing" || state.paused) return;
+    if(!cell || !cell.relic || cell.collected || cell.layers > 0) return;
+    state.energy = Math.max(0, state.energy - 1);
+    cell.brush += 1;
+    spawnDust(OX + cell.c * (TILE + GAP) + TILE / 2, OY + cell.r * (TILE + GAP) + TILE / 2, "#d9b98b", 4);
+    tone(880 + cell.brush * 80, .035, "square", .016);
+    if(cell.brush >= 2){
+      collect(cell);
+    } else {
+      toast("再刷一次, 泥土就干净了。");
+    }
+    updateHUD(true);
+  }
+
+  function collect(cell){
+    cell.collected = true;
+    state.collected.push(cell.relic);
+    state.hint = -1;
+    drawSlot(state.collected.length - 1, cell.relic);
+    spawnSparkles(OX + cell.c * (TILE + GAP) + TILE / 2, OY + cell.r * (TILE + GAP) + TILE / 2, 10);
+    tone(1040, .09, "triangle", .035);
+    updateHUD(true);
+    showRelic(cell.relic);
+  }
+
+  function showRelic(relic){
+    state.paused = true;
+    relicName.textContent = relic.name;
+    relicEra.textContent = relic.era;
+    relicDesc.textContent = relic.desc;
+    relicCtx.clearRect(0,0,96,96);
+    drawSpriteOn(relicCtx, relic.sprite, 48, 48, 5, 1);
+    showModal(relicModal);
+    document.getElementById("relicClose").focus();
+    updateHUD(true);
+  }
+
+  function closeRelic(){
+    hideModal(relicModal);
+    state.paused = false;
+    lastTime = performance.now();
+    if(state.collected.length >= 3){
+      endGame("win");
+    } else {
+      canvas.focus({preventScroll:true});
+      updateHUD(true);
+    }
+  }
+
+  function probe(){
+    if(state.status !== "playing" || state.paused) return;
+    if(state.probes <= 0){ toast("探针用完了。"); return; }
+    if(state.energy < 12){ toast("体力不足, 用不了探针。"); return; }
+    var targets = cells.filter(function(c){
+      return c.relic && !c.collected && c.layers > 0;
+    });
+    if(!targets.length){ toast("没有可探测的目标。"); return; }
+    state.energy -= 12;
+    state.probes -= 1;
+    var target = targets[Math.floor(Math.random() * targets.length)];
+    state.hint = target.i;
+    state.hintUntil = performance.now() + 3000;
+    toast("探针有反应: 高亮处有器物。");
+    tone(1100, .1, "sine", .03);
+    updateHUD(true);
+  }
+
+  function checkEnd(){
+    if(state.status !== "playing") return;
+    if(state.collected.length >= 3){ endGame("win"); return; }
+    var canDig = state.energy >= 5;
+    var canBrush = state.energy >= 0 && cells.some(function(c){ return c.relic && c.layers === 0 && !c.collected; });
+    if(!canDig && !canBrush) endGame("energy");
+  }
+
+  function endGame(reason){
+    if(state.status === "ended") return;
+    state.status = "ended";
+    state.paused = true;
+    var win = reason === "win";
+    var score = finalScore(win);
+    if(score > state.best){
+      state.best = score;
+      saveBest(score);
+    }
+    endTitle.textContent = win ? "探方完成" : "探方收工";
+    endText.textContent = win ? "三件文物全部入册, 这片探方可以封存了。" : (reason === "time" ? "时间到, 探方先封存。下次换个挖法。" : "体力耗尽, 还有文物没来得及清理。");
+    endScore.textContent = String(score);
+    endBest.textContent = String(state.best);
+    endDetail.textContent = "文物 " + state.collected.length + " / 3 · 陶片 " + state.shards + " · 剩余体力 " + Math.max(0, state.energy);
+    showModal(endModal);
+    document.getElementById("againBtn").focus();
+    updateHUD(true);
+    tone(win ? 720 : 180, .2, win ? "triangle" : "sawtooth", .04);
+  }
+
+  function spawnDust(cx, cy, color, count){
+    if(reduceMotion) return;
+    for(var i=0;i<count;i++){
+      state.particles.push({
+        x:cx + (Math.random() - .5) * 34,
+        y:cy + (Math.random() - .5) * 22,
+        vx:(Math.random() - .5) * 96,
+        vy:-28 - Math.random() * 66,
+        life:.55 + Math.random() * .5,
+        max:1,
+        color:color,
+        size:2 + Math.floor(Math.random() * 3)
+      });
+    }
+  }
+  function spawnSparkles(cx, cy, count){
+    if(reduceMotion) return;
+    for(var i=0;i<count;i++){
+      var a = (Math.PI * 2 * i) / count + Math.random() * .4;
+      var sp = 28 + Math.random() * 46;
+      state.particles.push({
+        x:cx, y:cy,
+        vx:Math.cos(a) * sp,
+        vy:Math.sin(a) * sp - 12,
+        life:.55 + Math.random() * .45,
+        max:1,
+        color:"#f0c15c",
+        size:2 + Math.floor(Math.random() * 3)
+      });
+    }
+  }
+
+  function updateParticles(dt){
+    for(var i=state.particles.length-1;i>=0;i--){
+      var p = state.particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 210 * dt;
+      p.life -= dt;
+      if(p.life <= 0) state.particles.splice(i,1);
+    }
+  }
+
+  function drawSpriteOn(c2, name, cx, cy, scale, alpha){
+    var s = SPRITES[name];
+    if(!s) return;
+    var rows = s.rows, pal = s.pal;
+    var w = rows[0].length * scale, h = rows.length * scale;
+    var x0 = Math.round(cx - w / 2), y0 = Math.round(cy - h / 2);
+    c2.globalAlpha = alpha == null ? 1 : alpha;
+    for(var ry=0;ry<rows.length;ry++){
+      var row = rows[ry];
+      for(var rx=0;rx<row.length;rx++){
+        var ch = row.charAt(rx);
+        if(ch === ".") continue;
+        c2.fillStyle = pal[ch] || "#fff";
+        c2.fillRect(x0 + rx * scale, y0 + ry * scale, scale, scale);
+      }
+    }
+    c2.globalAlpha = 1;
+  }
+
+  function drawDirt(cx, cy, seed, brush){
+    if(brush >= 2) return;
+    var n = brush === 0 ? 22 : 11;
+    ctx.globalAlpha = brush === 0 ? .82 : .42;
+    for(var i=0;i<n;i++){
+      var a = rand(seed + i * 7.3), b = rand(seed + i * 3.7 + 11);
+      var x = cx - 31 + a * 62;
+      var y = cy - 31 + b * 62;
+      ctx.fillStyle = i % 3 === 0 ? "#8b5a36" : (i % 3 === 1 ? "#6d4529" : "#a8794c");
+      ctx.fillRect(Math.round(x), Math.round(y), 3 + (i % 3), 2 + (i % 2));
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawCorners(x, y, size, color, thickness){
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, size, thickness);
+    ctx.fillRect(x, y, thickness, size);
+    ctx.fillRect(x + TILE - size, y, size, thickness);
+    ctx.fillRect(x + TILE - thickness, y, thickness, size);
+    ctx.fillRect(x, y + TILE - thickness, size, thickness);
+    ctx.fillRect(x, y + TILE - size, thickness, size);
+    ctx.fillRect(x + TILE - size, y + TILE - thickness, size, thickness);
+    ctx.fillRect(x + TILE - thickness, y + TILE - size, thickness, size);
+  }
+
+  function drawCell(cell, now){
+    var x = OX + cell.c * (TILE + GAP);
+    var y = OY + cell.r * (TILE + GAP);
+    var inset = cell.layers === 3 ? 3 : (cell.layers === 2 ? 9 : (cell.layers === 1 ? 15 : 18));
+    var ix = x + inset, iy = y + inset, iw = TILE - inset * 2, ih = TILE - inset * 2;
+
+    ctx.fillStyle = "#080402";
+    ctx.fillRect(x + 5, y + 5, TILE, TILE);
+    ctx.fillStyle = "#3b2517";
+    ctx.fillRect(x, y, TILE, TILE);
+
+    if(cell.layers > 0){
+      var base = cell.layers === 3 ? "#8b5a36" : (cell.layers === 2 ? "#74492c" : "#a77a4d");
+      var light = cell.layers === 3 ? "#a66b3f" : (cell.layers === 2 ? "#8b5a36" : "#c0925f");
+      var dark = cell.layers === 3 ? "#6b4126" : (cell.layers === 2 ? "#54331f" : "#7f5a39");
+      ctx.fillStyle = base;
+      ctx.fillRect(ix, iy, iw, ih);
+      ctx.fillStyle = light;
+      ctx.fillRect(ix, iy, iw, 3);
+      ctx.fillStyle = dark;
+      ctx.fillRect(ix, iy + ih - 4, iw, 4);
+      ctx.fillStyle = "rgba(0,0,0,.10)";
+      ctx.fillRect(ix, iy + Math.floor(ih * .36), iw, 2);
+      ctx.fillRect(ix, iy + Math.floor(ih * .68), iw, 2);
+      var rnd = rand(cell.seed + cell.layers * 31);
+      for(var k=0;k<7;k++){
+        var rx = ix + 4 + rand(cell.seed + k * 5.1 + cell.layers) * (iw - 10);
+        var ry = iy + 4 + rand(cell.seed + k * 7.7 + cell.layers * 3) * (ih - 10);
+        var c = k % 3 === 0 ? dark : (k % 3 === 1 ? light : "#5e3a22");
+        ctx.fillStyle = c;
+        var sz = 2 + Math.floor(rand(cell.seed + k * 9.1) * 4);
+        ctx.fillRect(Math.round(rx), Math.round(ry), sz, sz);
+      }
+      if(cell.layers === 3){
+        ctx.fillStyle = "#5d3d23";
+        for(var r=0;r<3;r++){
+          var rx2 = ix + 8 + rand(cell.seed + r * 4.2) * (iw - 18);
+          ctx.fillRect(Math.round(rx2), iy + 6 + r * 7, 2, 10);
+        }
+        if(rand(cell.seed * 1.7) > .55){
+          var gx = ix + 7 + rand(cell.seed + 19) * (iw - 22);
+          var gy = iy + 8 + rand(cell.seed + 23) * 12;
+          ctx.fillStyle = "#6f7d3a";
+          ctx.fillRect(Math.round(gx), Math.round(gy), 2, 8);
+          ctx.fillRect(Math.round(gx) - 3, Math.round(gy) + 3, 3, 2);
+          ctx.fillStyle = "#9aab55";
+          ctx.fillRect(Math.round(gx) + 2, Math.round(gy) + 1, 2, 5);
+        }
+      }
+    } else {
+      ctx.fillStyle = "#1a100b";
+      ctx.fillRect(ix, iy, iw, ih);
+      ctx.fillStyle = "#24170f";
+      ctx.fillRect(ix + 4, iy + 4, iw - 8, ih - 8);
+      var rnd2 = rand(cell.seed + 71);
+      for(var j=0;j<8;j++){
+        ctx.fillStyle = j % 2 ? "#3a2418" : "#2b1b12";
+        var dx = ix + 6 + rand(cell.seed + j * 5.6) * (iw - 14);
+        var dy = iy + 6 + rand(cell.seed + j * 8.2) * (ih - 14);
+        ctx.fillRect(Math.round(dx), Math.round(dy), 3, 2);
+      }
+      if(cell.shard && cell.collected){
+        ctx.fillStyle = "#c98b5e";
+        ctx.fillRect(x + TILE / 2 - 8, y + TILE / 2 + 2, 16, 4);
+        ctx.fillRect(x + TILE / 2 - 4, y + TILE / 2 - 3, 8, 4);
+        ctx.fillStyle = "#6d4529";
+        ctx.fillRect(x + TILE / 2 - 4, y + TILE / 2 + 6, 8, 2);
+      }
+      if(cell.relic && !cell.collected){
+        var cx = x + TILE / 2, cy = y + TILE / 2 + 2;
+        var glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 40);
+        glow.addColorStop(0, "rgba(240,193,92,.30)");
+        glow.addColorStop(1, "rgba(240,193,92,0)");
+        ctx.fillStyle = glow;
+        ctx.fillRect(x + 8, y + 8, TILE - 16, TILE - 16);
+        drawSpriteOn(ctx, cell.relic.sprite, cx, cy, 4, 1);
+        drawDirt(cx, cy, cell.seed + cell.brush * 17, cell.brush);
+        ctx.fillStyle = "rgba(0,0,0,.32)";
+        ctx.fillRect(x + TILE - 18, y + 7, 11, 2);
+        ctx.fillRect(x + TILE - 14, y + 9, 3, 9);
+        ctx.fillStyle = "#f7e7c3";
+        ctx.fillRect(x + TILE - 21, y + 5, 5, 2);
+        ctx.fillRect(x + TILE - 21, y + 7, 2, 5);
+        for(var d=0;d<2;d++){
+          ctx.fillStyle = d < cell.brush ? "#f0c15c" : "#5a3a22";
+          ctx.fillRect(cx - 9 + d * 10, y + TILE - 16, 6, 4);
+        }
+        if(!reduceMotion && Math.sin(now / 260 + cell.i) > .25){
+          ctx.fillStyle = "#fff0b8";
+          ctx.fillRect(cx - 28, cy - 24, 2, 6);
+          ctx.fillRect(cx - 30, cy - 22, 6, 2);
+          ctx.fillRect(cx + 24, cy + 14, 2, 6);
+          ctx.fillRect(cx + 22, cy + 16, 6, 2);
+        }
+      }
+    }
+
+    if(!reduceMotion && cell.relic && cell.layers === 0 && !cell.collected && Math.sin(now / 380 + cell.i) > .55){
+      ctx.fillStyle = "rgba(255,240,184,.7)";
+      ctx.fillRect(x + 12, y + 12, 2, 2);
+      ctx.fillRect(x + TILE - 16, y + 20, 2, 2);
+    }
+
+    if(state.hint === cell.i && now < state.hintUntil){
+      var pulse = .55 + .45 * (Math.sin(now / 90) * .5 + .5);
+      ctx.globalAlpha = pulse;
+      drawCorners(x, y, 18, "#f0c15c", 4);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#f0c15c";
+      ctx.fillRect(x + TILE / 2 - 3, y - 7, 6, 3);
+    }
+    if(state.hover === cell){
+      drawCorners(x, y, 12, "rgba(247,231,195,.7)", 2);
+    }
+    if(state.cursor.c === cell.c && state.cursor.r === cell.r && document.activeElement === canvas){
+      drawCorners(x, y, 18, "#f7e7c3", 3);
+    }
+
+    if(cell.layers > 0 && state.hover === cell){
+      ctx.fillStyle = "rgba(255,240,184,.08)";
+      ctx.fillRect(ix, iy, iw, ih);
+    }
+  }
+
+  function draw(now){
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#160f09";
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.strokeStyle = "rgba(240,193,92,.055)";
+    ctx.lineWidth = 1;
+    for(var gx=0; gx<W; gx+=24) {
+      ctx.beginPath(); ctx.moveTo(gx + .5, 0); ctx.lineTo(gx + .5, H); ctx.stroke();
+    }
+    for(var gy=0; gy<H; gy+=24) {
+      ctx.beginPath(); ctx.moveTo(0, gy + .5); ctx.lineTo(W, gy + .5); ctx.stroke();
+    }
+
+    ctx.strokeStyle = "#3b2517";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(OX - 9, OY - 9, COLS * TILE + (COLS - 1) * GAP + 18, ROWS * TILE + (ROWS - 1) * GAP + 18);
+
+    ctx.font = '12px "Zpix","Microsoft YaHei",monospace';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#9b7a54";
+    for(var c=0;c<COLS;c++){
+      ctx.fillText(String.fromCharCode(65 + c), OX + c * (TILE + GAP) + TILE / 2, 12);
+    }
+    ctx.textAlign = "right";
+    for(var r=0;r<ROWS;r++){
+      ctx.fillText(String(r + 1), OX - 14, OY + r * (TILE + GAP) + TILE / 2);
+    }
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#6d513b";
+    ctx.font = '10px "Zpix","Microsoft YaHei",monospace';
+    ctx.fillText("T01 · 南壁 · 1m × 1m", OX, H - 12);
+    ctx.textAlign = "right";
+    ctx.fillText("0        50cm", W - 40, H - 12);
+    ctx.fillStyle = "#5a3a22";
+    ctx.fillRect(W - 128, H - 17, 88, 2);
+    ctx.fillRect(W - 128, H - 22, 2, 12);
+    ctx.fillRect(W - 42, H - 22, 2, 12);
+
+    for(var i=0;i<cells.length;i++) drawCell(cells[i], now);
+
+    for(var p=0;p<state.particles.length;p++){
+      var part = state.particles[p];
+      ctx.globalAlpha = clamp(part.life / part.max, 0, 1);
+      ctx.fillStyle = part.color;
+      ctx.fillRect(Math.round(part.x), Math.round(part.y), part.size, part.size);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function loop(now){
+    var dt = Math.min(.05, (now - lastTime) / 1000);
+    lastTime = now;
+    if(state.status === "playing" && !state.paused){
+      state.time = Math.max(0, state.time - dt);
+      if(state.time <= 0){
+        endGame("time");
+      }
+    }
+    updateParticles(dt);
+    updateHUD(false);
+    draw(now);
+    requestAnimationFrame(loop);
+  }
+
+  function tone(freq, dur, type, vol){
+    if(muted) return;
+    try {
+      if(!audioCtx){
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return;
+        audioCtx = new AC();
+      }
+      var o = audioCtx.createOscillator();
+      var g = audioCtx.createGain();
+      o.type = type || "square";
+      o.frequency.value = freq;
+      g.gain.value = vol || .025;
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      var t = audioCtx.currentTime;
+      g.gain.exponentialRampToValueAtTime(.0001, t + (dur || .06) + .02);
+      o.start(t);
+      o.stop(t + (dur || .06) + .04);
+    } catch(e){}
+  }
+
+  canvas.addEventListener("pointermove", function(e){
+    var p = eventPoint(e);
+    state.hover = cellAtPoint(p.x, p.y);
+  });
+  canvas.addEventListener("pointerleave", function(){ state.hover = null; });
+  canvas.addEventListener("pointerdown", function(e){
+    e.preventDefault();
+    canvas.focus({preventScroll:true});
+    var p = eventPoint(e);
+    var cell = cellAtPoint(p.x, p.y);
+    if(!cell) return;
+    state.cursor = {c:cell.c, r:cell.r};
+    if(cell.layers > 0) dig(cell);
+    else if(cell.relic && !cell.collected) brush(cell);
+    else toast("这格已经到底了, 换一块。");
+  });
+
+  document.addEventListener("keydown", function(e){
+    if(helpModal.classList.contains("on") || relicModal.classList.contains("on") || endModal.classList.contains("on")) return;
+    var key = e.key;
+    if(key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp" || key === "ArrowDown"){
+      e.preventDefault();
+      if(state.status !== "playing" || state.paused) return;
+      if(key === "ArrowLeft") state.cursor.c = Math.max(0, state.cursor.c - 1);
+      if(key === "ArrowRight") state.cursor.c = Math.min(COLS - 1, state.cursor.c + 1);
+      if(key === "ArrowUp") state.cursor.r = Math.max(0, state.cursor.r - 1);
+      if(key === "ArrowDown") state.cursor.r = Math.min(ROWS - 1, state.cursor.r + 1);
+      return;
+    }
+    if(key === "Enter" || key === " "){
+      if(state.status !== "playing" || state.paused) return;
+      e.preventDefault();
+      var cell = cells[state.cursor.r * COLS + state.cursor.c];
+      if(cell.layers > 0) dig(cell);
+      else if(cell.relic && !cell.collected) brush(cell);
+      return;
+    }
+    if(key === "p" || key === "P"){ e.preventDefault(); probe(); }
+    if(key === "r" || key === "R"){ e.preventDefault(); startGame(); }
+  });
+
+  document.getElementById("startBtn").addEventListener("click", function(){
+    if(state.status === "ready" || state.status === "ended") startGame();
+    else {
+      hideModal(helpModal);
+      state.paused = false;
+      lastTime = performance.now();
+      canvas.focus({preventScroll:true});
+      updateHUD(true);
+    }
+  });
+  document.getElementById("helpBtn").addEventListener("click", function(){
+    if(state.status === "playing"){
+      state.paused = true;
+      updateHUD(true);
+    }
+    document.getElementById("startBtn").textContent =
+      state.status === "ready" ? "开始挖掘" : (state.status === "ended" ? "开始新一局" : "继续挖掘");
+    showModal(helpModal);
+    document.getElementById("startBtn").focus();
+  });
+  probeBtn.addEventListener("click", probe);
+  document.getElementById("relicClose").addEventListener("click", closeRelic);
+  document.getElementById("againBtn").addEventListener("click", startGame);
+  document.getElementById("endCloseBtn").addEventListener("click", function(){
+    hideModal(endModal);
+    state.paused = true;
+    updateHUD(true);
+  });
+  muteBtn.addEventListener("click", function(){
+    muted = !muted;
+    muteBtn.textContent = muted ? "音效 关" : "音效 开";
+    if(!muted) tone(520, .06, "square", .02);
+  });
+
+  window.addEventListener("resize", function(){
+    ctx.imageSmoothingEnabled = false;
+  });
+
+  state.best = readBest();
+  resetGame();
+  if(new URLSearchParams(location.search).get("play") === "1"){
+    startGame();
+  } else {
+    showModal(helpModal);
+    document.getElementById("startBtn").focus();
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
