@@ -248,23 +248,47 @@
   }
   .aq.open .aq-ball{transform:scale(.46);transform-origin:100% 100%}
   .aq-tip{display:none!important}
-  /* 对话框：按屏宽自适应，始终留 12px 边距，且始终在视口内 */
-  .aq-panel{
-    width:min(342px,calc(100vw - 30px))!important;
+  /* 对话框：手机上收成「贴着狮子头的小气泡」——
+     宽 300 左右、高不超过半屏，右侧对齐狮子，内容超高在面板内滚动，
+     不再铺满大半屏压住页面。 */
+  .aq .aq-panel{
+    width:min(300px,calc(100vw - 104px))!important;
     right:0!important;left:auto!important;
-    bottom:calc(100% + 6px)!important;
-    max-height:min(58vh,420px);
-    border-radius:16px;
+    bottom:calc(100% - 8px)!important;top:auto!important;
+    max-height:min(42vh,330px);
+    border-radius:15px;
+    animation-duration:.2s;
   }
-  .aq-body{max-height:min(36vh,268px);padding:10px 11px 4px;gap:8px}
-  .aq-msg{font-size:12.5px;line-height:1.7}
+  /* 狮子被拖到上半屏时，面板改向下展开（flip），仍贴着狮子 */
+  .aq.flip .aq-panel{bottom:auto!important;top:calc(100% - 8px)!important}
+  .aq-head{padding:8px 10px 7px;gap:7px}
+  .aq-headava{width:26px;height:26px;border-width:1.5px}
+  .aq-ht b{font-size:12.5px;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .aq-ht small{font-size:9.5px;margin-top:0}
+  .aq-score{font-size:9.5px;padding:2px 6px}
+  .aq-x{font-size:13px;padding:4px 5px}
+  .aq-body{min-height:0;max-height:none;padding:9px 10px 2px;gap:7px}
+  .aq-bub{font-size:11.5px;line-height:1.62;padding:7px 9px;border-radius:11px;max-width:92%}
+  .aq-chips{max-height:84px;overflow-y:auto;overscroll-behavior:contain;padding:5px 10px 3px;gap:5px;
+    -webkit-mask-image:linear-gradient(180deg,#000 78%,rgba(0,0,0,.15));mask-image:linear-gradient(180deg,#000 78%,rgba(0,0,0,.15))}
+  .aq-chips button{font-size:10.5px;padding:3px 8px}
+  .aq-input{padding:6px 9px 9px;gap:6px}
+  .aq-input input{font-size:11.5px;padding:6px 9px}
+  .aq-input .aq-btn{font-size:11.5px;padding:0 12px}
+  .aq-opts{gap:6px;margin-top:7px}
+  .aq-opt{font-size:11.5px;padding:6px 8px;border-radius:9px}
+  .aq-msg{font-size:11.5px;line-height:1.66}
 
 
   /* ---------------- 13 · 手机端再收一轮：主干滚动重绘 ----------------
      首页 6000px 长，下列动画都是「每帧重算整块绘制」的东西：
      渐变扫光、星星旋转、呼吸光晕、图片浮动、跑马灯 —— 手机上一律停帧。
      对话框与操作反馈类动画（小答、弹层、提示）保留。 */
-  .sc-stage,.sc-stage *,
+  /* 卷轴主体的「开卷」靠 scUnroll 把 clip-path 从中间一道缝收到 0；
+     停掉这个动画就会永远卡成一根竖细条（只剩中间 2%），所以这里直接写最终态，
+     只停子元素里的无限浮动（小舟）。 */
+  .sc-stage{clip-path:none!important;animation:none!important}
+  .sc-stage *,
   .rh-title-cn,.rh-title-cn *,
   .rh-hero-cta .starbtn,.rh-hero-cta .starbtn *,
   .rh-moon-art,.rh-moon-art *,
@@ -339,4 +363,18 @@
   .foot-decl-in{padding:12px 0 14px}
   .foot-decl p{font-size:11.5px;line-height:1.75;margin-bottom:7px;letter-spacing:0}
   .foot-decl b{display:block;margin:0 0 2px 0;font-size:12px}
+}
+
+/* =========================================================
+   14 · 小屏手机（≤400）：小答面板只有 250 出头宽
+   头栏「AI 红舞狮 · 小答 + 副标题 + 计分」会被挤成两行，
+   这里收掉副标题、略缩标题与计分，保证头栏始终一行，面板更紧凑
+   ========================================================= */
+@media (max-width:400px){
+  .aq-ht small{display:none}
+  .aq-ht b{font-size:12px;letter-spacing:.2px}
+  .aq-score{font-size:9px;padding:2px 5px}
+  .aq-headava{width:24px;height:24px}
+  .aq .aq-panel{width:min(276px,calc(100vw - 92px))!important}
+  .aq-chips{max-height:74px}
 }
