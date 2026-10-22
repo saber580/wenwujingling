@@ -968,8 +968,16 @@ const WHO = {
     heart:'他能把整根木头削成一支矛，也能在河湾里蹲一整个下午，只为等一条鱼。' },
   child:{ name:'一个约五岁的孩子', ta:'这孩子', arch:'未成年个体',
     age:'年龄约 5±1 岁，处于乳齿与恒齿交替期',
-    extra:'骨骼纤细、骨骺未闭合，长骨发育与年龄相符，未見明显病理改变。',
-    heart:'他还不会烧陶。但他会把泥巴捏成小鱼，摆满整个窗台。' }
+    extra:'骨骼纤细、骨骺未闭合，长骨发育与年龄相符，未见明显病理改变。',
+    heart:'他还不会烧陶。但他会把泥巴捏成小鱼，摆满整个窗台。' },
+  teen:{ name:'一个约十五岁的少年', ta:'他', arch:'未成年—青年过渡期个体',
+    age:'年龄约 15±2 岁，第三磨牙尚未萌出',
+    extra:'骨骺多数未完全闭合，骨骼仍在发育；四肢肌嵴已初步显现，提示已参与日常劳作。',
+    heart:'他刚学会自己磨一把石斧，斧柄上刻着歪歪扭扭的记号——那是他自己的名字。' },
+  old:{ name:'一位约六十岁的老人', ta:'他', arch:'老年个体',
+    age:'年龄约 60±5 岁',
+    extra:'牙齿磨耗严重，多个齿位生前脱落；脊椎与膝关节见明显退行性改变，腰椎有骨质增生。',
+    heart:'他记得每一次洪水涨到哪一级台阶。年轻人围着他，问今年能不能下河。' }
 };
 
 const POSE = {
@@ -981,6 +989,14 @@ const POSE = {
     heart:'让他侧着蜷起来，像还在母亲怀里那样。',
     arch:'葬式为侧身屈肢葬：下肢屈曲明显，上肢内收于胸前。',
     note:'本区域同期材料中占比较低，或具特殊含义。' },
+  prone:{ name:'俯身葬', sub:'罕见',
+    heart:'让他背朝上躺着。寨子里有人说这样不吉利，你还是这么做了。',
+    arch:'葬式为俯身直肢葬：体面向下，四肢伸展，面朝墓底。',
+    note:'本区域极少见，多被解释为特殊身份、非正常死亡或外来人群。' },
+  second:{ name:'二次葬', sub:'拣骨重葬',
+    heart:'过了几年，你又把他挖出来，把骨头一块一块拣干净，重新埋下。这样才算真的送走。',
+    arch:'葬式为二次葬：骨架呈非解剖学顺序散置，部分骨骼缺失或叠放，系拣骨后重新埋葬。',
+    note:'仰韶—马家窑系统常见葬俗，反映特定的灵魂观念与丧葬程序。' },
   urn:{ name:'瓮棺葬', sub:'仅孩童',
     heart:'用大陶瓮把他装起来，再扣上一只钵——像他还没出生时那样。',
     arch:'葬具为陶瓮与陶钵扣合而成的瓮棺，器身口沿经修整。',
@@ -999,13 +1015,22 @@ const HEAD = {
     arch:'头向东，为本区域非主流朝向，或提示墓主为外来成员，或具特殊身份。' },
   north:{ name:'头朝北', deg:0,
     heart:'朝着星宿不动的那一边。',
-    arch:'头向北，本区域少见，未见于已发表材料的规律性归纳。' }
+    arch:'头向北，本区域少见，未见于已发表材料的规律性归纳。' },
+  south:{ name:'头朝南', deg:180,
+    heart:'朝着河的下游。水会带他走远一点。',
+    arch:'头向南，与区域主流朝向相反，已发表材料中仅零星可见。' },
+  southeast:{ name:'头朝东南', deg:135,
+    heart:'朝着日头升起又偏一点的方向——那是春天来的方向。',
+    arch:'头向东南，偏离区域主流朝向，可能反映个体或家族层面的差异。' }
 };
 
 const OCHRE = {
   on:{ name:'撒一把赭石', sub:'赤铁矿粉',
     heart:'你抓了一把赭石粉，撒在他身边。红的是血，是火，是活着的颜色。别让他冷着走。',
     arch:'骨架周围及墓底见赭红色矿物粉末散布，经检测为赤铁矿（赭石）。' },
+  head:{ name:'只撒在头侧', sub:'薄薄一层',
+    heart:'你只在他头边撒了一把。别的地方，随它去吧。',
+    arch:'赭石粉末仅集中于头骨周围，分布范围局限，用量明显少于常见墓葬。' },
   off:{ name:'不撒', sub:'从简',
     heart:'你想了想，还是算了。他从来不爱那些讲究。',
     arch:'墓底未见赭石或其他矿物颜料痕迹。' }
@@ -1233,14 +1258,18 @@ function renderSlots(){
 
 function renderDust(){
   var d = $('#dust');
-  if(S.ochre==='on'){
-    if(!d.getAttribute('data-built')){
-      var html='';
-      for(var i=0;i<26;i++){
-        var x=18+Math.random()*64, y=16+Math.random()*68;
+  var mode = S.ochre;
+  if(mode==='on' || mode==='head'){
+    var key = 'dust-'+mode;
+    if(!d.getAttribute('data-built') || d.getAttribute('data-built')!==key){
+      var html='', cnt = mode==='on' ? 26 : 8;
+      for(var i=0;i<cnt;i++){
+        var x, y;
+        if(mode==='on'){ x=18+Math.random()*64; y=16+Math.random()*68; }
+        else { x=42+Math.random()*16; y=4+Math.random()*14; } /* 只在头侧 */
         html += '<i style="left:'+x.toFixed(1)+'%;top:'+y.toFixed(1)+'%"></i>';
       }
-      d.innerHTML = html; d.setAttribute('data-built','1');
+      d.innerHTML = html; d.setAttribute('data-built', key);
     }
     d.classList.add('on');
   }else{ d.classList.remove('on'); }
@@ -1272,7 +1301,7 @@ function say(txt){
 function renderMono(){
   $('#monoWho').textContent = '先民 · 独白　|　你要送走的是：' + WHO[S.who].name;
   var txt = WHO[S.who].heart + '　' + POSE[S.pose].heart + '　' + HEAD[S.head].heart;
-  if(S.ochre==='on') txt += '　' + T(OCHRE.on.heart);
+  if(S.ochre!=='off' && OCHRE[S.ochre]) txt += '　' + T(OCHRE[S.ochre].heart);
   $('#monoTx').textContent = txt;
 }
 
@@ -1436,6 +1465,15 @@ function dgLayout(){
     L.zone.side  = [I(3,2),I(4,2),I(5,2)];
     L.zone.feet  = [I(4,3),I(5,3),I(4,0)];
     L.zone.fill  = [I(3,0),I(5,0),I(5,1)];
+  }
+  /* 二次葬：骨头被拣过又重埋，散置不成人形 */
+  if(S.pose==='second'){
+    var used={};
+    ['head','chest','side','feet','fill'].forEach(function(z){ L.zone[z].forEach(function(i){ used[i]=1; }); });
+    var rest=[];
+    for(var k2=0;k2<C*R;k2++){ if(!used[k2]) rest.push(k2); }
+    L.bone = rest.slice(0,5);
+    L.urn = [];
   }
   return L;
 }
@@ -1799,16 +1837,25 @@ function dgCloseRelic(){
   dgHUD();
 }
 function dgProbe(){
-  if(dgSt.status!=='playing' || dgSt.paused) return;
+  if(dgSt.status!=='playing'){ dgToast('探方还没开工，先点土格开始。'); return; }
+  if(dgSt.paused){ dgToast('先把弹出的卡片关掉。'); return; }
   if(dgSt.probes<=0){ dgToast('探针只有一支，已经用掉了。'); return; }
-  if(dgSt.energy<12){ dgToast('体力不够了，探针探不动。'); return; }
-  var targets = dgCells.filter(function(c){ return c.relic && !c.collected && c.layers>0; });
-  if(!targets.length){ dgToast('没有可探测的目标了。'); return; }
-  dgSt.energy=Math.max(0,dgSt.energy-12); dgSt.probes--;
+  /* 还有没取出来的器物，就能探——不管它是埋在土里还是已经露头 */
+  var targets = dgCells.filter(function(c){ return c.relic && !c.collected; });
+  if(!targets.length){
+    dgToast('探方里的器物都提取完了，探针用不上了。');
+    dgSt.probes = 0; dgHUD(); return;
+  }
+  /* 一次一支，不耗体力；直接探到一件器物的位置 */
   var t = targets[Math.floor(Math.random()*targets.length)];
-  dgSt.hint=t.i; dgSt.hintUntil=performance.now()+3000;
-  dgToast('探针有反应：高亮处有器物。');
-  dgTone(1100,.1,'sine',.03); dgHUD();
+  dgSt.probes = 0;
+  dgSt.hint = t.i;
+  dgSt.hintUntil = performance.now() + 6000;
+  dgSt.cursor = { c:t.c, r:t.r };
+  dgToast('探针有反应：高亮这一格下面有器物。就用这一次了。');
+  dgTone(1100,.12,'sine',.035);
+  dgSpark(dgCellXY(t).x + DG.TILE/2, dgCellXY(t).y + DG.TILE/2, 6);
+  dgHUD();
 }
 function dgCheckEnd(){
   if(dgSt.status!=='playing') return;
@@ -1905,7 +1952,7 @@ var DG_TOOL_SPR = {
 var DG_TOOLS = [
   {k:'shovel', n:'小铲', tip:'挖一层 · 5 体力', key:'1'},
   {k:'brush',  n:'毛刷', tip:'清灰两次出土', key:'2'},
-  {k:'probe',  n:'探针', tip:'高亮示器物',   key:'3'}
+  {k:'probe',  n:'探针', tip:'标出一件器物·仅一次', key:'3'}
 ];
 dgSt.tool = 'shovel';
 
@@ -1942,7 +1989,7 @@ function dgRenderTools(){
       dgDrawIcon(b.querySelector('canvas').getContext('2d'), t.k, 3);
     });
   }
-  var probeOff = dgSt.status!=='playing' || dgSt.paused || dgSt.probes<=0 || dgSt.energy<12;
+  var probeOff = dgSt.status!=='playing' || dgSt.paused || dgSt.probes<=0;
   DG_TOOLS.forEach(function(t){
     var el=dgEl('dgTool_'+t.k); if(!el) return;
     if(t.k==='probe'){
@@ -2105,7 +2152,7 @@ function buildReport(){
   const rows = [];
   rows.push({ e:'你送走的人', heart:w.heart, arch:w.arch + '。' + w.age + '。' + w.extra });
   rows.push({ e:'葬式', heart:T(p.heart), arch:p.arch + (p.note?' '+p.note:'') });
-  if(S.pose!=='urn') rows.push({ e:'头向', heart:h.heart, arch:h.arch });
+  if(S.pose!=='urn' && S.pose!=='second') rows.push({ e:'头向', heart:h.heart, arch:h.arch });
   rows.push({ e:'葬仪用色', heart:T(o.heart), arch:o.arch });
   rows.push({ e:'随葬品数量', heart:'你数了数，一共放了 '+buriedN+' 件。'+(buriedN===0?'（你一件也没放。）':''),
     arch:'本次发掘实际提取 '+n+' 件。'+g.t+'。'+g.d+
