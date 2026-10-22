@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>文物精灵演示视频演讲稿</title>
+<style>
+  /* 页面规则：正文页脚居中页码；封面与目录页不显示 */
+  @page { margin: 2.2cm 2cm; @bottom-center { content: "第 " counter(page) " 页"; font-family: "SimSun"; font-size: 9pt; color: #8a7f6f; } }
+  @page cover { margin: 2.2cm 2cm; @bottom-center { content: none; } }
+
+  section[role="cover"] { page: cover; }
+  .toc-list, .toc-list ol, .toc-list ul { list-style: none; }
+  .toc-title { font-family: "SimSun"; font-size: 18pt; font-weight: bold; text-align: center; letter-spacing: 6px; margin: 0 0 18px 0; color: #8B5A2B; }
+  .toc-list li { font-family: "SimSun"; font-size: 12pt; line-height: 1.9; }
+  .toc-list li a { color: #2f2a26; text-decoration: none; }
+  .toc-list ol ol li { font-size: 11pt; color: #6b6259; }
+
+  h1 { font-family: "SimSun"; font-size: 16pt; font-weight: bold; color: #ffffff; background-color: #8B5A2B; padding: 8px 12px; margin: 22px 0 14px 0; line-height: 1.5; }
+  h2 { font-family: "SimSun"; font-size: 13.5pt; font-weight: bold; color: #8B5A2B; border-left: 4px solid #C9A227; padding-left: 10px; margin: 18px 0 10px 0; line-height: 1.6; }
+  p { font-family: "SimSun"; font-size: 12pt; line-height: 1.9; text-align: justify; margin: 0 0 8px 0; }
+  p.body { text-indent: 2em; }
+  .meta { font-family: "SimSun"; font-size: 12pt; color: #6b6259; text-align: center; line-height: 2; }
+  .label { font-family: "SimSun"; font-size: 12pt; font-weight: bold; color: #8B5A2B; }
+  .sub { font-family: "SimSun"; font-size: 12pt; background-color: #F6F1E6; border-left: 3px solid #C9A227; padding: 6px 10px; margin: 6px 0 12px 0; line-height: 1.8; }
+  .kicker { font-family: "SimSun"; font-size: 12pt; color: #6b6259; margin: 4px 0 10px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 16px 0; }
+  th, td { border: 1px solid #C9BFA6; padding: 7px 9px; font-size: 11pt; line-height: 1.6; }
+  th { background-color: #F0E7D4; font-weight: bold; color: #5a4a32; text-align: left; }
+  td { color: #2f2a26; }
+  ol.tips { font-family: "SimSun"; font-size: 12pt; line-height: 1.9; padding-left: 2em; }
+  ol.tips li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<section role="cover">
+  <p style="font-family: 'SimSun'; font-size: 32pt; font-weight: bold; text-align: center; color: #8B5A2B; letter-spacing: 8px; margin: 160px 0 10px 0;">文物精灵 RELIC SOUL</p>
+  <p style="font-family: 'SimSun'; font-size: 16pt; text-align: center; color: #6b6259; letter-spacing: 3px; margin: 0 0 6px 0;">5 分钟演示视频 · 演讲稿</p>
+  <p style="font-family: 'SimSun'; font-size: 13pt; text-align: center; color: #8a7f6f; letter-spacing: 2px; margin: 0 0 90px 0;">让文物开口说话</p>
+  <p class="meta">团队：王德江 · 韩庆祥 · 唐梦锦</p>
+  <p class="meta">2026 年 10 月</p>
+</section>
+
+<section role="cover">
+<nav class="doc-toc" aria-label="文档目录">
+  <p class="toc-title">目 录</p>
+  <ol class="toc-list">
+    <li><a href="#section-1">一、项目核心与玩法总览</a></li>
+    <li><a href="#section-2">二、演讲正文（分段脚本）</a>
+      <ol>
+        <li><a href="#section-3">0:00–0:25 开场 · 项目介绍</a></li>
+        <li><a href="#section-4">0:25–1:10 核心功能一 · 十三站与精灵图鉴</a></li>
+        <li><a href="#section-5">1:10–2:00 核心功能二 · 识宝与茶话会</a></li>
+        <li><a href="#section-6">2:00–3:10 核心功能三 · 赋彩与文物修复</a></li>
+        <li><a href="#section-7">3:10–4:10 AI 技术亮点</a></li>
+        <li><a href="#section-8">4:10–4:45 更多玩法速览</a></li>
+        <li><a href="#section-9">4:45–5:30 结尾 · 愿景与致谢</a></li>
+      </ol>
+    </li>
+    <li><a href="#section-10">三、录制与配音提示</a></li>
+  </ol>
+</nav>
+</section>
+
+<section class="chapter" data-page-restart="1">
+
+<h1 id="section-1">一、项目核心与玩法总览</h1>
+<p class="body">项目核心（一句话）：用 AI 让博物馆里的文物变成会聊天的精灵——把「读说明牌」变成「听文物自己讲」。</p>
+<p class="body">整套玩法分三层：看、玩、留。看，是沿着京畿十三站云游，翻阅 74 只精灵图鉴；玩，是 AI 识宝、茶话会、赋彩、修复四大互动；留，是生成海报与心仪卡，把知识留在心里。下表是完整清单，口播前先用 40 秒讲一遍，观众立刻就有全局印象。</p>
+<table>
+  <tr><th style="width:12%">层级</th><th style="width:22%">玩法</th><th style="width:48%">一句话说明</th><th style="width:18%">对应视频段落</th></tr>
+  <tr><td>看</td><td>京畿十三站 · 74 只精灵图鉴</td><td>按地域云游，点开就有朝代、材质、出土地与第一人称自我介绍，还能听语音</td><td>0:25–1:10</td></tr>
+  <tr><td>玩</td><td>AI 识宝</td><td>拍张照上传，AI 识别文物并给出年代、材质、馆藏线索</td><td>1:10–2:00</td></tr>
+  <tr><td>玩</td><td>精灵茶话会 / 活态苏醒</td><td>与文物第一人称实时真聊，回答由大模型现场生成</td><td>1:10–2:00</td></tr>
+  <tr><td>玩</td><td>AI 赋彩</td><td>黑白线稿一键上色，也可自己涂，随时看原图、可保存</td><td>2:00–3:10</td></tr>
+  <tr><td>玩</td><td>AI 文物修复</td><td>16/32/64 块碎片拼合复原，空白碎片不计入进度，完成出修复报告</td><td>2:00–3:10</td></tr>
+  <tr><td>留</td><td>打卡海报 / 心仪卡 / 考古小游戏</td><td>生成国风海报、收藏心动精灵、小游戏互动，把知识留住</td><td>4:10–4:45</td></tr>
+</table>
+<p class="body">四个技术支点：流式秒回（1–2 秒首字）、模型择优与自动降级、手机与电脑双端一致、安全加固（哈希口令 + 来源校验 + 安全响应头）。</p>
+
+<h1 id="section-2">二、演讲正文（分段脚本）</h1>
+<p class="kicker">全文约 1500 字，正常语速（约 260 字/分钟）朗读约 5 分 30 秒。「画面」供剪辑对位，「字幕」可直接做成 SRT。</p>
+
+<h2 id="section-3">0:00–0:25 开场 · 项目介绍</h2>
+<p class="label">口播：</p>
+<p class="body">大家好，我们是「文物精灵」团队。请大家想一想：博物馆里的文物，安安静静地躺在展柜里，说明牌上只有一行冷冰冰的年代和材质——大多数观众看一眼就走了。我们想做的，就是让这些国宝开口说话。文物精灵，是一个把馆藏文物变成「会聊天、会撒娇、有脾气」的 Q 版精灵的国风网站。接下来五分钟，请大家跟我们一起，看文物如何活过来。</p>
+<p class="label">画面：</p>
+<p class="sub">水墨片头 → 首页大标题「文物精灵」→ 快切三张文物实拍与对应 Q 版立绘对比</p>
+<p class="label">字幕：</p>
+<p class="sub">让文物开口说话 —— 文物精灵 RELIC SOUL</p>
+
+<h2 id="section-4">0:25–1:10 核心功能一 · 京畿十三站与精灵图鉴</h2>
+<p class="label">口播：</p>
+<p class="body">进入网站，像展开一幅山水长卷。我们以「京畿十三站」为主线，把河北博物院、中国国家博物馆等馆藏文物按地域串联起来。每一站点开，都是一组文物精灵：全区 74 只精灵，每一只都有名字、朝代、材质、出土地，还有一段第一人称的自我介绍。点击任意一只——比如这件西汉的五铢钱——它会用两千岁的方式跟你打招呼，语音朗读配上国风立绘，说明牌变成了一个活生生的「人」。</p>
+<p class="label">画面：</p>
+<p class="sub">首页滚动 → 十三站地图 → 站点卡片列表 → 点开「五铢钱」详情页 → 语音播放按钮特写</p>
+<p class="label">字幕：</p>
+<p class="sub">74 只文物精灵 · 十三站云游 · 每一件都有自己的人格</p>
+
+<h2 id="section-5">1:10–2:00 核心功能二 · AI 识宝与茶话会</h2>
+<p class="label">口播：</p>
+<p class="body">真正的重头戏在「AI 工坊」。第一招，AI 识宝：你在博物馆拍一张照片上传，AI 会识别它可能是什么文物，给出朝代、材质和馆藏线索，还能和图鉴里的精灵对上号。第二招，精灵茶话会：你可以和任意一只精灵实时聊天——它不是关键词问答，而是接入云端大模型的真对话。我们问五铢钱「你经历过什么？」，它会从汉武帝元狩五年讲起，讲谁拿它买过羊肉、换过丝绸。每一次回答都是现场生成的，不重样。</p>
+<p class="label">画面：</p>
+<p class="sub">AI 工坊页 → 上传照片 → 识别结果卡片 → 切到茶话会 → 输入问题 → 流式回答逐字出现特写</p>
+<p class="label">字幕：</p>
+<p class="sub">拍照即识 · 与文物实时真聊 · 回答由大模型现场生成</p>
+
+<h2 id="section-6">2:00–3:10 核心功能三 · AI 赋彩与文物修复</h2>
+<p class="label">口播：</p>
+<p class="body">第三招，AI 赋彩。我们准备了一批文物黑白线稿，点一下「一键赋彩」，AI 会按照文物的真实配色逐笔上色；你也可以自己拿画笔慢慢涂，随时「看原图」对照，画完一键保存。第四招，AI 文物修复：系统把一件文物切成 16、32 甚至 64 块碎片打乱，你来拼合复原——注意，原图里本来就空白的碎片会被自动标记出来，不计入修复进度，进度条算的是你真正复原的部分。全部归位的那一刻，会生成一份属于你的「AI 修复报告」。</p>
+<p class="label">画面：</p>
+<p class="sub">赋彩页（黑白 → 上色过程延时 → 保存）→ 修复页（碎片打乱 → 拖拽归位 → 空白格斜纹特写 → 100% 报告弹出）</p>
+<p class="label">字幕：</p>
+<p class="sub">黑白线稿一键上色 · 拼合碎片让文物重光</p>
+
+<h2 id="section-7">3:10–4:10 AI 技术亮点</h2>
+<p class="label">口播：</p>
+<p class="body">支撑这些玩法的，是我们自研的云端 AI 接入层。四个亮点：第一，流式输出——所有回答逐字呈现，首字响应控制在一到两秒，等得起的体验才叫对话。第二，模型择优与自动降级——多个大模型候选自动择优，某个模型超时或故障会被实时拉黑并切换，用户完全无感。第三，全端一致——手机端有独立的底部标签栏和宣纸抽屉导航，样式与桌面端物理隔离，改手机绝不动电脑版式。第四，安全加固——口令只以加盐哈希形式存在，本地 AI 服务做了来源校验，服务器补齐了安全响应头，密钥全程不出本机。</p>
+<p class="label">画面：</p>
+<p class="sub">架构示意动画（浏览器 → 接入层 → 云端模型）→ 流式打字特写 → 手机 / 电脑双端并排演示 → 安全清单逐条点亮</p>
+<p class="label">字幕：</p>
+<p class="sub">流式秒回 · 择优降级 · 双端一致 · 安全加固</p>
+
+<h2 id="section-8">4:10–4:45 更多玩法速览</h2>
+<p class="label">口播：</p>
+<p class="body">除此之外，还有打卡海报：选一件文物、写下感言，生成一张可保存分享的国风海报；心仪卡帮你收藏心动精灵；考古挖掘小游戏让小朋友也能玩得停不下来。从看到玩、从玩到学，文物知识就这样留在了心里。</p>
+<p class="label">画面：</p>
+<p class="sub">海报生成过程 → 心仪卡翻卡 → 小游戏 3 秒快剪</p>
+<p class="label">字幕：</p>
+<p class="sub">海报 · 心仪卡 · 考古小游戏</p>
+
+<h2 id="section-9">4:45–5:30 结尾 · 愿景与致谢</h2>
+<p class="label">口播：</p>
+<p class="body">我们相信，技术的意义不是替代文化，而是给文化一个被听见的机会。文物精灵用 AI 把千年前的器物变成了今天的朋友——下次走进博物馆，希望你不再是匆匆一瞥，而是停下来，听一听它们的故事。让文物开口说话，让每一次相遇都有温度。我们是文物精灵团队，谢谢大家！</p>
+<p class="label">画面：</p>
+<p class="sub">全家福式快剪（精灵群像 + 站点 + 工坊四宫格）→ 落版 LOGO「文物精灵 RELIC SOUL」+ 团队名</p>
+<p class="label">字幕：</p>
+<p class="sub">让文物开口说话 · 文物精灵团队 敬上</p>
+
+<h1 id="section-10">三、录制与配音提示</h1>
+<ol class="tips">
+  <li>口播：全篇普通话，语速约 260 字/分钟；加粗句读时稍作停顿。</li>
+  <li>分辨率：录屏请用 1920×1080 及以上，浏览器缩放 100%，鼠标移动放慢。</li>
+  <li>录屏顺序照「画面」列走，每段比口播多录 10 秒余量，方便剪辑对位。</li>
+  <li>字幕：把每段「字幕」行做成 SRT，字号大、居下居中；术语（如「流式输出」）可与口播同时高亮。</li>
+  <li>数字人出镜：开场与结尾各出镜 15–20 秒即可，中段以录屏为主；形象建议半身、正面、博物馆或书房背景。</li>
+  <li>若需压缩到 5 分钟：删「更多玩法速览」一段；若需拉到 8 分钟：在 3:10 段后加一段「幕后开发过程」，讲两个真实踩坑案例。</li>
+</ol>
+
+</section>
+</body>
+</html>
