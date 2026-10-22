@@ -8,8 +8,9 @@
 <link rel="stylesheet" href="css/red-v2.css?v=red27">
 <link rel="stylesheet" href="css/red-inner.css?v=ri8">
 <link rel="stylesheet" href="css/bg-paint.css?v=bp4">
-<link rel="stylesheet" href="css/intro-scroll.css?v=sc9">
+<link rel="stylesheet" href="css/intro-scroll.css?v=sc10">
 <link rel="stylesheet" href="css/mobile.css?v=m9">
+<link rel="stylesheet" href="css/newbie.css?v=nb1">
 <style>
 /* ===== 对战舞台校准（只作用于本页） =====
    1) 原来的 .unit 写死 132px，名字一长就向外溢出、被舞台的 overflow:hidden 切掉一截；
@@ -669,6 +670,9 @@
       </div>
       <a class="nav-item auth-btn" id="authBtn" href="#/" onclick="return authOpen()" title="登录 / 注册:登录后直接用本站 AI">👤 登录 / 注册</a>
     </nav>
+    <button type="button" class="nb-btn new" id="nbBtn" onclick="nbOpen()" title="新手指引 · 分步带你逛一遍" aria-label="新手指引">
+      <span class="nb-btn-ic">?</span><span class="nb-btn-t">新手指引</span>
+    </button>
     <div class="bgm" id="bgm">
       <button type="button" class="bgm-btn" id="bgmBtn" onclick="bgmToggle()" title="背景音乐:五首切换 / 关闭" aria-label="背景音乐">♪</button>
       <div class="bgm-panel" id="bgmPanel" hidden>
@@ -845,7 +849,19 @@
     document.addEventListener('visibilitychange', function(){ if(!document.hidden) prune(); });
     window.addEventListener('load', function(){ setTimeout(prune,600); });
   }catch(e){}
+
+  /* 开卷兜底：不管样式有没有被缓存/被别的规则停掉动画，2 秒内一定把卷轴放开 */
+  try{
+    var fixClip=function(){
+      var st=document.querySelector('.sc-stage');
+      if(!st) return;
+      var cp=getComputedStyle(st).clipPath;
+      if(cp && cp!=='none') st.style.clipPath='none';
+    };
+    fixClip(); setTimeout(fixClip,700); setTimeout(fixClip,1800); setTimeout(fixClip,3600);
+  }catch(e){}
 })();
 </script>
+<script src="js/newbie.js?v=nb1"></script>
 </body>
 </html>

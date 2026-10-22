@@ -1,0 +1,127 @@
+/* =========================================================
+   新手指引（分步聚光灯引导）
+   顶栏「新手指引」按钮 → 一层遮罩 + 一个挖空的聚光洞 + 一张说明卡，
+   按「第 N 步 / 共 N 步」推进，首次访问自动弹一次（记住 localStorage）。
+   ========================================================= */
+
+/* ---------- 顶栏按钮 ---------- */
+.nb-btn{
+  display:inline-flex;align-items:center;gap:6px;flex:none;
+  height:30px;padding:0 12px 0 8px;margin-left:10px;
+  border:1px solid rgba(246,214,152,.42);border-radius:999px;
+  background:rgba(255,240,214,.08);color:#ffe9c4;
+  font:600 12.5px/1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  letter-spacing:.06em;cursor:pointer;
+  transition:background .2s,border-color .2s,color .2s;
+}
+.nb-btn:hover{background:rgba(255,240,214,.18);border-color:rgba(246,214,152,.8);color:#fff6e2}
+.nb-btn:focus-visible{outline:2px solid #f6d698;outline-offset:2px}
+.nb-btn-ic{
+  display:grid;place-items:center;width:18px;height:18px;border-radius:50%;
+  background:linear-gradient(160deg,#f0c473,#c98a33);color:#5a2a06;
+  font:800 12px/1 "Georgia",serif;
+}
+.nb-btn.new::after{
+  content:"";width:6px;height:6px;margin-left:2px;border-radius:50%;
+  background:#ffd067;box-shadow:0 0 8px #ffbe45;animation:nbDot 1.8s ease-in-out infinite;
+}
+@keyframes nbDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.78)}}
+
+/* ---------- 遮罩 / 聚光洞 ---------- */
+.nb-wrap{position:fixed;inset:0;z-index:9000;display:none}
+.nb-wrap.on{display:block}
+.nb-mask{position:absolute;inset:0;background:rgba(26,14,9,.62);opacity:0;transition:opacity .26s ease}
+.nb-wrap.on .nb-mask{opacity:1}
+
+.nb-hole{
+  position:fixed;border-radius:14px;pointer-events:none;z-index:9001;
+  box-shadow:0 0 0 9999px rgba(26,14,9,.62),0 0 0 2px rgba(250,220,158,.95),0 0 30px rgba(255,206,120,.4);
+  transition:top .3s cubic-bezier(.3,.7,.3,1),left .3s cubic-bezier(.3,.7,.3,1),
+             width .3s cubic-bezier(.3,.7,.3,1),height .3s cubic-bezier(.3,.7,.3,1);
+}
+.nb-hole.hide{opacity:0}
+/* ---------- 说明卡 ---------- */
+.nb-card{
+  position:fixed;z-index:9002;
+  width:min(376px,calc(100vw - 32px));
+  padding:16px 16px 12px;
+  border:1px solid #e7c79b;border-radius:16px;
+  background:linear-gradient(168deg,#fffdf7 0%,#fdf4e6 58%,#fbeedb 100%);
+  box-shadow:0 26px 60px rgba(48,18,6,.44),inset 0 2px 0 rgba(255,255,255,.9);
+  font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  transform:translateY(10px) scale(.985);opacity:0;
+  transition:transform .28s cubic-bezier(.3,.7,.3,1),opacity .24s ease,top .28s ease,left .28s ease;
+}
+.nb-wrap.on .nb-card{transform:none;opacity:1}
+.nb-card::before{
+  content:"";position:absolute;left:16px;right:16px;top:0;height:3px;border-radius:0 0 3px 3px;
+  background:linear-gradient(90deg,#c2361d,#e8894a 48%,#f0c473);
+}
+
+.nb-step{
+  display:inline-flex;align-items:baseline;gap:5px;
+  font:700 11.5px/1 "Noto Sans SC",sans-serif;letter-spacing:.14em;color:#b4351c;
+}
+.nb-step b{font:800 20px/1 "STKaiti","KaiTi",serif;color:#c2361d;letter-spacing:0}
+.nb-step i{font-style:normal;color:#a98a63;font-weight:600;letter-spacing:.08em}
+
+.nb-title{
+  margin:9px 0 6px;
+  font:700 17.5px/1.4 "STKaiti","KaiTi","Songti SC",serif;color:#3a1d12;letter-spacing:.03em;
+}
+.nb-desc{
+  margin:0;font-size:13px;line-height:1.8;color:#6b4a33;letter-spacing:.01em;
+}
+.nb-desc em{font-style:normal;color:#b4351c;font-weight:700}
+
+.nb-dots{display:flex;align-items:center;gap:5px;margin:12px 0 10px}
+.nb-dots i{
+  width:6px;height:6px;border-radius:50%;background:#e2cbb0;transition:.24s;
+}
+.nb-dots i.on{width:16px;border-radius:3px;background:linear-gradient(90deg,#c2361d,#e0884a)}
+
+.nb-foot{display:flex;align-items:center;gap:8px}
+.nb-skip{
+  margin-right:auto;border:none;background:none;padding:6px 2px;cursor:pointer;
+  font-size:12px;color:#a98a63;letter-spacing:.04em;
+}
+.nb-skip:hover{color:#7b5a3c}
+.nb-prev,.nb-next{
+  height:34px;border-radius:999px;cursor:pointer;font:700 12.5px/1 "Noto Sans SC",sans-serif;
+  letter-spacing:.06em;transition:.2s;padding:0 16px;
+}
+.nb-prev{border:1px solid #e0c4a3;background:#fffaf0;color:#8a5a38}
+.nb-prev:hover{border-color:#c9a071;color:#6b3f22}
+.nb-next{
+  border:none;color:#fff6e6;
+  background:linear-gradient(135deg,#d8452a,#a82613);
+  box-shadow:0 6px 16px rgba(150,30,10,.28);
+}
+.nb-next:hover{filter:brightness(1.06)}
+.nb-prev:disabled{opacity:.4;cursor:default}
+
+/* ---------- 窄屏：卡片落到底部，整块可点 ---------- */
+@media (max-width:860px){
+  .nb-btn{height:28px;padding:0 9px 0 6px;margin-left:6px;font-size:11.5px}
+  .nb-btn-ic{width:16px;height:16px;font-size:11px}
+  .nb-card{
+    left:12px!important;right:12px;top:auto!important;
+    width:auto;bottom:calc(16px + env(safe-area-inset-bottom));
+    padding:14px 14px 10px;border-radius:15px;
+  }
+  .nb-title{font-size:16.5px}
+  .nb-desc{font-size:12.5px;line-height:1.75}
+  .nb-prev,.nb-next{height:36px;padding:0 18px;font-size:12.5px}
+  /* 目标本身在下半屏（小答、底栏）时，卡片改落到顶部，别跟聚光洞打架 */
+  .nb-card.top{
+    top:calc(70px + env(safe-area-inset-top))!important;bottom:auto!important;
+  }
+}
+@media (max-width:360px){
+  .nb-btn-t{display:none}
+  .nb-btn{padding:0 8px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .nb-hole,.nb-card,.nb-mask,.nb-btn.new::after{transition:none!important;animation:none!important}
+}

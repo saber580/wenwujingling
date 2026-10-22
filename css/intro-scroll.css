@@ -75,14 +75,21 @@
 }
 
 /* ---------------- 卷轴本体 ---------------- */
+/* 注意：基础态必须是「全开」。
+   开卷动效只是从「中间一道缝」展开到全幅的入场效果，用 from/to 写；
+   一旦哪个环境不跑动画（省电模式、被别的样式 animation:none 掉、缓存了旧样式…），
+   元素就停在基础态 = 完整展开，绝不会再出现「只剩一根竖细条」的情况。 */
 .sc-stage{
   position:relative;min-height:0;
   display:flex;align-items:center;justify-content:center;
   padding:8px clamp(10px,3vw,46px);
-  clip-path:inset(0 49% 0 49%);
-  animation:scUnroll 1.25s cubic-bezier(.45,.05,.35,1) .1s forwards;
+  clip-path:none;
+  animation:scUnroll 1.25s cubic-bezier(.45,.05,.35,1) .1s both;
 }
-@keyframes scUnroll{to{clip-path:inset(0 0 0 0)}}
+@keyframes scUnroll{
+  from{clip-path:inset(0 49% 0 49%)}
+  to{clip-path:inset(0 0 0 0)}
+}
 
 .sc-paper{
   position:relative;overflow:hidden;flex:none;
