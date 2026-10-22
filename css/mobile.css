@@ -1,0 +1,288 @@
+/* =========================================================
+   文物精灵 · 手机专属版式（MOBILE ONLY）
+   ---------------------------------------------------------
+   本文件所有规则都包在 @media (max-width: 860px) 里，
+   桌面（>860px）完全不受影响，一行都不动。
+   作用：顶栏压成单行 + 底部标签栏导航 + 首屏/列表/网格重排
+   ========================================================= */
+/* 桌面默认不存在这些手机部件；只有窄屏才启用 */
+.mtab,.msheet,.msheet-mask{display:none}
+
+@media (max-width: 860px){
+
+  #app,body{overflow-x:hidden}
+  .mtab{display:flex}
+  .msheet-mask{display:block}
+  .msheet{display:block}
+
+  /* ---------------- 1 · 顶栏：只留匾额与音乐 ---------------- */
+  .topbar.rh-topbar{
+    padding:7px 12px 9px;gap:8px;flex-wrap:nowrap;
+    box-shadow:0 6px 16px rgba(70,0,6,.3);
+  }
+  .rh-topbar .brand{gap:8px;flex:1 1 auto;min-width:0}
+  .rh-topbar .brand-logo{width:29px;height:29px;filter:drop-shadow(0 3px 7px rgba(60,0,4,.4))}
+  .rh-topbar .brand b{font-size:15.5px;letter-spacing:2.4px}
+  .rh-topbar .brand small{font-size:7.5px;letter-spacing:1.1px;margin-top:1px}
+  .rh-preset-tag{display:none}
+  body.mnav-on .rh-topbar .topnav{display:none}  /* 内容导航搬到底部标签栏；脚本没跑时不隐藏 */  .rh-topbar .bgm{margin-left:auto;flex:0 0 auto}
+  .rh-topbar .bgm-btn{width:33px;height:33px;font-size:14px}
+  .rh-topbar .bgm-panel{
+    right:0;left:auto;top:calc(100% + 6px);
+    width:min(226px,80vw);max-height:64vh;overflow:auto;
+  }
+  .topbar.rh-topbar::after{height:4px;opacity:.52}
+
+  /* ---------------- 2 · 底部标签栏 ---------------- */
+  body{padding-bottom:calc(60px + env(safe-area-inset-bottom))}
+
+  .mtab{
+    position:fixed;left:0;right:0;bottom:0;z-index:59;
+    display:flex;align-items:stretch;
+    padding:5px 6px calc(5px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,#A8101A 0%,#8B0C13 100%);
+    border-top:1px solid rgba(255,222,168,.26);
+    box-shadow:0 -8px 22px rgba(58,0,5,.34);
+  }
+  .mtab>button{
+    flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;padding:6px 2px 3px;background:none;border:0;cursor:pointer;
+    color:rgba(255,240,214,.62);
+    font-family:var(--rh-kai);font-size:10.5px;letter-spacing:1.6px;
+    position:relative;transition:color .2s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mtab>button .mt-ic{width:21px;height:21px;display:block;transition:transform .22s}
+  .mtab>button.on{color:#FFF4DC;font-weight:700}
+  .mtab>button.on .mt-ic{transform:translateY(-1.5px);filter:drop-shadow(0 0 6px rgba(255,214,140,.65))}
+  .mtab>button.on::after{
+    content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:24px;height:2px;border-radius:0 0 2px 2px;
+    background:linear-gradient(90deg,transparent,#FFDF9E,transparent);
+  }
+  .mtab>button:active{color:#fff}
+
+  /* ---------------- 3 · 下拉抽屉 ---------------- */
+  .msheet-mask{
+    position:fixed;inset:0;z-index:118;background:rgba(38,0,6,.46);
+    opacity:0;pointer-events:none;transition:opacity .26s;
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+  }
+  .msheet-mask.on{opacity:1;pointer-events:auto}
+  .msheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:121;
+    transform:translateY(104%);transition:transform .32s cubic-bezier(.22,.86,.3,1);
+    padding:6px 16px calc(14px + env(safe-area-inset-bottom));
+    max-height:78vh;overflow:auto;-webkit-overflow-scrolling:touch;
+    background:linear-gradient(180deg,#FFFBF0,#F9ECCF 58%,#F2DFB8);
+    border-radius:20px 20px 0 0;
+    box-shadow:0 -16px 44px rgba(60,0,4,.42),inset 0 1px 0 #FFFDF6;
+  }
+  .msheet.on{transform:none}
+  .msheet-t{
+    display:flex;align-items:center;gap:10px;padding:9px 2px 10px;
+    border-bottom:1px solid rgba(150,84,30,.2);position:sticky;top:0;z-index:2;
+    background:linear-gradient(180deg,#FFFBF0,#FFFBF0 72%,rgba(255,251,240,0));
+  }
+  .msheet-t b{font-family:var(--rh-kai);font-size:17px;letter-spacing:3px;color:#8B0C13}
+  .msheet-t i{flex:1;height:1px;background:linear-gradient(90deg,rgba(150,84,30,.32),transparent)}
+  .msheet-t button{
+    width:30px;height:30px;flex:none;border-radius:50%;cursor:pointer;
+    border:1px solid rgba(150,84,30,.24);background:rgba(255,255,255,.65);
+    color:#8B0C13;font-size:13px;line-height:1;display:grid;place-items:center;
+  }
+  .msheet a{
+    display:flex;align-items:center;min-height:50px;padding:0 8px;
+    font-family:var(--rh-kai);font-size:15px;letter-spacing:1.4px;color:#3E1B15;
+    border-bottom:1px dashed rgba(150,84,30,.16);
+  }
+  .msheet a:last-child{border-bottom:0}
+  .msheet a:active{background:rgba(255,222,176,.55);color:#A50F17}
+
+  /* ---------------- 4 · 首屏：月洞与说明牌 ---------------- */
+  .rh-hero-wrap{padding:6px 14px 0;gap:0}
+  .rh-hero-window{width:100%;margin-top:0}
+  .rh-moon{width:min(62vw,290px)}
+  .rh-moon .aw-tip{bottom:12px;font-size:9px;padding:2px 8px;letter-spacing:.5px}
+  .rh-stamp{width:22px;height:26px;font-size:10.5px;border-radius:2px}
+  .rh-moon-side{display:none}
+
+  .rh-plate{
+    width:100%;max-width:430px;margin:11px auto 0;
+    padding:13px 15px 11px;border-radius:12px;
+    box-shadow:0 12px 26px rgba(60,0,4,.22),inset 0 0 0 1px #FFFCF4;
+  }
+  .rh-plate-top{font-size:9.5px;letter-spacing:1px}
+  .rh-plate h2{font-size:22px;letter-spacing:3px;margin:1px 0 2px}
+  .rh-plate-sub{font-size:10.5px;letter-spacing:1.4px;margin-bottom:7px}
+  .rh-plate-tags{gap:6px;margin-bottom:9px}
+  .rh-plate-tags span{font-size:10.5px;padding:2px 8px;border-radius:3px}
+  .rh-plate-desc{font-size:12.5px;line-height:1.85;margin-bottom:10px}
+  .rh-plate-go{
+    display:flex;align-items:center;justify-content:space-between;
+    padding-top:9px;border-bottom:0;
+    border-top:1px dashed rgba(150,84,30,.24);
+    font-size:12.5px;letter-spacing:1.2px;
+  }
+  .rh-plate-x{width:26px;height:26px}
+
+  /* 标题区收紧，别让首屏被撑太长 */
+  .rh-hero-copy{padding:18px 2px 2px;text-align:center}
+  .rh-eyebrow{font-size:8.5px;letter-spacing:3.2px;opacity:.82}
+  .rh-motto{padding:5px 15px;margin:7px auto 6px}
+  .rh-motto-t{font-size:clamp(15px,4.6vw,19px);letter-spacing:1.6px}
+  .rh-title{justify-content:center;gap:9px;margin:0}
+  .rh-title-cn{
+    font-size:clamp(38px,11.4vw,48px);letter-spacing:6px;
+    /* 手机内核里渐变裁字常失效（字直接消失），改用实心烫金 + 描边阴影，稳 */
+    background:none;-webkit-background-clip:border-box;background-clip:border-box;
+    color:#FFEAC0;-webkit-text-fill-color:#FFEAC0;
+    filter:none;text-shadow:0 2px 10px rgba(72,0,6,.55),0 1px 0 rgba(255,246,226,.35);
+  }
+  .rh-title .rh-seal{width:22px;height:26px;font-size:11px}
+  .rh-en{font-size:8px;letter-spacing:3.6px;margin-top:4px;opacity:.8}
+  .rh-lede{font-size:12.5px;line-height:1.95;margin:9px auto 13px;max-width:330px;letter-spacing:.4px}
+  .rh-nums{justify-content:center;margin:0 auto 15px;max-width:330px}
+  .rh-nums>div{padding:0 10px}
+  .rh-nums b{font-size:20px}
+  .rh-nums span{font-size:8.5px;letter-spacing:1.4px}
+  .rh-hero-cta{gap:8px;justify-content:center;flex-wrap:nowrap}
+  .rh-hero-cta .starbtn{flex:1 1 0;min-width:0;height:46px}
+  .rh-hero-cta .starbtn strong{font-size:12.5px;letter-spacing:.6px}
+  .rh-rail{display:none}
+
+  /* ---------------- 5 · 票券条 ---------------- */
+  .rh-fanbar{padding-bottom:6px}
+  .rh-fanbar-in{padding:0 12px}
+  .rh-tickets-head{margin-bottom:2px}
+  .rh-fan{height:156px}
+  .rh-fan-hint{margin-top:6px;font-size:8.5px;letter-spacing:1.8px;opacity:.6}
+
+  /* ---------------- 6 · 我的精灵：头像四列 ---------------- */
+  .rh-sec{padding:30px 14px 12px}
+  .rh-head{align-items:center;gap:10px;margin-bottom:18px}
+  .rh-no{width:38px;height:38px;font-size:19px}
+  .rh-head-txt h2{font-size:19.5px;letter-spacing:1.4px;line-height:1.35}
+  .rh-head-txt p{font-size:12px;line-height:1.85;margin-top:6px}
+  .rh-more{font-size:11.5px;padding:5px 10px}
+  .rh-mine-body{gap:0}
+  .rh-seals{
+    grid-template-columns:repeat(4,1fr);justify-items:center;
+    gap:13px 8px;padding:14px 10px 10px;border-radius:12px;
+  }
+  .rh-ava{width:100%;max-width:70px;aspect-ratio:1/1;height:auto}
+  .rh-ava img{width:78%;height:78%}
+  .rh-ava-more{width:100%;max-width:70px;aspect-ratio:1/1;height:auto;font-size:11.5px}
+  .rh-meter{padding:2px 4px 0}
+  .rh-meter-num b{font-size:34px}
+  .rh-meter p{font-size:11.5px;line-height:1.8}
+
+  /* ---------------- 7 · 十三站：整行卡片、点击区更大 ---------------- */
+  .rh-explore-grid{gap:22px}
+  .rh-station-list{
+    grid-template-columns:1fr;gap:0;
+    border-top:0;border-radius:12px;overflow:hidden;
+    background:rgba(255,252,244,.62);
+    box-shadow:inset 0 0 0 1px rgba(165,15,23,.1),0 6px 16px rgba(120,60,20,.07);
+  }
+  .rh-station{
+    grid-template-columns:26px 1fr auto;gap:10px;
+    min-height:56px;padding:10px 13px;
+    border-bottom:1px solid rgba(165,15,23,.09);
+  }
+  .rh-station:last-child{border-bottom:0}
+  .rh-station:hover,
+  .rh-station:active{background:rgba(242,53,43,.06);padding-left:13px}
+  .rh-st-no{font-size:11.5px;opacity:.82}
+  .rh-st-main b{font-size:15.5px;letter-spacing:1.5px}
+  .rh-st-main small{font-size:11px;margin-top:3px}
+  .rh-st-prog{
+    font-size:11px;padding:3px 9px;border-radius:999px;
+    background:rgba(255,255,255,.72);border-color:rgba(165,15,23,.16);
+  }
+  .rh-map-card{padding:11px}
+  .rh-map-foot{font-size:10.5px}
+
+  /* ---------------- 8 · AI 工坊 / 图鉴 / 尾屏 ---------------- */
+  .rh-tools{grid-template-columns:1fr 1fr;gap:10px}
+  .rh-tool{padding:14px 13px;border-radius:11px}
+  .rh-tool b{font-size:14.5px;letter-spacing:.6px}
+  .rh-tool small{font-size:11px;line-height:1.75}
+  .rh-tool-go{font-size:11px;margin-top:8px}
+  .rh-ai{padding-left:14px;padding-right:14px}
+  /* 属性图鉴：三列等宽，别再左一个右一个参差不齐 */
+  .rh-attr-grid{gap:22px}
+  .rh-attr-col b{font-size:12.5px;letter-spacing:2px;margin-bottom:10px}
+  .rh-attr-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .rh-attr{
+    justify-content:center;gap:6px;min-height:44px;
+    padding:6px 6px;border-radius:7px;
+  }
+  .rh-attr:hover{transform:none}
+  .rh-attr img{width:17px;height:17px;flex:none}
+  .rh-attr b{font-size:11.5px;letter-spacing:.4px;text-align:center;line-height:1.3}
+  .rh-final{padding:30px 16px 34px;text-align:center}
+  .rh-final h2{font-size:21px}
+  footer{padding:26px 16px calc(28px + env(safe-area-inset-bottom))}
+  footer h4{font-size:12.5px}
+  footer a,footer p{font-size:11.5px}
+
+  /* ---------------- 9 · 弹层盖住底栏与顶栏，像原生 App ---------------- */
+  .overlay{z-index:200;padding:12px 10px}
+  .overlay .sheet{max-height:88vh;border-radius:18px;padding:16px}
+  .overlay .auth-figure{height:clamp(150px,44vw,205px)}
+  .overlay .auth-panel{padding:20px 20px 18px}
+  .overlay .auth-panel h3{font-size:20px}
+
+  /* ---------------- 10 · 红舞狮：缩小让位，别压字 ---------------- */
+  .aq{
+    right:-4px;bottom:calc(50px + env(safe-area-inset-bottom));
+    transform:scale(.52) translateZ(0);transform-origin:100% 100%;
+    z-index:58;
+  }
+  .aq-tip{display:none!important}
+  .aq-panel{width:min(320px,calc(100vw - 16px))!important;right:0!important;left:auto!important}
+
+  /* ---------------- 11 · 手机流畅度：卸掉最吃 GPU 的装饰开销 ----------------
+     下面几项都是「全屏级、每帧重算」的开销，桌面留着好看，手机上会拖垮滑动帧率：
+     (a) 背景大图的持续推镜/漂移/呼吸动画  (b) backdrop-filter 实时模糊
+     (c) 花瓣飘落  (d) 滑动时仍在跑的舞狮连串动画                            */
+
+  /* (a) 背景：保留静态山水，停掉 72s/104s 的全屏缩放与雾带漂移 */
+  body.bg-paint .bgp-base,
+  body.bg-paint .bgp-sky,
+  body.bg-paint .bgp-mist,
+  body.bg-paint .bgp-glow{animation:none!important}
+  body.bg-paint .bgp-sky{opacity:.42}
+  body.bg-paint .bgp-glow{opacity:.6}
+
+  /* (b) backdrop-filter 滚动时每帧重算背景模糊，手机端换成等效的半透实色 */
+  body.bg-paint .topbar.rh-topbar{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    background:linear-gradient(180deg,rgba(126,8,14,.96) 0%,rgba(112,6,12,.94) 100%);
+    box-shadow:0 4px 12px rgba(26,0,3,.34);
+  }
+  body.bg-paint .rh-plate{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    background:linear-gradient(180deg,rgba(255,252,243,.97),rgba(248,233,203,.95));
+  }
+  .msheet-mask{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(38,0,6,.52)}
+
+  /* (c) 花瓣：全屏飘落，手机上直接不画 */
+  body.bg-paint .bgp-petal{display:none!important}
+
+  /* 固定部件单独成层，滚动时不再跟着重绘；顶栏阴影收窄，少画一大片 */
+  .topbar.rh-topbar{will-change:transform;box-shadow:0 4px 12px rgba(70,0,6,.3)}
+  .mtab{will-change:transform}
+
+  /* (d) 手指滑动的 160ms 内暂停舞狮动效，停下来自动恢复 */
+  body.is-scrolling .aq-glow,
+  body.is-scrolling .aq-spark,
+  body.is-scrolling .aq-hop,
+  body.is-scrolling .aq-jump,
+  body.is-scrolling .aq-face,
+  body.is-scrolling .aq-pole{animation-play-state:paused}
+
+  /* 顺手去掉橡皮筋回弹与下拉刷新带来的顿挫 */
+  html,body{overscroll-behavior-y:none;-webkit-text-size-adjust:100%}
+}
