@@ -1812,7 +1812,7 @@ function dgProbe(){
 }
 function dgCheckEnd(){
   if(dgSt.status!=='playing') return;
-  if(dgSt.collected.length>=dgSt.goal){ dgEnd('win'); return; }
+  if(dgSt.goal>0 && dgSt.collected.length>=dgSt.goal){ dgEnd('win'); return; }
   var canDig   = dgSt.energy>=5;
   var canBrush = dgCells.some(function(c){ return c.relic && c.layers===0 && !c.collected; });
   if(!canDig && !canBrush) dgEnd('energy');
@@ -1874,22 +1874,12 @@ function dgStart(){
   dgEl('dgEnd').classList.remove('on');
   dgTray(); dgHUD();
 
-  if(n===0){
-    dgSt.status='ended';
-    S.dug=[];
-    dgEl('dgEndTitle').textContent='墓室已清空';
-    dgEl('dgEndText').textContent='整座墓清理到底，没有发现任何随葬器物。';
-    dgEl('dgLoss').innerHTML='<b>你什么都没有留下。</b><br>三千年后，他们也就什么都读不到。';
-    dgEl('dgEnd').classList.add('on');
-    dgEl('goReport').disabled=false;
-    dgHUD();
-  } else {
-    dgSt.status='playing'; dgSt.paused=false;
-    dgLast=performance.now();
-    dgCv.focus({preventScroll:true});
-    dgToast('开工。你埋的东西就在下面——位置你自己记得。');
-    dgTone(320,.08,'square',.025);
-  }
+  /* 直接进探方开挖，不再弹「墓室已清空」；挖到最后自然出报告 */
+  dgSt.status='playing'; dgSt.paused=false;
+  dgLast=performance.now();
+  dgCv.focus({preventScroll:true});
+  dgToast('开工。土就在手边，先揭一层看看。');
+  dgTone(320,.08,'square',.025);
   if(dgRaf) cancelAnimationFrame(dgRaf);
   dgRaf = requestAnimationFrame(dgLoop);
 }
