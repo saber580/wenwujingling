@@ -42,10 +42,7 @@ body.act-earth{background:linear-gradient(180deg,#241a10,#160f08);}
 body.act-dig{background:
   radial-gradient(900px 460px at 50% 0%,rgba(230,199,101,.14),transparent 60%),
   linear-gradient(180deg,#3a2917,#1c130a);}
-body.act-paper{background:
-  url("装饰/万字底纹.webp") repeat fixed,
-  url("装饰/宣纸纹.webp") repeat fixed,
-  linear-gradient(180deg,#fbf7ef,#f2ebdd);}
+body.act-paper{background:linear-gradient(180deg,#fdfaf4,#f6f0e4);}
 body.act-paper{color:var(--ink)}
 
 /* 颗粒噪点 */
@@ -525,13 +522,14 @@ body:not(.act-paper) .foot{color:#8d7a5c}
    ========================================================= */
 body,body.act-bury,body.act-earth,body.act-dig,body.act-paper{
   color:var(--ink);
+  /* 底纹压到极淡：只留宣纸纤维感，不抢字 */
   background:
-    url("装饰/万字底纹.webp") repeat fixed,
+    linear-gradient(180deg,rgba(252,249,243,.72),rgba(246,240,229,.72)),
     url("装饰/宣纸纹.webp") repeat fixed,
     radial-gradient(1200px 500px at 50% -10%,#fff7e6 0%,transparent 60%),
-    linear-gradient(180deg,#fbf7ef,#f2ebdd 60%,#efe6d4);
+    linear-gradient(180deg,#fdfaf4,#f6f0e4 60%,#f2ebdd);
 }
-.grain{opacity:.045;mix-blend-mode:multiply}
+.grain{opacity:.03;mix-blend-mode:multiply}
 
 /* 顶栏 = 主站 .topbar */
 .hd{background:rgba(255,253,248,.88);border-bottom:1px solid var(--line);
@@ -818,8 +816,10 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
           <h4>探方状态</h4>
           <div class="dg-stat"><span>体力</span><b id="dgEnergy">100</b></div>
           <div class="dg-meter"><i id="dgEnergyBar"></i></div>
-          <div class="dg-stat"><span>剩余时间</span><b id="dgClock">02:30</b></div>
+          <div class="dg-stat"><span>剩余时间</span><b id="dgClock">02:00</b></div>
           <div class="dg-stat"><span>已提取</span><b id="dgFound">0</b></div>
+          <div class="dg-stat"><span>已清理</span><b id="dgCleared">0 / 24 格</b></div>
+          <div class="dg-meter"><i id="dgClearBar" style="width:0"></i></div>
           <div class="dg-stat"><span>陶片</span><b id="dgShard">0</b></div>
         </div>
         <div class="dg-panel">
@@ -853,7 +853,10 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
 
     <div class="actbar">
       <div class="counter">埋下 <b id="buriedN">?</b> 件 · 实提 <b id="digN">0</b> 件</div>
-      <button class="btn primary" id="goReport" disabled>生成发掘报告　→</button>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button class="btn ghost" id="goStop" type="button">结束发掘</button>
+        <button class="btn primary" id="goReport" disabled>生成发掘报告　→</button>
+      </div>
     </div>
   </section>
 
@@ -1540,11 +1543,18 @@ function dgSpark(cx,cy,n){
 }
 
 function dgHUD(){
-  dgEl('dgEnergy').textContent = String(Math.max(0, dgSt.energy));
-  dgEl('dgEnergyBar').style.width = dgClamp(dgSt.energy,0,100)+'%';
-  var s = Math.max(0, Math.ceil(dgSt.time));
-  dgEl('dgClock').textContent = (Math.floor(s/60)<10?'0':'')+Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60);
+  var cleared = 0;
+  for(var i=0;i<dgCells.length;i++){ if(dgCells[i].layers===0) cleared++; }
+  var en = Math.max(0, dgSt.energy);
+  dgEl('dgEnergy').textContent = String(Math.round(en));
+  dgEl('dgEnergyBar').style.width = dgClamp(en,0,100)+'%';
+  var sec = Math.max(0, Math.ceil(dgSt.time));
+  var ck = dgEl('dgClock');
+  if(ck) ck.textContent = (Math.floor(sec/60)<10?'0':'')+Math.floor(sec/60)+':'+(sec%60<10?'0':'')+(sec%60);
   dgEl('dgFound').textContent = String(dgSt.collected.length);
+  var cl = dgEl('dgCleared'), cb = dgEl('dgClearBar');
+  if(cl) cl.textContent = cleared + ' / ' + (DG.COLS*DG.ROWS) + ' 格';
+  if(cb) cb.style.width = (cleared/(DG.COLS*DG.ROWS)*100).toFixed(1)+'%';
   dgEl('dgShard').textContent = String(dgSt.shards);
   dgRenderTools();
   dgEl('dgStatus').textContent = dgSt.status==='ready' ? '等待开工'
@@ -1727,8 +1737,9 @@ function dgDig(cell){
     else dgToast('这格已经到底了，换一块。');
     return;
   }
-  if(dgSt.energy<5){ dgToast('体力见底了。'); dgCheckEnd(); return; }
-  dgSt.energy-=5; cell.layers--;
+  if(dgSt.energy<5){ dgToast('体力见底了，挖不动了。'); dgCheckEnd(); return; }
+  dgSt.energy=Math.max(0,dgSt.energy-5);
+  cell.layers--;
   var p=dgCellXY(cell);
   dgDust(p.x+DG.TILE/2, p.y+DG.TILE/2, '#a8794c', 8);
   dgTone(150+cell.layers*30,.045,'square',.02);
@@ -1744,11 +1755,13 @@ function dgDig(cell){
     }
   }
   dgHUD();
+  dgCheckEnd();
 }
 function dgBrush(cell){
   if(dgSt.status!=='playing' || dgSt.paused) return;
   if(!cell || !cell.relic || cell.collected || cell.layers>0) return;
-  dgSt.energy=Math.max(0,dgSt.energy-1); cell.brush++;
+  dgSt.energy=Math.max(0,dgSt.energy-1);
+  cell.brush++;
   var p=dgCellXY(cell);
   dgDust(p.x+DG.TILE/2,p.y+DG.TILE/2,'#d9b98b',4);
   dgTone(880+cell.brush*80,.035,'square',.016);
@@ -1787,11 +1800,11 @@ function dgCloseRelic(){
 }
 function dgProbe(){
   if(dgSt.status!=='playing' || dgSt.paused) return;
-  if(dgSt.probes<=0){ dgToast('探针用完了。'); return; }
-  if(dgSt.energy<12){ dgToast('体力不足，用不了探针。'); return; }
+  if(dgSt.probes<=0){ dgToast('探针只有一支，已经用掉了。'); return; }
+  if(dgSt.energy<12){ dgToast('体力不够了，探针探不动。'); return; }
   var targets = dgCells.filter(function(c){ return c.relic && !c.collected && c.layers>0; });
   if(!targets.length){ dgToast('没有可探测的目标了。'); return; }
-  dgSt.energy-=12; dgSt.probes--;
+  dgSt.energy=Math.max(0,dgSt.energy-12); dgSt.probes--;
   var t = targets[Math.floor(Math.random()*targets.length)];
   dgSt.hint=t.i; dgSt.hintUntil=performance.now()+3000;
   dgToast('探针有反应：高亮处有器物。');
@@ -1800,20 +1813,34 @@ function dgProbe(){
 function dgCheckEnd(){
   if(dgSt.status!=='playing') return;
   if(dgSt.collected.length>=dgSt.goal){ dgEnd('win'); return; }
-  var canDig = dgSt.energy>=5;
+  var canDig   = dgSt.energy>=5;
   var canBrush = dgCells.some(function(c){ return c.relic && c.layers===0 && !c.collected; });
   if(!canDig && !canBrush) dgEnd('energy');
 }
 function dgEnd(reason){
   if(dgSt.status==='ended') return;
-  dgSt.status='ended'; dgSt.paused=true;
+  dgSt.status='ended'; dgSt.paused=true; S.dugDone = true;
   var win = reason==='win';
   S.dug = dgSt.collected.slice();
   var miss = placedList().length - dgSt.collected.length;
+
+  /* 一件也没挖出来：不弹结算，直接生成报告 */
+  if(dgSt.collected.length === 0){
+    S.dug = [];
+    dgEl('buriedN').textContent = String(placedList().length);
+    dgEl('goReport').disabled = false;
+    dgTray(); dgHUD();
+    dgTone(180,.18,'sawtooth',.035);
+    buildReport(); goto(4);
+    return;
+  }
+
   dgEl('dgEndTitle').textContent = win ? '探方清理完毕' : '探方收工';
   dgEl('dgEndText').textContent = win
     ? '你埋下的东西，一件一件都回到了地面上。'
-    : (reason==='time' ? '时间到，探方先封存。' : '体力耗尽，还有东西没来得及清理。');
+    : (reason==='stop' ? '你放下手铲，探方先封存。'
+       : (reason==='time' ? '两分钟到，探方封存——还有东西留在土里，等下一次。'
+          : '体力耗尽，手铲再也压不下去——还有东西留在土里。'));
   var loss = dgEl('dgLoss');
   if(miss>0){
     loss.innerHTML = '<b>注意：还有 ' + miss + ' 件没能提取。</b><br>'+
@@ -1837,12 +1864,12 @@ function dgStart(){
   dgCtx.imageSmoothingEnabled = false;
   var n = placedList().length;
   dgEl('buriedN').textContent = '?';
-  dgSt.collected=[]; dgSt.shards=0; dgSt.probes=2; dgSt.particles=[];
+  dgSt.collected=[]; dgSt.shards=0; dgSt.probes=1; dgSt.particles=[];
   dgSt.emptyStreak=0; dgSt.hint=-1; dgSt.cursor={c:0,r:0}; dgSt.hover=null;
   dgSt.energy = 60 + n*22;
-  dgSt.time = 90 + n*30;
+  dgSt.time = 120;
   dgMakeCells();
-  S.dug = [];
+  S.dug = []; S.dugDone = false;
   dgEl('dgRelic').classList.remove('on');
   dgEl('dgEnd').classList.remove('on');
   dgTray(); dgHUD();
@@ -1997,6 +2024,10 @@ function dgUseTool(cell){
     if(k==='2'){ dgSetTool('brush'); }
     if(k==='3'){ dgProbe(); }
   });
+  dgEl('goStop').addEventListener('click', function(){
+    if(dgSt.status!=='playing'){ dgToast('探方已经收工了。'); return; }
+    dgEnd('stop');
+  });
   dgEl('dgRelicClose').addEventListener('click', dgCloseRelic);
   dgEl('dgEndGo').addEventListener('click', function(){
     dgEl('dgEnd').classList.remove('on');
@@ -2072,7 +2103,7 @@ function buildMisreads(list){
 function buildReport(){
   const w=WHO[S.who], p=POSE[S.pose], h=HEAD[S.head], o=OCHRE[S.ochre];
   /* 实际从探方里提取出来的（未开挖时按埋下的全部计） */
-  const dugRaw = (S.dug && S.dug.length) ? S.dug : placedList();
+  const dugRaw = S.dugDone ? (S.dug || []) : placedList();
   const list = dugRaw.map(function(r){ return { s:r.s || r.slot, id:r.id, no:r.no }; });
   const n = list.length;
   const buriedN = placedList().length;
@@ -2238,7 +2269,7 @@ $('#goDig').onclick = function(){ goto(3); dgStart(); };
 $('#goReport').onclick = function(){ buildReport(); goto(4); };
 $('#goAgain').onclick = function(){
   S.who='woman'; S.pose='straight'; S.head='west'; S.ochre='off';
-  S.place={head:[],chest:[],side:[],feet:[],fill:[]}; S.broken={}; S.picked=null; S.dug=[];
+  S.place={head:[],chest:[],side:[],feet:[],fill:[]}; S.broken={}; S.picked=null; S.dug=[]; S.dugDone=false;
   $('#sec').innerHTML=''; $('#digN').textContent='0'; $('#buriedN').textContent='0';
   document.getElementById('dgRelic').classList.remove('on');
   document.getElementById('dgEnd').classList.remove('on');
