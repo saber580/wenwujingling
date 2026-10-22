@@ -596,6 +596,17 @@ h1,h2,h3{margin:0}
   display:flex;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;color:#867f77;font-size:12.5px}
 .fb-r{display:flex;gap:36px;flex-wrap:wrap}
 .fb-r em{font-style:normal}
+
+/* ------- 尾页声明区:原创/素材来源/AI 生成/第三方/免责 -------
+   放在版权行上方,一行一条,字号小于正文,避免喧宾夺主。
+   桌面端沿用 1280px 容器宽度;窄屏由 mobile.css 收字号。 */
+.foot-decl{max-width:1280px;margin:0 auto;padding:0 32px}
+.foot-decl-in{border-top:1px solid rgba(255,255,255,.13);padding:14px 0 16px}
+.foot-decl p{margin:0 0 6px;font-size:12px;line-height:1.9;color:#a89c8d;letter-spacing:.2px}
+.foot-decl p:last-child{margin-bottom:0}
+.foot-decl b{font-weight:600;color:#dccbac;margin-right:6px}
+.foot-decl a{color:#dccbac;text-decoration:none;border-bottom:1px dotted rgba(220,203,172,.5)}
+.foot-decl a:hover{color:#fff2d8}
 @media(max-width:640px){
   .foot-in{padding-top:42px;padding-bottom:26px;gap:32px}
   .foot-cols{gap:34px}
