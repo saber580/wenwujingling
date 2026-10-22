@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="180" viewBox="0 0 560 180">
+<title>飞鸟群 · 程序绘制(「青绿山水」背景用)</title>
+<g fill="none" stroke="#3d5c55" stroke-width="2.6" stroke-linecap="round">
+  <path d="M20 84q10 -13 20 0q10 -13 20 0" opacity=".7"/>
+  <path d="M98 50q8 -10 16 0q8 -10 16 0" opacity=".55"/>
+  <path d="M152 108q7 -9 14 0q7 -9 14 0" opacity=".5"/>
+  <path d="M238 64q12 -15 24 0q12 -15 24 0" opacity=".75"/>
+  <path d="M332 100q9 -11 18 0q9 -11 18 0" opacity=".6"/>
+  <path d="M420 56q10 -13 20 0q10 -13 20 0" opacity=".65"/>
+</g>
+</svg>

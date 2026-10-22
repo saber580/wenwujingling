@@ -1,0 +1,33 @@
+{
+  "title": "象棋 · 将",
+  "subtitle": "黑方统帅",
+  "technique": "一将当关",
+  "tagline": "决胜千里 · 王不见王",
+  "edition": "SC-001 / 001",
+  "collection": "中国象棋 · 全息典藏",
+  "description": "象棋中的「将」：九宫之内，一步之遥。",
+  "font": "C:/Windows/Fonts/simkai.ttf",
+  "parameters": {
+    "subjectScale": 1.25,
+    "subjectDepth": 0.4,
+    "backgroundDepth": -0.25,
+    "effectsScale": 1,
+    "effectsDepth": 0.5,
+    "foil": 0.65
+  },
+  "safeArea": {
+    "scale": 1.12,
+    "offset": [
+      -0.06,
+      -0.085
+    ]
+  },
+  "assets": {
+    "subject": "./assets/subject.png",
+    "background": "./assets/background.png",
+    "text": "./assets/text.png",
+    "lineart": "./assets/lineart.png",
+    "model": "./assets/card.glb",
+    "effects": "./assets/effects.png"
+  }
+}
