@@ -1788,7 +1788,7 @@ function dgDrawCell(cell, now){
     dgCtx.fillRect(p.x,p.y,T,2); dgCtx.fillRect(p.x,p.y+T-2,T,2);
     dgCtx.fillRect(p.x,p.y,2,T); dgCtx.fillRect(p.x+T-2,p.y,2,T);
   }
-  if(dgSt.cursor.c===cell.c && dgSt.cursor.r===cell.r && document.activeElement===dgCv){
+  if(dgSt.cursor.c===cell.c && dgSt.cursor.r===cell.r && !cell.hinted && document.activeElement===dgCv){
     dgCtx.fillStyle='#f7e7c3';
     dgCtx.fillRect(p.x,p.y,T,3); dgCtx.fillRect(p.x,p.y+T-3,T,3);
     dgCtx.fillRect(p.x,p.y,3,T); dgCtx.fillRect(p.x+T-3,p.y,3,T);
@@ -1925,8 +1925,8 @@ function dgProbe(){
   /* 还有没取出来的器物，就能探——不管它是埋在土里还是已经露头 */
   var targets = dgCells.filter(function(c){ return c.relic && !c.collected; });
   if(!targets.length){
-    dgToast('探方里的器物都提取完了，探针用不上了。');
-    dgSt.probes = 0; dgHUD(); return;
+    dgToast('探方里的器物都提取完了，探针没派上用场。');
+    return;   /* 不消耗，留到最后一件都取完为止 */
   }
   /* 一次一支，不耗体力；直接探到一件器物的位置 */
   var t = targets[Math.floor(Math.random()*targets.length)];
@@ -1990,6 +1990,7 @@ function dgEnd(reason){
 }
 
 function dgStart(){
+  if(placedList().length===0) aiPickOffering();  /* 兜底：保证探方里一定有东西 */
   dgCv = dgEl('dgCanvas'); dgCtx = dgCv.getContext('2d');
   dgCtx.imageSmoothingEnabled = false;
   var n = placedList().length;
@@ -2395,7 +2396,11 @@ function aiPickOffering(){
    八、事件绑定
    ========================================================= */
 $('#aiPick').onclick = aiPickOffering;
-$('#goBury').onclick = function(){ renderAll(); goto(1); };
+$('#goBury').onclick = function(){
+  renderAll();
+  if(placedList().length===0) aiPickOffering();  /* 没人点也自动安排好 */
+  goto(1);
+};
 $('#goEarth').onclick = function(){
   goto(2); runEarth();
 };
