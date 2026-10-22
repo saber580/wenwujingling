@@ -377,6 +377,93 @@ body.act-paper .rep{background:var(--paper2)}
 .foot{max-width:1180px;margin:0 auto;padding:0 18px 40px;font-size:11.5px;line-height:1.9;color:var(--ink2)}
 body:not(.act-paper) .foot{color:#8d7a5c}
 
+/* ================= 幕 3 · 发掘小游戏（像素风） ================= */
+.dg{display:grid;grid-template-columns:200px minmax(0,1fr) 208px;gap:14px;align-items:start}
+.dg-panel{border:2px solid #5a3a22;background:#24170f;padding:11px 12px;box-shadow:4px 4px 0 rgba(0,0,0,.45)}
+.dg-panel h4{margin:0 0 9px;font-size:11px;letter-spacing:2px;color:#f0c15c;font-weight:800}
+.dg-stat{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:#b99a72;margin-bottom:5px}
+.dg-stat b{font-size:14px;color:#f7e7c3}
+.dg-meter{height:7px;background:#120c08;border:1px solid #5a3a22;margin:0 0 8px;overflow:hidden}
+.dg-meter i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#d13a2f,#f0c15c);transition:width .2s}
+.dg-tool{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.dg-key{flex:none;width:26px;height:26px;display:grid;place-items:center;background:#312015;border:2px solid #7a5230;
+  color:#f7e7c3;font-size:12px;font-weight:800}
+.dg-tool div b{display:block;font-size:12px;color:#f7e7c3}
+.dg-tool div small{display:block;font-size:9.5px;color:#7f624a;letter-spacing:.3px}
+.dg-btn{display:block;width:100%;margin-top:4px;padding:7px 8px;cursor:pointer;font-family:inherit;
+  background:#312015;border:2px solid #7a5230;color:#f7e7c3;font-size:11.5px;font-weight:800;letter-spacing:.5px}
+.dg-btn small{display:block;font-size:9.5px;color:#7f624a;font-weight:400;margin-top:1px}
+.dg-btn:disabled{opacity:.4;cursor:not-allowed}
+.dg-hint{margin:8px 0 0;font-size:9.5px;line-height:1.7;color:#6b5340;letter-spacing:.3px}
+.dg-tip{margin:0;font-size:11px;line-height:1.8;color:#b99a72}
+
+.dg-main{min-width:0;border:2px solid #5a3a22;background:#160f09;box-shadow:4px 4px 0 rgba(0,0,0,.45)}
+.dg-head{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;
+  border-bottom:2px solid #5a3a22;font-size:11px;letter-spacing:1.4px;color:#b99a72;background:#1e1409}
+.dg-head span:last-child{color:#f0c15c}
+.dg-main canvas{display:block;width:100%;height:auto;image-rendering:pixelated;touch-action:manipulation;outline:none}
+.dg-toast{margin:0;padding:0 10px;height:0;overflow:hidden;font-size:11.5px;color:#f0c15c;letter-spacing:.5px;
+  transition:height .18s,padding .18s;background:#1a100a;border-top:0 solid #5a3a22}
+.dg-toast.on{height:30px;line-height:30px;padding:0 10px;border-top-width:2px}
+
+.dg-tray{display:grid;gap:6px}
+.dg-slot{display:grid;grid-template-columns:34px 1fr;grid-template-rows:auto auto;gap:2px 7px;align-items:center;
+  padding:5px 6px;border:2px solid #352116;background:#1a100a}
+.dg-slot canvas{grid-row:1/3;width:34px;height:34px;image-rendering:pixelated;background:#130c08;border:2px solid #352116}
+.dg-slot b{font-size:11px;color:#7f624a;letter-spacing:.4px}
+.dg-slot small{font-size:9.5px;color:#5f4a37}
+.dg-slot.found{border-color:#f0c15c;background:#2a1c0e}
+.dg-slot.found b{color:#f7e7c3}
+.dg-slot.found small{color:#b99a72}
+.dg-slot.miss{border-color:#5c2f28;background:#1e100c}
+.dg-slot.miss b{color:#a35a4e;text-decoration:line-through}
+.dg-slot.miss small{color:#7a4038}
+
+/* 弹窗 */
+.dg-modal{position:fixed;inset:0;z-index:120;display:none;place-items:center;padding:18px;
+  background:rgba(8,4,2,.78);backdrop-filter:blur(3px)}
+.dg-modal.on{display:grid}
+.dg-card{width:min(560px,100%);max-height:88vh;overflow:auto;background:#24170f;border:3px solid #7a5230;
+  box-shadow:8px 8px 0 rgba(0,0,0,.6);padding:20px 22px 18px;animation:dgpop .22s ease}
+.dg-card.wide{width:min(680px,100%)}
+@keyframes dgpop{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.dg-card h3{margin:4px 0 2px;font-size:19px;letter-spacing:2px;color:#f7e7c3}
+.dg-card > p{margin:8px 0 0;font-size:12.5px;line-height:1.9;color:#b99a72}
+.dg-card-hd{display:flex;gap:14px;align-items:center;border-bottom:2px solid #5a3a22;padding-bottom:12px;margin-bottom:12px}
+.dg-card-hd canvas{width:64px;height:64px;flex:none;image-rendering:pixelated;background:#130c08;border:3px solid #5a3a22}
+.dg-no{font-size:10.5px;letter-spacing:1.6px;color:#f0c15c;background:#3a2412;border:1px solid #7a5230;padding:2px 7px;display:inline-block}
+.dg-era{font-size:11px;letter-spacing:1.2px;color:#b99a72}
+.dg-two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 4px}
+.dg-v{padding:11px 13px;border:2px solid #5a3a22;background:#1c1209}
+.dg-v em{display:block;font-style:normal;font-size:10px;letter-spacing:1.6px;margin-bottom:7px;font-weight:700}
+.dg-v p{margin:0;font-size:12.5px;line-height:1.9}
+.dg-v.own{border-left:4px solid #d13a2f}
+.dg-v.own em{color:#e07a5f}
+.dg-v.own p{color:#e8d4bb;font-family:var(--serif)}
+.dg-v.arc{border-left:4px solid #78c0a8}
+.dg-v.arc em{color:#78c0a8}
+.dg-v.arc p{color:#c3d8cc}
+.dg-card-ft{display:flex;gap:9px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.dg-loss{margin-top:12px;padding:11px 13px;border:2px dashed #7a5230;background:#1e1408;
+  font-size:12px;line-height:1.85;color:#d3b98c}
+.dg-loss b{color:#f0c15c}
+
+@media (max-width:980px){
+  .dg{grid-template-columns:minmax(0,1fr)}
+  .dg-side{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .dg-side.right{grid-template-columns:1fr 1fr}
+  .dg-tray{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:860px){
+  .dg{gap:10px}
+  .dg-side,.dg-side.right{grid-template-columns:1fr;gap:10px}
+  .dg-tray{grid-template-columns:1fr 1fr}
+  .dg-two{grid-template-columns:1fr}
+  .dg-card{padding:16px 15px 14px}
+  .dg-card h3{font-size:17px}
+  .dg-hint{display:none}
+}
+
 /* ---------- 响应式 ---------- */
 @media (max-width:960px){
   .grid2,.dig-grid{grid-template-columns:1fr}
@@ -558,33 +645,89 @@ body:not(.act-paper) .foot{color:#8d7a5c}
     </div>
   </section>
 
-  <!-- ===== 幕 3 · 发掘 ===== -->
+  <!-- ===== 幕 3 · 发掘（真·挖掘小游戏：挖的正是你埋下的） ===== -->
   <section class="act" id="s3">
-    <div class="dig-grid">
-      <div class="panel">
-        <h3>T0512 探方 · 刮面发掘</h3>
-        <p class="tip">按地层逐层揭露，出土器物现场编号、记录三维坐标。</p>
-        <div class="digpit" id="digpit">
-          <div class="mesh"></div>
-          <i class="corner a"></i><i class="corner b"></i><i class="corner c"></i><i class="corner d"></i>
-          <div class="soilmask" id="soilmask"></div>
-          <div class="dburial" id="dburial"></div>
-          <div class="dslot dslot-fill" id="dfill"></div>
+    <div class="dg">
+      <aside class="dg-side">
+        <div class="dg-panel">
+          <h4>探方状态</h4>
+          <div class="dg-stat"><span>体力</span><b id="dgEnergy">100</b></div>
+          <div class="dg-meter"><i id="dgEnergyBar"></i></div>
+          <div class="dg-stat"><span>剩余时间</span><b id="dgClock">02:30</b></div>
+          <div class="dg-stat"><span>已提取</span><b id="dgFound">0 / 0</b></div>
+          <div class="dg-stat"><span>陶片</span><b id="dgShard">0</b></div>
         </div>
+        <div class="dg-panel">
+          <h4>工　具</h4>
+          <div class="dg-tool"><span class="dg-key">铲</span><div><b>小铲</b><small>点土格 · 挖一层 · 5 体力</small></div></div>
+          <div class="dg-tool"><span class="dg-key">刷</span><div><b>毛刷</b><small>器物露出后刷两次</small></div></div>
+          <button class="dg-btn" id="dgProbe" type="button">探针 <small id="dgProbeText">2 次 · 12 体力</small></button>
+          <p class="dg-hint">方向键移动 · Enter 操作 · P 探针</p>
+        </div>
+      </aside>
+
+      <div class="dg-main">
+        <div class="dg-head">
+          <span>T0512 · M3 墓室探方</span>
+          <span id="dgStatus">等待开工</span>
+        </div>
+        <canvas id="dgCanvas" width="720" height="480" tabindex="0"
+                aria-label="考古探方。点击土格挖土，点击露出的器物清灰。"></canvas>
+        <div class="dg-toast" id="dgToast" role="status" aria-live="polite"></div>
       </div>
-      <div class="ctrl">
-        <div class="panel">
-          <h3>出土器物登记表</h3>
-          <p class="tip">田野编号格式：探方号 地层 : 器物序号</p>
-          <div class="finds" id="finds"></div>
+
+      <aside class="dg-side right">
+        <div class="dg-panel">
+          <h4>出土登记册</h4>
+          <div class="dg-tray" id="dgTray"></div>
         </div>
-        <div class="actbar">
-          <div class="counter">已提取 <b id="digN">0</b> 件</div>
-          <button class="btn primary" id="goReport" disabled>生成发掘报告　→</button>
+        <div class="dg-panel">
+          <h4>领队提示</h4>
+          <p class="dg-tip">你埋下的东西就在下面——就躺在你当初放的位置。<br>先揭土，见器物换毛刷。别把力气全花在空方上。</p>
         </div>
-      </div>
+      </aside>
+    </div>
+
+    <div class="actbar">
+      <div class="counter">埋下 <b id="buriedN">0</b> 件 · 实提 <b id="digN">0</b> 件</div>
+      <button class="btn primary" id="goReport" disabled>生成发掘报告　→</button>
     </div>
   </section>
+
+  <!-- 出土弹窗 · 两套视角 -->
+  <div class="dg-modal" id="dgRelic" role="dialog" aria-modal="true">
+    <div class="dg-card wide">
+      <div class="dg-card-hd">
+        <canvas id="dgRelicCanvas" width="88" height="88"></canvas>
+        <div>
+          <span class="dg-no" id="dgRelicNo">T0512③:1</span>
+          <h3 id="dgRelicName">器物</h3>
+          <span class="dg-era" id="dgRelicEra"></span>
+        </div>
+      </div>
+      <div class="dg-two">
+        <div class="dg-v own"><em>你埋下时</em><p id="dgRelicHeart"></p></div>
+        <div class="dg-v arc"><em>三千年后 · 田野记录</em><p id="dgRelicArch"></p></div>
+      </div>
+      <div class="dg-card-ft">
+        <button class="btn primary" id="dgRelicClose" type="button">收入登记册</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 结算弹窗 -->
+  <div class="dg-modal" id="dgEnd" role="dialog" aria-modal="true">
+    <div class="dg-card">
+      <span class="dg-no" id="dgEndEyebrow">T0512 · 探方记录</span>
+      <h3 id="dgEndTitle">探方完成</h3>
+      <p id="dgEndText"></p>
+      <div class="dg-loss" id="dgLoss"></div>
+      <div class="dg-card-ft">
+        <button class="btn primary" id="dgEndGo" type="button">生成发掘报告　→</button>
+        <button class="btn ghost" id="dgEndStay" type="button">再看看探方</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== 幕 4 · 报告 ===== -->
   <section class="act" id="s4">
@@ -775,7 +918,7 @@ const DYN = [
    ========================================================= */
 const S = { who:'woman', pose:'straight', head:'west', ochre:'off',
             place:{head:[],chest:[],side:[],feet:[],fill:[]},
-            broken:{}, picked:null };
+            broken:{}, picked:null, dug:null };
 
 const $  = function(s){ return document.querySelector(s); };
 const $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
@@ -1011,86 +1154,573 @@ function runEarth(){
 }
 
 /* =========================================================
-   六、幕 3 · 发掘
+   六、幕 3 · 发掘小游戏
+   挖的正是你在第一幕亲手埋下的那几件，
+   而且它们躺在当初你放的位置上。
    ========================================================= */
-function renderDig(){
-  var b = $('#dburial');
-  b.style.transform = 'rotate('+HEAD[S.head].deg+'deg)';
-  b.classList.toggle('urn', S.pose==='urn');
-  var bones = ['skull','spine','ribs','pelvis','arm-l','arm-r','leg-l','leg-r'];
-  var html = '<div class="urn-body"></div>';
-  bones.forEach(function(c){
-    if(c==='ribs'){ html += '<div class="dbone bone ribs"><i></i><i></i><i></i><i></i><i></i></div>'; }
-    else { html += '<div class="dbone bone '+c+'"></div>'; }
-  });
-  ['head','chest','side','feet'].forEach(function(s){
-    html += '<div class="dslot" data-s="'+s+'"></div>';
-  });
-  b.innerHTML = html;
-  var map = {head:'head',chest:'chest',side:'side',feet:'feet'};
-  Object.keys(map).forEach(function(s){
-    var box = b.querySelector('.dslot[data-s="'+s+'"]');
-    S.place[s].forEach(function(id){
-      var it = item(id);
-      var w = document.createElement('i');
-      w.className='dfind';
-      w.innerHTML = it.img ? '<img src="'+it.img+'" alt="">' : (SVG[it.svg]||'');
-      box.appendChild(w);
-    });
-  });
-  var fb = $('#dfill');
-  fb.innerHTML='';
-  S.place.fill.forEach(function(id){
-    var it = item(id);
-    var w = document.createElement('i');
-    w.className='dfind';
-    w.innerHTML = it.img ? '<img src="'+it.img+'" alt="">' : (SVG[it.svg]||'');
-    fb.appendChild(w);
-  });
+
+/* ---- 像素图（16×16）---- */
+var DG_SPR = {
+  pot:{ pal:{1:"#c08552",2:"#8d5a33",3:"#c2452f",4:"#2b2622"}, rows:[
+    "................","......2222......",".....211112.....","....21122112....",
+    "...2113333112...","..211333333112..","..211444444112..","..211333333112..",
+    "..211444444112..","...2113333112...","...2111111112...","....21111112....",
+    ".....222222.....","................","................","................"]},
+  jar:{ pal:{1:"#c08552",2:"#8d5a33",3:"#c2452f"}, rows:[
+    "................",".......11.......","......1221......","......1221......",
+    ".....112211.....","....11222211....","...1122332211...","...1122332211...",
+    "..112233332211..","..112222222211..","...1122222211...","....11222211....",
+    ".....112211.....","......1121......",".......11.......","................"]},
+  bowl:{ pal:{1:"#c08552",2:"#8d5a33",3:"#f2e4c6",4:"#2b2622"}, rows:[
+    "................","..222222222222..",".21111111111112.",".21333333333312.",
+    ".21331111111312.",".21331441441312.",".21331111111312.",".21331141141312.",
+    ".21331111111312.",".21333333333312.","..211111111112..","...2222222222...",
+    "................","................","................","................"]},
+  dragon:{ pal:{1:"#5f9e7d",2:"#3d6b52",3:"#a8d5bd",4:"#2b2622"}, rows:[
+    "................",".....111111.....","...1133333311...","..113333333311..",
+    ".11333333333311.",".11331111113311.",".11331441144311.",".11331441144311.",
+    ".11331111113311.",".11333333333311.","..113333333311..","...1133333311...",
+    ".....111111.....","................","................","................"]},
+  jade:{ pal:{1:"#5f9e7d",2:"#3d6b52",3:"#a8d5bd",4:"#c9a227"}, rows:[
+    "................","......4444......",".....411111.....","....41133111....",
+    "...4113333111...","...4113333111...","..411333333311..","..411333333311..",
+    "..411333333311..","..411333333311..","...4113333111...","...4113333111...",
+    "....41133111....",".....411111.....","................","................"]},
+  axe:{ pal:{1:"#9aa0a6",2:"#6b6f73",3:"#c8ccd0",4:"#9c6b3f"}, rows:[
+    "................",".........1111...","........11221...",".......1122221..",
+    "......11222221..",".....112222221..","....1122222221..","....1132222221..",
+    "...11222222221..","...11222222221..","....1122222221..",".....11222221...",
+    "......14441.....","......14441.....","......14441.....","................"]},
+  needle:{ pal:{1:"#e8dcc0",2:"#a89878",3:"#c9a227"}, rows:[
+    "................",".....112..11....",".....121.1221...",".....121.1221...",
+    ".....121.1221...",".....121.1221...",".....121..1221..",".....121..1221..",
+    ".....121..1221..",".....121...221..",".....111....21..",".....333....1...",
+    ".....333........","................","................","................"]}
+};
+var DG_SPRITE_OF = { caitaohu:'pot', jiandiping:'jar', taobo:'bowl',
+                     yuzhulong:'dragon', yuzhui:'jade', shifu:'axe', guzhen:'needle' };
+
+/* ---- 探方 6×4，按头向决定骨架走向与五个位置区 ---- */
+function dgLayout(){
+  var C=6, R=4;
+  var I = function(c,r){ return r*C+c; };
+  var L = { bone:[], urn:[], zone:{head:[],chest:[],side:[],feet:[],fill:[]} };
+  if(S.pose==='urn'){
+    L.urn = [I(2,1),I(3,1),I(2,2),I(3,2)];
+    L.zone.head  = [I(1,0),I(2,0),I(3,0)];
+    L.zone.chest = [I(1,1),I(1,2),I(4,1)];
+    L.zone.side  = [I(4,2),I(0,1),I(0,2)];
+    L.zone.feet  = [I(1,3),I(2,3),I(3,3)];
+    L.zone.fill  = [I(0,0),I(5,0),I(0,3),I(5,3)];
+  } else if(S.head==='north'){
+    L.bone = [I(2,0),I(2,1),I(2,2),I(2,3)];
+    L.zone.head  = [I(1,0),I(3,0),I(0,0)];
+    L.zone.chest = [I(1,1),I(3,1),I(0,1)];
+    L.zone.side  = [I(1,2),I(3,2),I(0,2)];
+    L.zone.feet  = [I(1,3),I(3,3),I(0,3)];
+    L.zone.fill  = [I(4,0),I(5,0),I(4,3),I(5,3)];
+  } else if(S.head==='east'){
+    L.bone = [I(0,1),I(1,1),I(2,1),I(3,1),I(4,1)];
+    L.zone.head  = [I(4,0),I(5,0),I(3,0)];
+    L.zone.chest = [I(3,2),I(4,2),I(5,2)];
+    L.zone.side  = [I(0,2),I(1,2),I(2,2)];
+    L.zone.feet  = [I(0,3),I(1,3),I(0,0)];
+    L.zone.fill  = [I(4,3),I(5,3),I(5,1)];
+  } else if(S.head==='northwest'){
+    L.bone = [I(0,0),I(1,1),I(2,2),I(3,3)];
+    L.zone.head  = [I(1,0),I(2,0),I(0,1)];
+    L.zone.chest = [I(2,1),I(1,2),I(3,1)];
+    L.zone.side  = [I(3,2),I(2,3),I(1,3)];
+    L.zone.feet  = [I(4,3),I(4,2),I(5,2)];
+    L.zone.fill  = [I(3,0),I(4,0),I(5,0),I(5,3)];
+  } else { /* west：头在左，横躺 */
+    L.bone = [I(0,1),I(1,1),I(2,1),I(3,1),I(4,1)];
+    L.zone.head  = [I(0,0),I(1,0),I(2,0)];
+    L.zone.chest = [I(0,2),I(1,2),I(2,2)];
+    L.zone.side  = [I(3,2),I(4,2),I(5,2)];
+    L.zone.feet  = [I(4,3),I(5,3),I(4,0)];
+    L.zone.fill  = [I(3,0),I(5,0),I(5,1)];
+  }
+  return L;
 }
 
-var digSeq=[];
-function runDig(){
-  $('#soilmask').classList.add('gone');
-  setTimeout(function(){
-    $$('#dburial .dbone').forEach(function(el,i){
-      setTimeout(function(){ el.classList.add('show'); }, i*90);
-    });
-  }, 700);
-  setTimeout(function(){
-    var order = ['head','chest','side','feet','fill'];
-    var all=[];
-    order.forEach(function(s){ S.place[s].forEach(function(id){ all.push({s:s,id:id}); }); });
-    var listEl = $('#finds'); listEl.innerHTML='';
-    var i=0;
-    var timer = setInterval(function(){
-      if(i>=all.length){ clearInterval(timer); $('#goReport').disabled=false; return; }
-      var rec = all[i], it = item(rec.id);
-      // 图上浮出
-      var box = (rec.s==='fill') ? $('#dfill') : $('#dburial .dslot[data-s="'+rec.s+'"]');
-      var nodes = box ? box.querySelectorAll('.dfind') : [];
-      var done = box ? box.querySelectorAll('.dfind.out').length : 0;
-      if(nodes[done]) nodes[done].classList.add('out');
-      // 登记
-      var no = 'T0512③:' + (i+1);
-      var d = document.createElement('div');
-      d.className='find';
-      d.innerHTML = '<span class="no">'+no+'</span><span class="tx"><b>'+esc(it.name)+'</b>'+
-        '<span>'+esc(it.archType)+'　·　'+esc(it.archPos[rec.s])+
-        (S.broken[rec.id]?'　·　口沿见人为击碎痕':'')+'</span></span>';
-      listEl.appendChild(d);
-      requestAnimationFrame(function(){ d.classList.add('show'); });
-      $('#digN').textContent = i+1;
-      i++;
-    }, 620);
-    // 无随葬品
-    if(all.length===0){
-      $('#finds').innerHTML = '<div class="find show"><span class="no">T0512③:0</span>'+
-        '<span class="tx"><b>未发现随葬品</b><span>墓室清理完毕，未见任何人工随葬器物。登记为「无随葬品」。</span></span></div>';
-      $('#goReport').disabled=false;
+/* ---- 引擎 ---- */
+var DG = { W:720, H:480, COLS:6, ROWS:4, TILE:100, GAP:8, OX:40, OY:28 };
+var dgCv=null, dgCtx=null, dgCells=[], dgRaf=0, dgLast=0, dgAudio=null;
+var dgSt = { status:'ready', energy:100, time:150, probes:2, collected:[], shards:0,
+             paused:false, cursor:{c:0,r:0}, hover:null, hint:-1, hintUntil:0,
+             particles:[], emptyStreak:0, goal:0 };
+
+function dgEl(id){ return document.getElementById(id); }
+function dgClamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function dgRand(seed){ var x=Math.sin(seed*127.1+311.7)*43758.5453; return x-Math.floor(x); }
+
+function dgSpriteOn(c2, name, cx, cy, scale){
+  var s = DG_SPR[name]; if(!s) return;
+  var rows=s.rows, pal=s.pal;
+  var w=rows[0].length*scale, h=rows.length*scale;
+  var x0=Math.round(cx-w/2), y0=Math.round(cy-h/2);
+  for(var ry=0;ry<rows.length;ry++){
+    var row=rows[ry];
+    for(var rx=0;rx<row.length;rx++){
+      var ch=row.charAt(rx);
+      if(ch==='.') continue;
+      c2.fillStyle = pal[ch] || '#fff';
+      c2.fillRect(x0+rx*scale, y0+ry*scale, scale, scale);
     }
-  }, 1500);
+  }
 }
+
+/* 布点：把玩家埋的东西放进对应位置区 */
+function dgMakeCells(){
+  var L = dgLayout();
+  dgCells = [];
+  for(var i=0;i<DG.COLS*DG.ROWS;i++){
+    dgCells.push({ i:i, c:i%DG.COLS, r:Math.floor(i/DG.COLS), layers:3,
+      relic:null, bone:false, urn:false, shard:false, brush:0,
+      collected:false, seed:i*97+13 });
+  }
+  L.bone.forEach(function(i){ dgCells[i].bone = true; });
+  L.urn.forEach(function(i){ dgCells[i].urn = true; });
+
+  var put = [];
+  ['head','chest','side','feet','fill'].forEach(function(s){
+    S.place[s].forEach(function(id, k){
+      put.push({ slot:s, id:id, idx:L.zone[s][k] });
+    });
+  });
+  var no = 0;
+  put.forEach(function(p){
+    if(p.idx==null) return;
+    var cell = dgCells[p.idx];
+    if(!cell || cell.bone || cell.urn) return;
+    var it = item(p.id);
+    no++;
+    cell.relic = {
+      id:p.id, slot:p.slot, no:no,
+      name:it.name, sprite:DG_SPRITE_OF[p.id] || 'jade',
+      era:it.archType,
+      heart:T(it.place[p.slot]) + (S.broken[p.id] ? '　你把它打破了才放进去。' : ''),
+      arch:it.archType + '。' + it.archDesc + '　' + it.archPos[p.slot] +
+           (S.broken[p.id] ? '　口沿见人为击碎痕，属毁器葬俗。' : '')
+    };
+  });
+  dgSt.goal = no;
+
+  /* 空方里撒几片陶片 */
+  var free = dgCells.filter(function(c){ return !c.relic && !c.bone && !c.urn; });
+  for(var k=0;k<Math.min(4, free.length);k++){
+    free[Math.floor(dgRand(k*31.7+9)*free.length)].shard = true;
+  }
+}
+
+function dgToast(msg){
+  var t = dgEl('dgToast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(dgSt._tt);
+  dgSt._tt = setTimeout(function(){ t.classList.remove('on'); }, 2200);
+}
+function dgTone(freq, dur, type, vol){
+  try{
+    if(!dgAudio){ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; dgAudio=new AC(); }
+    var o=dgAudio.createOscillator(), g=dgAudio.createGain();
+    o.type=type||'square'; o.frequency.value=freq; g.gain.value=vol||.02;
+    o.connect(g); g.connect(dgAudio.destination);
+    var t=dgAudio.currentTime;
+    g.gain.exponentialRampToValueAtTime(.0001, t+(dur||.06)+.02);
+    o.start(t); o.stop(t+(dur||.06)+.04);
+  }catch(e){}
+}
+function dgDust(cx,cy,color,n){
+  for(var i=0;i<n;i++){
+    dgSt.particles.push({ x:cx+(Math.random()-.5)*34, y:cy+(Math.random()-.5)*22,
+      vx:(Math.random()-.5)*96, vy:-28-Math.random()*66,
+      life:.55+Math.random()*.5, max:1, color:color, size:2+Math.floor(Math.random()*3) });
+  }
+}
+function dgSpark(cx,cy,n){
+  for(var i=0;i<n;i++){
+    var a=(Math.PI*2*i)/n+Math.random()*.4, sp=28+Math.random()*46;
+    dgSt.particles.push({ x:cx, y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-12,
+      life:.55+Math.random()*.45, max:1, color:'#f0c15c', size:2+Math.floor(Math.random()*3) });
+  }
+}
+
+function dgHUD(){
+  dgEl('dgEnergy').textContent = String(Math.max(0, dgSt.energy));
+  dgEl('dgEnergyBar').style.width = dgClamp(dgSt.energy,0,100)+'%';
+  var s = Math.max(0, Math.ceil(dgSt.time));
+  dgEl('dgClock').textContent = (Math.floor(s/60)<10?'0':'')+Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60);
+  dgEl('dgFound').textContent = dgSt.collected.length + ' / ' + dgSt.goal;
+  dgEl('dgShard').textContent = String(dgSt.shards);
+  dgEl('dgProbeText').textContent = dgSt.probes + ' 次 · 12 体力';
+  dgEl('dgProbe').disabled = dgSt.status!=='playing' || dgSt.paused || dgSt.probes<=0 || dgSt.energy<12;
+  dgEl('dgStatus').textContent = dgSt.status==='ready' ? '等待开工'
+    : dgSt.status==='ended' ? '探方收工' : (dgSt.paused ? '清理中 · 暂停' : '发掘中');
+  dgEl('digN').textContent = String(dgSt.collected.length);
+}
+
+function dgTray(){
+  var box = dgEl('dgTray'); box.innerHTML='';
+  var all = placedList();
+  all.forEach(function(p){
+    var it = item(p.id);
+    var got = dgSt.collected.some(function(r){ return r.id===p.id && r.slot===p.slot; });
+    var d = document.createElement('div');
+    d.className = 'dg-slot' + (got?' found':'');
+    d.innerHTML = '<canvas width="34" height="34"></canvas><b>'+esc(it.name)+'</b>'+
+                  '<small>'+(got? ('T0512③:'+ (dgSt.collected.filter(function(r){return r.id===p.id&&r.slot===p.slot;})[0]||{no:'-'}).no) : SLOT_NAME[p.s]+' · 未提取')+'</small>';
+    box.appendChild(d);
+    var cc = d.querySelector('canvas').getContext('2d');
+    cc.imageSmoothingEnabled=false;
+    cc.fillStyle='#1a100a'; cc.fillRect(0,0,34,34);
+    if(got) dgSpriteOn(cc, DG_SPRITE_OF[p.id]||'jade', 17, 17, 2);
+    else { cc.fillStyle='#3a2418'; cc.fillRect(10,16,14,2); cc.fillRect(16,10,2,14); }
+  });
+  if(!all.length) box.innerHTML = '<p class="dg-tip">这一座墓里，你什么都没有留下。</p>';
+}
+
+function dgCellXY(cell){ return { x:DG.OX+cell.c*(DG.TILE+DG.GAP), y:DG.OY+cell.r*(DG.TILE+DG.GAP) }; }
+
+function dgDrawCell(cell, now){
+  var p = dgCellXY(cell), T = DG.TILE;
+  var inset = cell.layers===3?3:(cell.layers===2?9:(cell.layers===1?15:18));
+  var ix=p.x+inset, iy=p.y+inset, iw=T-inset*2, ih=T-inset*2;
+  dgCtx.fillStyle='#080402'; dgCtx.fillRect(p.x+5,p.y+5,T,T);
+  dgCtx.fillStyle='#3b2517'; dgCtx.fillRect(p.x,p.y,T,T);
+
+  if(cell.layers>0){
+    var base = cell.layers===3?'#8b5a36':(cell.layers===2?'#74492c':'#a77a4d');
+    var light= cell.layers===3?'#a66b3f':(cell.layers===2?'#8b5a36':'#c0925f');
+    var dark = cell.layers===3?'#6b4126':(cell.layers===2?'#54331f':'#7f5a39');
+    dgCtx.fillStyle=base; dgCtx.fillRect(ix,iy,iw,ih);
+    dgCtx.fillStyle=light; dgCtx.fillRect(ix,iy,iw,3);
+    dgCtx.fillStyle=dark;  dgCtx.fillRect(ix,iy+ih-4,iw,4);
+    dgCtx.fillStyle='rgba(0,0,0,.10)';
+    dgCtx.fillRect(ix,iy+Math.floor(ih*.36),iw,2);
+    dgCtx.fillRect(ix,iy+Math.floor(ih*.68),iw,2);
+    for(var k=0;k<7;k++){
+      var rx=ix+4+dgRand(cell.seed+k*5.1+cell.layers)*(iw-10);
+      var ry=iy+4+dgRand(cell.seed+k*7.7+cell.layers*3)*(ih-10);
+      dgCtx.fillStyle = k%3===0?dark:(k%3===1?light:'#5e3a22');
+      var sz=2+Math.floor(dgRand(cell.seed+k*9.1)*4);
+      dgCtx.fillRect(Math.round(rx),Math.round(ry),sz,sz);
+    }
+  } else {
+    dgCtx.fillStyle='#1a100b'; dgCtx.fillRect(ix,iy,iw,ih);
+    dgCtx.fillStyle='#24170f'; dgCtx.fillRect(ix+4,iy+4,iw-8,ih-8);
+    for(var j=0;j<8;j++){
+      dgCtx.fillStyle = j%2?'#3a2418':'#2b1b12';
+      dgCtx.fillRect(Math.round(ix+6+dgRand(cell.seed+j*5.6)*(iw-14)),
+                     Math.round(iy+6+dgRand(cell.seed+j*8.2)*(ih-14)),3,2);
+    }
+    if(cell.urn){                                  /* 瓮棺 */
+      dgCtx.fillStyle='#8d4f36'; dgCtx.fillRect(p.x+22,p.y+18,56,64);
+      dgCtx.fillStyle='#b56a4a'; dgCtx.fillRect(p.x+26,p.y+22,48,56);
+      dgCtx.fillStyle='#3a2418'; dgCtx.fillRect(p.x+30,p.y+16,40,8);
+    }
+    if(cell.bone){                                 /* 人骨 */
+      dgCtx.fillStyle='#e8dcc0';
+      dgCtx.fillRect(p.x+42,p.y+30,16,16);
+      dgCtx.fillRect(p.x+48,p.y+48,4,26);
+      dgCtx.fillRect(p.x+38,p.y+52,24,3);
+      dgCtx.fillRect(p.x+40,p.y+58,20,3);
+      dgCtx.fillRect(p.x+42,p.y+64,16,3);
+      dgCtx.fillStyle='#6b5a41';
+      dgCtx.fillRect(p.x+46,p.y+35,3,3); dgCtx.fillRect(p.x+52,p.y+35,3,3);
+    }
+    if(cell.shard && cell.collected){
+      dgCtx.fillStyle='#c98b5e'; dgCtx.fillRect(p.x+T/2-8,p.y+T/2+2,16,4);
+      dgCtx.fillStyle='#6d4529'; dgCtx.fillRect(p.x+T/2-4,p.y+T/2+6,8,2);
+    }
+    if(cell.relic && !cell.collected){
+      var cx=p.x+T/2, cy=p.y+T/2+2;
+      var g=dgCtx.createRadialGradient(cx,cy,2,cx,cy,40);
+      g.addColorStop(0,'rgba(240,193,92,.30)'); g.addColorStop(1,'rgba(240,193,92,0)');
+      dgCtx.fillStyle=g; dgCtx.fillRect(p.x+8,p.y+8,T-16,T-16);
+      dgSpriteOn(dgCtx, cell.relic.sprite, cx, cy, 4);
+      if(cell.brush<2){
+        dgCtx.globalAlpha = cell.brush===0?.82:.42;
+        for(var d=0;d<(cell.brush===0?22:11);d++){
+          var ax=dgRand(cell.seed+d*7.3), bx=dgRand(cell.seed+d*3.7+11);
+          dgCtx.fillStyle = d%3===0?'#8b5a36':(d%3===1?'#6d4529':'#a8794c');
+          dgCtx.fillRect(Math.round(cx-31+ax*62), Math.round(cy-31+bx*62), 3+(d%3), 2+(d%2));
+        }
+        dgCtx.globalAlpha=1;
+      }
+      for(var q=0;q<2;q++){
+        dgCtx.fillStyle = q<cell.brush?'#f0c15c':'#5a3a22';
+        dgCtx.fillRect(cx-9+q*10, p.y+T-16, 6, 4);
+      }
+    }
+  }
+  if(dgSt.hint===cell.i && now<dgSt.hintUntil){
+    dgCtx.globalAlpha = .55+.45*(Math.sin(now/90)*.5+.5);
+    dgCtx.fillStyle='#f0c15c';
+    dgCtx.fillRect(p.x,p.y,T,4); dgCtx.fillRect(p.x,p.y+T-4,T,4);
+    dgCtx.fillRect(p.x,p.y,4,T); dgCtx.fillRect(p.x+T-4,p.y,4,T);
+    dgCtx.globalAlpha=1;
+  }
+  if(dgSt.hover===cell){
+    dgCtx.fillStyle='rgba(247,231,195,.7)';
+    dgCtx.fillRect(p.x,p.y,T,2); dgCtx.fillRect(p.x,p.y+T-2,T,2);
+    dgCtx.fillRect(p.x,p.y,2,T); dgCtx.fillRect(p.x+T-2,p.y,2,T);
+  }
+  if(dgSt.cursor.c===cell.c && dgSt.cursor.r===cell.r && document.activeElement===dgCv){
+    dgCtx.fillStyle='#f7e7c3';
+    dgCtx.fillRect(p.x,p.y,T,3); dgCtx.fillRect(p.x,p.y+T-3,T,3);
+    dgCtx.fillRect(p.x,p.y,3,T); dgCtx.fillRect(p.x+T-3,p.y,3,T);
+  }
+}
+
+function dgDraw(now){
+  dgCtx.clearRect(0,0,DG.W,DG.H);
+  dgCtx.fillStyle='#160f09'; dgCtx.fillRect(0,0,DG.W,DG.H);
+  dgCtx.strokeStyle='rgba(240,193,92,.055)'; dgCtx.lineWidth=1;
+  for(var gx=0;gx<DG.W;gx+=24){ dgCtx.beginPath(); dgCtx.moveTo(gx+.5,0); dgCtx.lineTo(gx+.5,DG.H); dgCtx.stroke(); }
+  for(var gy=0;gy<DG.H;gy+=24){ dgCtx.beginPath(); dgCtx.moveTo(0,gy+.5); dgCtx.lineTo(DG.W,gy+.5); dgCtx.stroke(); }
+  dgCtx.strokeStyle='#3b2517'; dgCtx.lineWidth=3;
+  dgCtx.strokeRect(DG.OX-9, DG.OY-9, DG.COLS*DG.TILE+(DG.COLS-1)*DG.GAP+18, DG.ROWS*DG.TILE+(DG.ROWS-1)*DG.GAP+18);
+  dgCtx.font='12px "Zpix","Microsoft YaHei",monospace';
+  dgCtx.textAlign='center'; dgCtx.textBaseline='middle'; dgCtx.fillStyle='#9b7a54';
+  for(var c=0;c<DG.COLS;c++) dgCtx.fillText(String.fromCharCode(65+c), DG.OX+c*(DG.TILE+DG.GAP)+DG.TILE/2, 12);
+  dgCtx.textAlign='right';
+  for(var r=0;r<DG.ROWS;r++) dgCtx.fillText(String(r+1), DG.OX-14, DG.OY+r*(DG.TILE+DG.GAP)+DG.TILE/2);
+  dgCtx.textAlign='left'; dgCtx.fillStyle='#6d513b'; dgCtx.font='10px "Zpix","Microsoft YaHei",monospace';
+  dgCtx.fillText('T0512 · M3 · 1m × 1m', DG.OX, DG.H-12);
+  dgCtx.textAlign='right'; dgCtx.fillText('0        50cm', DG.W-40, DG.H-12);
+  dgCtx.fillStyle='#5a3a22';
+  dgCtx.fillRect(DG.W-128,DG.H-17,88,2); dgCtx.fillRect(DG.W-128,DG.H-22,2,12); dgCtx.fillRect(DG.W-42,DG.H-22,2,12);
+  for(var i=0;i<dgCells.length;i++) dgDrawCell(dgCells[i], now);
+  for(var p2=0;p2<dgSt.particles.length;p2++){
+    var pt=dgSt.particles[p2];
+    dgCtx.globalAlpha=dgClamp(pt.life/pt.max,0,1);
+    dgCtx.fillStyle=pt.color;
+    dgCtx.fillRect(Math.round(pt.x),Math.round(pt.y),pt.size,pt.size);
+  }
+  dgCtx.globalAlpha=1;
+}
+
+function dgLoop(now){
+  var dt = Math.min(.05,(now-dgLast)/1000); dgLast=now;
+  if(dgSt.status==='playing' && !dgSt.paused){
+    dgSt.time = Math.max(0, dgSt.time-dt);
+    if(dgSt.time<=0) dgEnd('time');
+  }
+  for(var i=dgSt.particles.length-1;i>=0;i--){
+    var p=dgSt.particles[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=210*dt; p.life-=dt;
+    if(p.life<=0) dgSt.particles.splice(i,1);
+  }
+  dgHUD(); dgDraw(now);
+  dgRaf = requestAnimationFrame(dgLoop);
+}
+
+function dgCellAt(px,py){
+  for(var i=0;i<dgCells.length;i++){
+    var c=dgCells[i], p=dgCellXY(c);
+    if(px>=p.x && px<=p.x+DG.TILE && py>=p.y && py<=p.y+DG.TILE) return c;
+  }
+  return null;
+}
+function dgPoint(e){
+  var r=dgCv.getBoundingClientRect();
+  return { x:(e.clientX-r.left)*(DG.W/r.width), y:(e.clientY-r.top)*(DG.H/r.height) };
+}
+
+function dgDig(cell){
+  if(dgSt.status!=='playing' || dgSt.paused || !cell) return;
+  if(cell.layers===0){
+    if(cell.relic && !cell.collected) dgBrush(cell);
+    else dgToast('这格已经到底了，换一块。');
+    return;
+  }
+  if(dgSt.energy<5){ dgToast('体力见底了。'); dgCheckEnd(); return; }
+  dgSt.energy-=5; cell.layers--;
+  var p=dgCellXY(cell);
+  dgDust(p.x+DG.TILE/2, p.y+DG.TILE/2, '#a8794c', 8);
+  dgTone(150+cell.layers*30,.045,'square',.02);
+  if(cell.layers===0){
+    if(cell.bone){ dgToast('是人骨。慢一点，换毛刷。'); dgTone(300,.12,'sine',.03); }
+    else if(cell.urn){ dgToast('瓮棺的口沿露出来了。'); }
+    else if(cell.relic){ dgSt.emptyStreak=0; dgSpark(p.x+DG.TILE/2,p.y+DG.TILE/2,7); dgTone(660,.12,'triangle',.035); dgToast('有东西！换毛刷，慢一点。'); }
+    else if(cell.shard){ cell.collected=true; dgSt.shards++; dgSt.emptyStreak=0; dgToast('陶片 +1，继续。'); }
+    else {
+      dgSt.emptyStreak++;
+      if(dgSt.emptyStreak>=5){ cell.shard=true; cell.collected=true; dgSt.shards++; dgSt.emptyStreak=0; dgToast('连续空方，捡到一片陶片。'); }
+      else dgToast(dgSt.emptyStreak>=3?'连续空方，试试探针。':'空方，只有碎土。');
+    }
+  }
+  dgHUD();
+}
+function dgBrush(cell){
+  if(dgSt.status!=='playing' || dgSt.paused) return;
+  if(!cell || !cell.relic || cell.collected || cell.layers>0) return;
+  dgSt.energy=Math.max(0,dgSt.energy-1); cell.brush++;
+  var p=dgCellXY(cell);
+  dgDust(p.x+DG.TILE/2,p.y+DG.TILE/2,'#d9b98b',4);
+  dgTone(880+cell.brush*80,.035,'square',.016);
+  if(cell.brush>=2) dgCollect(cell); else dgToast('再刷一次，泥土就干净了。');
+  dgHUD();
+}
+function dgCollect(cell){
+  cell.collected=true;
+  dgSt.collected.push(cell.relic);
+  var p=dgCellXY(cell);
+  dgSpark(p.x+DG.TILE/2,p.y+DG.TILE/2,10);
+  dgTone(1040,.09,'triangle',.035);
+  dgTray(); dgHUD(); dgShowRelic(cell.relic);
+}
+function dgShowRelic(rel){
+  dgSt.paused=true;
+  dgEl('dgRelicNo').textContent = 'T0512③:' + rel.no;
+  dgEl('dgRelicName').textContent = rel.name;
+  dgEl('dgRelicEra').textContent = rel.era;
+  dgEl('dgRelicHeart').textContent = rel.heart;
+  dgEl('dgRelicArch').textContent = rel.arch;
+  var cc = dgEl('dgRelicCanvas').getContext('2d');
+  cc.imageSmoothingEnabled=false; cc.clearRect(0,0,88,88);
+  cc.fillStyle='#130c08'; cc.fillRect(0,0,88,88);
+  dgSpriteOn(cc, rel.sprite, 44, 44, 4);
+  dgEl('dgRelic').classList.add('on');
+  dgEl('dgRelicClose').focus();
+  dgHUD();
+}
+function dgCloseRelic(){
+  dgEl('dgRelic').classList.remove('on');
+  dgSt.paused=false; dgLast=performance.now();
+  if(dgSt.collected.length >= dgSt.goal) dgEnd('win');
+  else dgCv.focus({preventScroll:true});
+  dgHUD();
+}
+function dgProbe(){
+  if(dgSt.status!=='playing' || dgSt.paused) return;
+  if(dgSt.probes<=0){ dgToast('探针用完了。'); return; }
+  if(dgSt.energy<12){ dgToast('体力不足，用不了探针。'); return; }
+  var targets = dgCells.filter(function(c){ return c.relic && !c.collected && c.layers>0; });
+  if(!targets.length){ dgToast('没有可探测的目标了。'); return; }
+  dgSt.energy-=12; dgSt.probes--;
+  var t = targets[Math.floor(Math.random()*targets.length)];
+  dgSt.hint=t.i; dgSt.hintUntil=performance.now()+3000;
+  dgToast('探针有反应：高亮处有器物。');
+  dgTone(1100,.1,'sine',.03); dgHUD();
+}
+function dgCheckEnd(){
+  if(dgSt.status!=='playing') return;
+  if(dgSt.collected.length>=dgSt.goal){ dgEnd('win'); return; }
+  var canDig = dgSt.energy>=5;
+  var canBrush = dgCells.some(function(c){ return c.relic && c.layers===0 && !c.collected; });
+  if(!canDig && !canBrush) dgEnd('energy');
+}
+function dgEnd(reason){
+  if(dgSt.status==='ended') return;
+  dgSt.status='ended'; dgSt.paused=true;
+  var win = reason==='win';
+  S.dug = dgSt.collected.slice();
+  var miss = placedList().length - dgSt.collected.length;
+  dgEl('dgEndTitle').textContent = win ? '探方清理完毕' : '探方收工';
+  dgEl('dgEndText').textContent = win
+    ? '你埋下的东西，一件一件都回到了地面上。'
+    : (reason==='time' ? '时间到，探方先封存。' : '体力耗尽，还有东西没来得及清理。');
+  var loss = dgEl('dgLoss');
+  if(miss>0){
+    loss.innerHTML = '<b>注意：还有 ' + miss + ' 件没能提取。</b><br>'+
+      '它们仍然在你埋下的位置——只是这一次，没人把它们取出来。<br>'+
+      '真实考古里，一座墓从来不会被一次性穷尽：时间、经费、天气、取舍，'+
+      '都会决定哪些东西重见天日、哪些继续留在土里。';
+  } else {
+    loss.innerHTML = '<b>本次全部提取。</b><br>这份完整，本身就是一种运气——'+
+      '田野里更多见的是「挖到了一部分」。';
+  }
+  dgEl('dgEnd').classList.add('on');
+  dgEl('dgEndGo').focus();
+  dgEl('goReport').disabled = false;
+  dgTray(); dgHUD();
+  dgTone(win?720:180,.2,win?'triangle':'sawtooth',.04);
+}
+
+function dgStart(){
+  dgCv = dgEl('dgCanvas'); dgCtx = dgCv.getContext('2d');
+  dgCtx.imageSmoothingEnabled = false;
+  var n = placedList().length;
+  dgEl('buriedN').textContent = String(n);
+  dgSt.collected=[]; dgSt.shards=0; dgSt.probes=2; dgSt.particles=[];
+  dgSt.emptyStreak=0; dgSt.hint=-1; dgSt.cursor={c:0,r:0}; dgSt.hover=null;
+  dgSt.energy = 60 + n*22;
+  dgSt.time = 90 + n*30;
+  dgMakeCells();
+  S.dug = [];
+  dgEl('dgRelic').classList.remove('on');
+  dgEl('dgEnd').classList.remove('on');
+  dgTray(); dgHUD();
+
+  if(n===0){
+    dgSt.status='ended';
+    S.dug=[];
+    dgEl('dgEndTitle').textContent='墓室已清空';
+    dgEl('dgEndText').textContent='整座墓清理到底，没有发现任何随葬器物。';
+    dgEl('dgLoss').innerHTML='<b>你什么都没有留下。</b><br>三千年后，他们也就什么都读不到。';
+    dgEl('dgEnd').classList.add('on');
+    dgEl('goReport').disabled=false;
+    dgHUD();
+  } else {
+    dgSt.status='playing'; dgSt.paused=false;
+    dgLast=performance.now();
+    dgCv.focus({preventScroll:true});
+    dgToast('开工。你埋的东西就在下面——位置你自己记得。');
+    dgTone(320,.08,'square',.025);
+  }
+  if(dgRaf) cancelAnimationFrame(dgRaf);
+  dgRaf = requestAnimationFrame(dgLoop);
+}
+
+/* 事件（只绑一次） */
+(function(){
+  var cv = dgEl('dgCanvas');
+  cv.addEventListener('pointermove', function(e){ dgSt.hover = dgCellAt(dgPoint(e).x, dgPoint(e).y); });
+  cv.addEventListener('pointerleave', function(){ dgSt.hover=null; });
+  cv.addEventListener('pointerdown', function(e){
+    e.preventDefault(); cv.focus({preventScroll:true});
+    var p=dgPoint(e), cell=dgCellAt(p.x,p.y);
+    if(!cell) return;
+    dgSt.cursor={c:cell.c,r:cell.r};
+    if(cell.layers>0) dgDig(cell);
+    else if(cell.relic && !cell.collected) dgBrush(cell);
+    else dgToast('这格已经到底了，换一块。');
+  });
+  document.addEventListener('keydown', function(e){
+    if(dgEl('dgRelic').classList.contains('on') || dgEl('dgEnd').classList.contains('on')) return;
+    if(document.body.classList.contains('act-paper')) return;
+    var sec = document.querySelector('.act.on');
+    if(!sec || sec.id!=='s3') return;
+    var k=e.key;
+    if(k==='ArrowLeft'||k==='ArrowRight'||k==='ArrowUp'||k==='ArrowDown'){
+      e.preventDefault();
+      if(dgSt.status!=='playing'||dgSt.paused) return;
+      if(k==='ArrowLeft')  dgSt.cursor.c=Math.max(0,dgSt.cursor.c-1);
+      if(k==='ArrowRight') dgSt.cursor.c=Math.min(DG.COLS-1,dgSt.cursor.c+1);
+      if(k==='ArrowUp')    dgSt.cursor.r=Math.max(0,dgSt.cursor.r-1);
+      if(k==='ArrowDown')  dgSt.cursor.r=Math.min(DG.ROWS-1,dgSt.cursor.r+1);
+      return;
+    }
+    if(k==='Enter'||k===' '){
+      if(dgSt.status!=='playing'||dgSt.paused) return;
+      e.preventDefault();
+      var cell=dgCells[dgSt.cursor.r*DG.COLS+dgSt.cursor.c];
+      if(cell.layers>0) dgDig(cell);
+      else if(cell.relic && !cell.collected) dgBrush(cell);
+      return;
+    }
+    if(k==='p'||k==='P'){ e.preventDefault(); dgProbe(); }
+  });
+  dgEl('dgProbe').addEventListener('click', dgProbe);
+  dgEl('dgRelicClose').addEventListener('click', dgCloseRelic);
+  dgEl('dgEndGo').addEventListener('click', function(){
+    dgEl('dgEnd').classList.remove('on');
+    $('#goReport').click();
+  });
+  dgEl('dgEndStay').addEventListener('click', function(){ dgEl('dgEnd').classList.remove('on'); });
+})();
 
 /* =========================================================
    七、幕 4 · 两套视角映射 → 发掘报告
@@ -1102,9 +1732,9 @@ function gradeText(n){
   if(n<=6) return {t:'随葬品 '+n+' 件，数量较丰富', d:'高于本区域同期一般墓葬。'};
   return {t:'随葬品 '+n+' 件，数量丰富', d:'在本区域同期墓葬中少见，提示墓主具特殊身份。'};
 }
-function identityText(){
-  var n = placedList().length;
-  var ids = placedIds();
+function identityText(list){
+  var n = (list ? list.length : placedList().length);
+  var ids = (list ? list.map(function(r){return r.id;}) : placedIds());
   var jadeChestOrHead = S.place.chest.indexOf('yuzhulong')>=0 || S.place.head.indexOf('yuzhulong')>=0;
   var hasJade = ids.indexOf('yuzhulong')>=0;
   if(hasJade && jadeChestOrHead && n>=4)
@@ -1116,11 +1746,18 @@ function identityText(){
   return '无随葬品，无法据物质遗存讨论墓主的社会身份。';
 }
 
-function buildMisreads(){
-  const out=[]; const ids=placedIds(); const n=ids.length;
-  if(n===0) out.push({t:'什么都没留下的人',
+function buildMisreads(list){
+  const out=[]; const ids=(list||[]).map(function(r){ return r.id; }); const n=ids.length;
+  const buriedN = placedList().length;
+  if(buriedN===0) out.push({t:'什么都没留下的人',
     h:'你捧着他，把他放下去，然后一转身，什么都带走了。',
     a:'M3 未发现任何随葬品。考古学上，对这座墓能写下的只有「无随葬品」四个字——你没留，他们就真的不知道。'});
+  else if(n===0) out.push({t:'一次没被完成的发掘',
+    h:'你把东西一件件放进去，位置都记得清清楚楚。',
+    a:'本次探方清理未提取到任何随葬器物。报告只能写「未发现」——埋下了，不等于被看见。'});
+  else if(n < buriedN) out.push({t:'留在土里的那几件',
+    h:'每一件你都放得很仔细，连朝向都调过。',
+    a:'埋藏 '+buriedN+' 件、提取 '+n+' 件。未提取的那 '+(buriedN-n)+' 件不构成证据，也不构成反证——它们只是没被取出来。'});
   if(ids.indexOf('shifu')>=0 && S.who==='woman') out.push({t:'斧子与性别',
     h:'你放它进去，只是因为那是她砍柴开荒的手。',
     a:'随葬磨制石斧，通常被视作砍伐、农耕劳动的标志，在同期材料中多与男性个体共出。本墓骨骼鉴定为女性个体——器物与性别，不能简单画等号。'});
@@ -1146,14 +1783,19 @@ function buildMisreads(){
     out.push({t:'放错地方的玉',
       h:'你把它系在腰上——那是他活着时挂了一辈子的位置。',
       a:'玉礼器出土于非常规位置。报告会据此讨论「摆放是否合于礼制」，却无从知道，那只是他习惯的位置。'});
-  return out.slice(0,4);
+  return out.slice(0,5);
 }
 
 function buildReport(){
   const w=WHO[S.who], p=POSE[S.pose], h=HEAD[S.head], o=OCHRE[S.ochre];
-  const list = placedList(); const n = list.length;
+  /* 实际从探方里提取出来的（未开挖时按埋下的全部计） */
+  const dugRaw = (S.dug && S.dug.length) ? S.dug : placedList();
+  const list = dugRaw.map(function(r){ return { s:r.s || r.slot, id:r.id, no:r.no }; });
+  const n = list.length;
+  const buriedN = placedList().length;
+  const missed = buriedN - n;
   const g = gradeText(n);
-  const idt = identityText();
+  const idt = identityText(list);
 
   /* 对照行 */
   const rows = [];
@@ -1161,7 +1803,9 @@ function buildReport(){
   rows.push({ e:'葬式', heart:T(p.heart), arch:p.arch + (p.note?' '+p.note:'') });
   if(S.pose!=='urn') rows.push({ e:'头向', heart:h.heart, arch:h.arch });
   rows.push({ e:'葬仪用色', heart:T(o.heart), arch:o.arch });
-  rows.push({ e:'随葬品数量', heart:'你数了数，一共 '+n+' 件。'+(n===0?'（你一件也没舍得放——不，你一件也没放。）':''), arch:g.t + '。' + g.d });
+  rows.push({ e:'随葬品数量', heart:'你数了数，一共放了 '+buriedN+' 件。'+(buriedN===0?'（你一件也没放。）':''),
+    arch:'本次发掘实际提取 '+n+' 件。'+g.t+'。'+g.d+
+         (missed>0 ? '　另有 '+missed+' 件未能提取，仍留于墓内未清理区。' : '') });
   list.forEach(function(r, i){
     const it = item(r.id);
     rows.push({ e:'第 '+(i+1)+' 件 · '+it.name+'（'+SLOT_NAME[r.s]+'）',
@@ -1171,7 +1815,7 @@ function buildReport(){
   rows.push({ e:'墓主身份结论', heart:'你知道他是谁。你知道他爱吃什么、怕什么、笑起来什么样。',
     arch:idt });
 
-  const mis = buildMisreads();
+  const mis = buildMisreads(list);
 
   /* 报告正文 */
   const siteLine = '甘肃 · 半山遗址东区　2026 年度发掘　T0512 探方';
@@ -1189,7 +1833,7 @@ function buildReport(){
     '<div><b>年代</b>'+dateLine+'</div>'+
     '<div><b>墓主</b>'+w.arch+'，'+w.age+'</div>'+
     '<div><b>葬式</b>'+p.name+(S.pose!=='urn'?'，'+h.name:'')+'</div>'+
-    '<div><b>随葬品</b>'+g.t+'</div>'+
+    '<div><b>随葬品</b>本次提取 '+n+' 件'+(missed>0?('（埋藏 '+buriedN+' 件，'+missed+' 件未提取）'):'')+'　·　'+g.t+'</div>'+
     '<div><b>保存状况</b>'+(S.ochre==='on'?'骨架周围见赭石散布，':'')+'骨骼保存中等，未见明显扰动</div>'+
     '</div>';
 
@@ -1218,7 +1862,18 @@ function buildReport(){
           (S.ochre==='on'? '墓内赭石的使用，指向一套可复述的、被共同体共同遵守的丧葬程序。':'')+
           '本报告仅据物质遗存立论；墓主的社会关系、情感与具体生平分，非考古学所能直接触及。</p>';
 
-  html += '<h4>四、两套语言 · 对照</h4>';
+  if(missed>0){
+    html += '<h4>四、发掘损耗</h4>';
+    html += '<p>据第一幕埋藏记录，本墓共放置随葬品 '+buriedN+' 件；本次探方清理实际提取 '+n+' 件，'+
+            '<b>另有 '+missed+' 件未能提取</b>，仍留于墓内未清理区。</p>';
+    html += '<p>需要说明：这并非发掘失误，而是田野考古的常态——时间、经费、天气与取舍，'+
+            '共同决定了一座墓里有哪些东西能重见天日、哪些继续留在土里。'+
+            '因此，本报告的全部结论，都建立在「被提取出来的那一部分」之上；'+
+            '未被提取的部分，不构成证据，也不构成反证。</p>';
+    html += '<p>换句话说：<b>考古学看到的从来不是完整的过去，而是过去允许被看到的那一部分。</b></p>';
+  }
+
+  html += '<h4>'+(missed>0?'五':'四')+'、两套语言 · 对照</h4>';
   html += '<div class="cmp"><div class="cmp-h"><div>你埋下时（先民视角）</div><div>三千年后（考古学视角）</div></div>';
   rows.forEach(function(r){
     html += '<div class="cmp-r"><div><em>'+esc(r.e)+'</em><span class="quote">'+esc(r.heart)+'</span></div>'+
@@ -1227,7 +1882,7 @@ function buildReport(){
   html += '</div>';
 
   if(mis.length){
-    html += '<h4>五、被误读的部分</h4>';
+    html += '<h4>'+(missed>0?'六':'五')+'、被误读的部分</h4>';
     mis.forEach(function(m){
       html += '<div class="mis"><b>'+esc(m.t)+'</b>'+
               '<div class="h">'+esc(m.h)+'</div><div class="a">'+esc(m.a)+'</div></div>';
@@ -1258,13 +1913,14 @@ $('#goBury').onclick = function(){ renderAll(); goto(1); };
 $('#goEarth').onclick = function(){
   goto(2); runEarth();
 };
-$('#goDig').onclick = function(){ renderDig(); goto(3); runDig(); };
+$('#goDig').onclick = function(){ goto(3); dgStart(); };
 $('#goReport').onclick = function(){ buildReport(); goto(4); };
 $('#goAgain').onclick = function(){
   S.who='woman'; S.pose='straight'; S.head='west'; S.ochre='off';
-  S.place={head:[],chest:[],side:[],feet:[],fill:[]}; S.broken={}; S.picked=null;
-  $('#sec').innerHTML=''; $('#finds').innerHTML=''; $('#digN').textContent='0';
-  $('#soilmask').classList.remove('gone');
+  S.place={head:[],chest:[],side:[],feet:[],fill:[]}; S.broken={}; S.picked=null; S.dug=[];
+  $('#sec').innerHTML=''; $('#digN').textContent='0'; $('#buriedN').textContent='0';
+  document.getElementById('dgRelic').classList.remove('on');
+  document.getElementById('dgEnd').classList.remove('on');
   $('#yearBig').firstChild.nodeValue='公元前 2600 年';
   $('#yearSub').textContent='下葬当日';
   $('#dynTx').textContent=''; $('#depthBar').style.width='0%';
@@ -1289,4 +1945,3 @@ renderAll();
 </script>
 </body>
 </html>
-</content>
