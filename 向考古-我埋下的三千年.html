@@ -221,6 +221,12 @@ body.act-paper .btn.ghost{background:transparent;color:var(--ink2)}
 .opt.lock{opacity:.32;pointer-events:none}
 
 /* 随葬品池 */
+/* AI 幕后决定：看不见的随葬品 */
+.ai-slot{margin-top:12px;padding:18px 16px;border-radius:12px;text-align:center;
+  border:2px dashed rgba(230,199,101,.34);background:rgba(0,0,0,.22)}
+.ai-q{font-family:var(--serif);font-size:30px;letter-spacing:12px;color:rgba(230,199,101,.55);
+  margin-bottom:8px;text-indent:12px}
+.ai-slot p{margin:0;font-family:var(--serif);font-size:12.5px;line-height:1.95;color:#a89571}
 .pool{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .item{display:flex;gap:9px;align-items:center;padding:8px;border-radius:11px;cursor:pointer;
   border:1px solid rgba(242,228,198,.16);background:rgba(255,255,255,.03);transition:.18s;text-align:left;min-width:0}
@@ -513,6 +519,154 @@ body:not(.act-paper) .foot{color:#8d7a5c}
   .yearbig{font-size:34px}
   .sec{height:230px}
 }
+/* =========================================================
+   与「文物精灵」主站统一：宣纸底 · 墨字 · 朱红
+   （只改皮，不动玩法；深色只保留墓坑/地层/探方画布作为"现场画面"）
+   ========================================================= */
+body,body.act-bury,body.act-earth,body.act-dig,body.act-paper{
+  color:var(--ink);
+  background:
+    url("装饰/万字底纹.webp") repeat fixed,
+    url("装饰/宣纸纹.webp") repeat fixed,
+    radial-gradient(1200px 500px at 50% -10%,#fff7e6 0%,transparent 60%),
+    linear-gradient(180deg,#fbf7ef,#f2ebdd 60%,#efe6d4);
+}
+.grain{opacity:.045;mix-blend-mode:multiply}
+
+/* 顶栏 = 主站 .topbar */
+.hd{background:rgba(255,253,248,.88);border-bottom:1px solid var(--line);
+  box-shadow:0 3px 14px rgba(120,90,40,.08)}
+body.act-paper .hd{background:rgba(255,253,248,.88)}
+.hd-in{max-width:1180px;padding:9px 18px}
+.bm{background:none;box-shadow:none;width:40px;height:40px;border-radius:0}
+.bm img{width:40px;height:40px;object-fit:contain;display:block}
+.hd h1,body.act-paper .hd h1{color:var(--red-d);font-size:17px;letter-spacing:2px}
+.hd .sub,body.act-paper .hd .sub{color:var(--ink2);letter-spacing:1.2px}
+.st{color:#8b7c66;border-color:transparent}
+.st:hover{color:var(--red-d);background:rgba(181,67,47,.05)}
+.st.on{color:var(--red-d);border-color:rgba(181,67,47,.38);background:rgba(181,67,47,.08);font-weight:700}
+.st.done{color:var(--jade)}
+
+/* 按钮 = 主站 */
+.btn{border:1px solid var(--line);background:var(--paper2);color:var(--ink);
+  box-shadow:0 2px 8px rgba(120,90,40,.08)}
+.btn:hover{background:#fff;border-color:var(--gold);transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(180deg,#c2452f,#8e3220);color:#fff5e0;border-color:var(--gold)}
+.btn.primary:hover{background:linear-gradient(180deg,#d4563f,#9d3a26)}
+.btn.ghost{background:transparent;color:var(--ink2);border-color:var(--line)}
+
+/* 序章 */
+.s0-mark{box-shadow:0 0 0 6px rgba(181,67,47,.10),0 16px 36px rgba(120,90,40,.20)}
+.s0-mark span{background:radial-gradient(circle at 40% 34%,#fff8ea,#f3e6cd);color:var(--red)}
+.s0-wrap h2{color:var(--red-d);text-shadow:none;font-weight:800}
+.s0-wrap .en{color:#b09a7c}
+.s0-lead{color:#3d342a}
+.s0-lead em{color:var(--red)}
+.s0-quote{color:#4a3f33;background:rgba(201,162,39,.12);border-left-color:var(--gold)}
+.chip{color:var(--ink2);border-color:var(--line);background:rgba(255,255,255,.72)}
+
+/* 面具 = 主站卡片 */
+.panel{background:var(--paper2);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 8px 24px rgba(80,60,30,.10)}
+.panel h3{color:var(--red-d);font-size:15px;letter-spacing:1.6px}
+.panel .tip{color:var(--ink2)}
+.panel .tip b{color:var(--red-d)}
+.tip{background:rgba(201,162,39,.10);border-left:3px solid var(--gold);color:#5b4c3a}
+.tip b{color:var(--red-d)}
+.tip i{color:var(--ink2)}
+
+/* 选项 */
+.opt{background:rgba(255,255,255,.78);border-color:var(--line)}
+.opt:hover{background:#fff;border-color:rgba(201,162,39,.6)}
+.opt b{color:var(--ink)}
+.opt span{color:var(--ink2)}
+.opt.on{border-color:var(--red);background:rgba(181,67,47,.07);box-shadow:0 0 0 2px rgba(181,67,47,.10) inset}
+.opt.on b{color:var(--red-d)}
+.opt.lock{opacity:.42}
+
+/* 独白 */
+.mono{background:linear-gradient(180deg,rgba(181,67,47,.09),rgba(181,67,47,.03));
+  border-color:rgba(181,67,47,.24)}
+.mono .who{color:var(--red-d)}
+.mono p{color:#4a3f33}
+.mono p.hl{color:var(--red-d)}
+
+/* AI 隐藏区 */
+.ai-slot{border-color:rgba(201,162,39,.55);background:rgba(255,255,255,.6)}
+.ai-q{color:#b06a52}
+.ai-slot p{color:var(--ink2)}
+.pickhint{color:var(--ink2)}
+.pickhint b{color:var(--red-d)}
+
+/* 行动条 */
+.counter{color:var(--ink2)}
+.counter b{color:var(--red-d)}
+
+/* 幕 2 */
+.earth-wrap h3{color:var(--red-d)!important}
+.yearbig{color:var(--red-d);text-shadow:none}
+.yearbig small{color:var(--ink2)}
+.dyn{color:#8e6b12}
+.depthbar{background:rgba(120,90,40,.16)}
+.earth-txt{color:#4a3f33}
+.sec{box-shadow:0 10px 30px rgba(80,60,30,.18),inset 0 0 0 1px rgba(90,58,34,.4)}
+.pit{box-shadow:inset 0 0 0 3px rgba(0,0,0,.35),inset 0 14px 34px rgba(0,0,0,.5),0 16px 34px rgba(80,60,30,.28)}
+
+/* 幕 3 探方：两侧仪表盘改为浅色卡片，画布保持深色"现场画面" */
+.dg-panel{background:var(--paper2);border:1px solid var(--line);box-shadow:0 8px 24px rgba(80,60,30,.10)}
+.dg-panel h4{color:var(--red-d);font-size:12px;letter-spacing:1.8px}
+.dg-stat{color:var(--ink2)}
+.dg-stat b{color:var(--ink)}
+.dg-meter{background:rgba(120,90,40,.14);border-color:var(--line)}
+.dg-tile{background:#fff;border-color:var(--line)}
+.dg-tile:hover{background:#fffdf8;border-color:rgba(201,162,39,.65)}
+.dg-tile.on{border-color:var(--red);background:rgba(181,67,47,.07);box-shadow:0 0 0 2px rgba(181,67,47,.10) inset}
+.dg-tile canvas{background:#24170f;border:1px solid var(--line);border-radius:9px;padding:1px}
+.dg-tile b{color:var(--ink)}
+.dg-tile small{color:var(--ink2)}
+.dg-tile .tk{color:var(--ink2);border-color:var(--line)}
+.dg-tile.on .tk{color:var(--red-d);border-color:rgba(181,67,47,.4)}
+.dg-hint{color:#7d6c57;font-size:10.5px;line-height:1.75}
+.dg-tip{color:var(--ink2)}
+.dg-slot{border-color:var(--line);background:#fffdf8}
+.dg-slot b{color:#5b4c3a}
+.dg-slot small{color:#7d6c57}
+.dg-slot.found{border-color:var(--gold);background:rgba(201,162,39,.10)}
+.dg-slot.found b{color:var(--ink)}
+.dg-slot.miss{border-color:rgba(181,67,47,.3);background:rgba(181,67,47,.05)}
+.dg-slot.miss b{color:var(--red-d)}
+
+/* 主站同款页脚 */
+.foot{margin-top:40px;background:linear-gradient(180deg,#aa241c,#7c1511 90%);
+  border-top:1px solid rgba(255,226,180,.32);color:#d9d3ca}
+.foot-in,.foot-bar{max-width:1180px;margin:0 auto;padding-left:26px;padding-right:26px}
+.foot-in{display:flex;justify-content:space-between;gap:40px 52px;flex-wrap:wrap;padding-top:44px;padding-bottom:30px}
+.foot-logo{display:flex;align-items:center;gap:10px}
+.foot-logo img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
+.foot-logo b{color:#fff6e6;font-size:19px;letter-spacing:1.5px}
+.foot-logo .en{color:#edc48f;font-size:11px;letter-spacing:2.6px;margin-top:3px;white-space:nowrap}
+.foot-brand p{margin:18px 0 0;color:#f6d7b6;font-size:14px;letter-spacing:.4px}
+.foot-cols{display:flex;gap:48px;flex-wrap:wrap}
+.fc{display:flex;flex-direction:column;gap:11px;font-size:13.5px}
+.fc b{color:#edc48f;font-weight:400;font-size:12px;letter-spacing:1.5px;margin-bottom:4px}
+.fc a,.fc span{color:#ffeedd;text-decoration:none;line-height:1.5}
+.fc a:hover{color:#ffd9a0}
+.foot-decl{max-width:1180px;margin:0 auto;padding:0 26px}
+.foot-decl-in{border-top:1px solid rgba(255,236,206,.26);padding:13px 0 15px}
+.foot-decl p{margin:0 0 6px;font-size:11.5px;line-height:1.9;color:#f0c3ad;letter-spacing:.2px}
+.foot-decl p:last-child{margin-bottom:0}
+.foot-decl b{font-weight:600;color:#ffe3c6;margin-right:6px}
+.foot-bar{border-top:1px solid rgba(255,236,206,.3);padding-top:14px;padding-bottom:22px;
+  display:flex;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;color:#e8b7a4;font-size:12.5px}
+.fb-r{display:flex;gap:32px;flex-wrap:wrap}
+.fb-r em{font-style:normal}
+
+@media (max-width:860px){
+  .foot-in{padding-top:30px;padding-bottom:22px}
+  .foot-cols{gap:30px}
+  .foot-decl p{font-size:11px}
+}
+
 </style>
 </head>
 <body class="act-bury">
@@ -521,7 +675,7 @@ body:not(.act-paper) .foot{color:#8d7a5c}
 <header class="hd">
   <div class="hd-in">
     <div class="brand">
-      <div class="bm">考</div>
+      <div class="bm"><img src="装饰/神兽标志.webp" alt="文物精灵"></div>
       <div>
         <h1>向考古 · 我埋下的三千年</h1>
         <div class="sub">文物精灵 · 视角反转玩法 demo</div>
@@ -618,14 +772,15 @@ body:not(.act-paper) .foot{color:#8d7a5c}
           <div class="opt-row" id="headRow"></div>
         </div>
         <div class="panel">
-          <h3>④ 随葬品（AI 替你选 / 也可自己点）</h3>
-          <p class="tip">同一处最多放 3 件。陶器可标记「口沿打破」——你相信打破了才算送到另一个世界。</p>
-          <div style="margin:10px 0 12px">
-            <button class="btn primary" id="aiPick" type="button" style="width:100%;font-size:14.5px;padding:12px">
-              🎲 AI 随机替我选一套
-            </button>
+          <h3>④ 随葬品（AI 替你决定）</h3>
+          <p class="tip">放几件、放什么、摆在哪儿——都由 AI 替你安排。你心里只当是「该带的都带上了」，<b>具体是什么、是几件，你看不见</b>。</p>
+          <div class="ai-slot">
+            <div class="ai-q">？　？　？</div>
+            <p>要等三千年后，你把土一层一层揭开的那个下午，它们才会一件一件出现。</p>
           </div>
-          <div class="pool" id="pool"></div>
+          <div style="margin-top:12px">
+            <button class="btn ghost" id="aiPick" type="button" style="width:100%">🎲 换一套（AI 重选，你依然看不见）</button>
+          </div>
           <div class="pickhint" id="pickHint"></div>
         </div>
         <div class="panel">
@@ -633,7 +788,7 @@ body:not(.act-paper) .foot{color:#8d7a5c}
           <div class="opt-row" id="ochreRow"></div>
         </div>
         <div class="actbar">
-          <div class="counter">已放入 <b id="cntN">0</b> 件</div>
+          <div class="counter">随葬品 <b id="cntN">?</b> 件</div>
           <button class="btn primary" id="goEarth">封　土　↓</button>
         </div>
       </div>
@@ -664,7 +819,7 @@ body:not(.act-paper) .foot{color:#8d7a5c}
           <div class="dg-stat"><span>体力</span><b id="dgEnergy">100</b></div>
           <div class="dg-meter"><i id="dgEnergyBar"></i></div>
           <div class="dg-stat"><span>剩余时间</span><b id="dgClock">02:30</b></div>
-          <div class="dg-stat"><span>已提取</span><b id="dgFound">0 / 0</b></div>
+          <div class="dg-stat"><span>已提取</span><b id="dgFound">0</b></div>
           <div class="dg-stat"><span>陶片</span><b id="dgShard">0</b></div>
         </div>
         <div class="dg-panel">
@@ -697,7 +852,7 @@ body:not(.act-paper) .foot{color:#8d7a5c}
     </div>
 
     <div class="actbar">
-      <div class="counter">埋下 <b id="buriedN">0</b> 件 · 实提 <b id="digN">0</b> 件</div>
+      <div class="counter">埋下 <b id="buriedN">?</b> 件 · 实提 <b id="digN">0</b> 件</div>
       <button class="btn primary" id="goReport" disabled>生成发掘报告　→</button>
     </div>
   </section>
@@ -746,6 +901,49 @@ body:not(.act-paper) .foot{color:#8d7a5c}
     </div>
   </section>
 </main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <div class="foot-brand">
+      <div class="foot-logo">
+        <img src="装饰/神兽标志.webp" alt="文物精灵">
+        <b>文物精灵</b>
+        <span class="en">RELIC SOUL</span>
+      </div>
+      <p>让每一个中国文物，都鲜活起来。</p>
+    </div>
+    <div class="foot-cols">
+      <div class="fc"><b>玩法</b>
+        <a href="index.html">返回主站</a>
+        <a href="向考古-我埋下的三千年.html">向考古 · 我埋下的三千年</a>
+        <a href="考古挖掘小游戏.html">考古挖掘小游戏</a>
+      </div>
+      <div class="fc"><b>本次玩法</b>
+        <span>① 下葬：定身份、葬式、头向</span>
+        <span>② 三千年：看地层一层层压上来</span>
+        <span>③ 发掘：亲手下探方，挖出你埋的东西</span>
+      </div>
+      <div class="fc"><b>关于</b>
+        <span>文物精灵 · 大学 AI 网页作品</span>
+        <span>葬俗参照仰韶—马家窑系统公开资料</span>
+        <span>演示项目 · 2026</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot-decl">
+    <div class="foot-decl-in">
+      <p><b>原创声明</b>本页设计、交互逻辑、像素素材与全部源码均由「文物精灵」团队原创，未直接照搬任何开源项目（含开源硬件设计）、商业模板或他人设计稿；确有借鉴之处均已在仓库 README 中注明，并做了实质性二次开发与适配。</p>
+      <p><b>素材与资料</b>文物资料整理自河北博物院、中国国家博物馆等公开资料，版权归原馆藏机构所有，本站仅用于学习交流与科普展示，如涉版权问题请联系我们删除。</p>
+      <p><b>演示说明</b>墓葬编号、探方号、个体年龄与出土编号为演示虚构；葬俗（头向、瓮棺葬、赤铁矿粉、毁器）参照仰韶—马家窑系统公开发表的考古学通识编写，不作学术引用。</p>
+      <p><b>免责声明</b>本站为高校学生 AI 网页作品原型，演示数据与功能结果不代表真实考古结论，不用于任何商业用途。</p>
+    </div>
+  </div>
+  <div class="foot-bar">
+    <span>© 2026 文物精灵 RELIC SOUL · 本站为产品原型演示</span>
+    <span class="fb-r"><em>部分内容为演示数据</em><em>河北 · 中国</em></span>
+  </div>
+</footer>
+
 
 <footer class="foot">
   <div>本页为「文物精灵」比赛 Demo 的独立玩法页，资料取自站内知识库（半山彩陶壶 / 红山文化玉猪龙 / 玉坠 等）；葬俗描述参照仰韶—马家窑系统公开发表的考古学通识，人物与墓葬编号为演示虚构。</div>
@@ -982,6 +1180,7 @@ function renderOptRow(box, map, key){
 }
 
 function renderPool(){
+  if(!$('#pool')) return;   /* AI 幕后决定，不再渲染可选池 */
   var used = placedIds();
   $('#pool').innerHTML = ITEMS.map(function(it){
     var n = used.filter(function(x){return x===it.id;}).length;
@@ -999,15 +1198,10 @@ function renderPool(){
 }
 
 function renderHint(){
-  var h = $('#pickHint');
-  if(S.picked){
-    var it = item(S.picked);
-    h.innerHTML = '已选中 <b>'+esc(it.name)+'</b>：点墓坑里的虚线框放入。'+
-      (it.breakable ? '　<a href="javascript:;" id="brkBtn" style="color:#e6c765">'+ (S.broken[it.id]?'✓ 口沿已打破':'标记为「口沿打破」') +'</a>' : '');
-    var b = document.getElementById('brkBtn');
-    if(b) b.onclick = function(){ toggleBroken(S.picked); };
-  }else{
-    h.innerHTML = '先从上面选一件。放进去的东西，三千年后都会变成证据。';
+  var h = $('#pickHint'); if(!h) return;
+  if(!h.getAttribute('data-ai')){
+    h.setAttribute('data-ai','1');
+    h.innerHTML = 'AI 已经替你安排好了。<b>放了几件、都是什么</b>——你看不见，也不会被告知。';
   }
 }
 
@@ -1026,20 +1220,11 @@ function renderSlots(){
     var s = el.getAttribute('data-s');
     var cap = el.querySelector('.cap');
     if(cap && caps[s]) cap.textContent = caps[s];
+    /* 随葬品由 AI 决定，玩家看不见——墓坑里不摆任何东西 */
     el.querySelectorAll('.mini').forEach(function(n){ n.remove(); });
-    S.place[s].forEach(function(id){
-      var it = item(id);
-      var w = document.createElement('i');
-      w.className='mini';
-      var brk = S.broken[id] ? '<em class="bk">碎</em>' : '';
-      w.innerHTML = (it.img?'<img src="'+it.img+'" alt="" onerror="this.style.display=\'none\'">':(SVG[it.svg]||'')) + brk;
-      w.title = it.name + (S.broken[id] ? '（口沿打破）' : '');
-      w.onclick = function(ev){ ev.stopPropagation(); removeFrom(s,id); };
-      el.appendChild(w);
-    });
-    el.classList.toggle('hot', !!S.picked && S.place[s].length < SLOT_CAP[s]);
+    el.classList.remove('hot');
   });
-  $('#cntN').textContent = placedList().length;
+  $('#cntN').textContent = '?';
   renderDust();
 }
 
@@ -1359,7 +1544,7 @@ function dgHUD(){
   dgEl('dgEnergyBar').style.width = dgClamp(dgSt.energy,0,100)+'%';
   var s = Math.max(0, Math.ceil(dgSt.time));
   dgEl('dgClock').textContent = (Math.floor(s/60)<10?'0':'')+Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60);
-  dgEl('dgFound').textContent = dgSt.collected.length + ' / ' + dgSt.goal;
+  dgEl('dgFound').textContent = String(dgSt.collected.length);
   dgEl('dgShard').textContent = String(dgSt.shards);
   dgRenderTools();
   dgEl('dgStatus').textContent = dgSt.status==='ready' ? '等待开工'
@@ -1642,6 +1827,7 @@ function dgEnd(reason){
   dgEl('dgEnd').classList.add('on');
   dgEl('dgEndGo').focus();
   dgEl('goReport').disabled = false;
+  dgEl('buriedN').textContent = String(placedList().length);
   dgTray(); dgHUD();
   dgTone(win?720:180,.2,win?'triangle':'sawtooth',.04);
 }
@@ -1650,7 +1836,7 @@ function dgStart(){
   dgCv = dgEl('dgCanvas'); dgCtx = dgCv.getContext('2d');
   dgCtx.imageSmoothingEnabled = false;
   var n = placedList().length;
-  dgEl('buriedN').textContent = String(n);
+  dgEl('buriedN').textContent = '?';
   dgSt.collected=[]; dgSt.shards=0; dgSt.probes=2; dgSt.particles=[];
   dgSt.emptyStreak=0; dgSt.hint=-1; dgSt.cursor={c:0,r:0}; dgSt.hover=null;
   dgSt.energy = 60 + n*22;
@@ -2035,8 +2221,10 @@ function aiPickOffering(){
     }
   }
   renderAll();
-  $('#pickHint').innerHTML = 'AI 替你放好了 <b>'+picks.length+' 件</b>。不满意就再点一次 🎲，也可以自己点选修改。';
-  say('AI 替你放好了：<b>'+picks.join('；')+'</b>。不满意就再点一次，也可以自己点选修改。');
+  var h = $('#pickHint');
+  if(h){ h.setAttribute('data-ai','1');
+    h.innerHTML = '换过一套了。换了什么，同样不告诉你——三千年后见。'; }
+  say('这一套已经替你安排好，收进墓里了。<b>放了几件、都是什么，你不知道。</b>要等挖开那天才知道。');
 }
 /* =========================================================
    八、事件绑定
@@ -2068,7 +2256,7 @@ $('#goTop').onclick = function(){ goto(0); };
 $$('#pit .slot').forEach(function(el){
   el.onclick = function(){
     var s = el.getAttribute('data-s');
-    if(!S.picked){ say('先从右边选一件随葬品。'); return; }
+    say('随葬品已经由 AI 替你放好，你看不见。揭土那天它们才会现身。'); return;
     placeTo(s);
   };
 });
