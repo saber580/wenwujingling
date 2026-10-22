@@ -200,12 +200,23 @@ body.act-paper .btn.ghost{background:transparent;color:var(--ink2)}
 .slot-fill .cap{bottom:-17px}
 
 /* 葬式形态：左侧墓坑跟着选项一起变 */
-.burial.pose-bent .leg-l{top:178px;height:132px;transform-origin:top center;transform:rotate(152deg)}
-.burial.pose-bent .leg-r{top:178px;height:128px;transform-origin:top center;transform:rotate(-146deg)}
-.burial.pose-bent .arm-l{transform:rotate(26deg)}
-.burial.pose-bent .arm-r{transform:rotate(-22deg)}
-.burial.pose-bent .ribs{transform:scaleX(.92)}
-.burial.pose-bent .pelvis{top:158px}
+/* 屈肢：大腿自髋部上折，小腿自膝部回折 —— 侧躺蜷缩 */
+.thigh-l,.thigh-r,.shin-l,.shin-r{display:none}
+.burial.pose-bent .leg-l,.burial.pose-bent .leg-r{display:none}
+.burial.pose-bent .thigh-l,.burial.pose-bent .thigh-r,
+.burial.pose-bent .shin-l,.burial.pose-bent .shin-r{display:block;position:absolute;border-radius:5px}
+.burial.pose-bent .thigh-l{left:calc(50% - 4.5px);top:51%;width:9px;height:18.8%;
+  transform-origin:top center;transform:rotate(150deg)}
+.burial.pose-bent .thigh-r{left:calc(50% - 4.5px);top:51%;width:9px;height:18.8%;
+  transform-origin:top center;transform:rotate(-150deg)}
+.burial.pose-bent .shin-l{left:calc(28% - 4px);top:34.7%;width:8px;height:15.3%;
+  transform-origin:top center;transform:rotate(28deg)}
+.burial.pose-bent .shin-r{left:calc(72% - 4px);top:34.7%;width:8px;height:15.3%;
+  transform-origin:top center;transform:rotate(-28deg)}
+.burial.pose-bent .ribs{transform:scaleX(.58)}
+.burial.pose-bent .pelvis{top:44%;width:40px;margin-left:-20px}
+.burial.pose-bent .arm-l{top:62px;height:96px;transform:rotate(34deg)}
+.burial.pose-bent .arm-r{top:62px;height:96px;transform:rotate(-34deg)}
 
 .burial.pose-prone .skull::before{opacity:0}
 .burial.pose-prone .skull::after{left:20px;top:39px;width:10px;height:4px;background:rgba(107,90,65,.45);opacity:.7}
@@ -430,6 +441,8 @@ body:not(.act-paper) .foot{color:#8d7a5c}
 .dg-tile.on{border-color:#f0c15c;background:rgba(240,193,92,.16);
   box-shadow:inset 0 0 12px rgba(240,193,92,.15),0 0 10px rgba(240,193,92,.12)}
 .dg-tile.off{opacity:.45;cursor:not-allowed}
+.dg-tile.used{opacity:.7}
+.dg-tile.used canvas{filter:grayscale(.5)}
 .dg-tile canvas{width:46px;height:46px;image-rendering:pixelated;display:block;margin:0 auto 6px}
 .dg-tile b{display:block;font-size:13.5px;color:#f7e7c3;letter-spacing:1.5px}
 .dg-tile small{display:block;font-size:10px;color:#b99a72;line-height:1.55;margin-top:3px}
@@ -532,8 +545,6 @@ body:not(.act-paper) .foot{color:#8d7a5c}
   .pelvis{top:130px;width:44px;margin-left:-22px}
   .arm-l,.arm-r{top:56px;height:100px}
   .leg-l,.leg-r{top:156px;height:134px}
-  .burial.pose-bent .leg-l{top:156px;height:112px}
-  .burial.pose-bent .leg-r{top:156px;height:108px}
   .slot,.dslot{width:58px;min-height:54px}
   .slot[data-s="head"],.dslot[data-s="head"]{left:60%;top:-4px}
   .slot[data-s="chest"],.dslot[data-s="chest"]{left:-10px;top:88px}
@@ -777,6 +788,8 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
             <div class="bone arm-r"></div>
             <div class="bone leg-l"></div>
             <div class="bone leg-r"></div>
+            <div class="bone thigh-l"></div><div class="bone shin-l"></div>
+            <div class="bone thigh-r"></div><div class="bone shin-r"></div>
             <div class="urn-body"></div>
             <div class="scatter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
             <div class="slot" data-s="head"><span class="cap" data-cap="head">头侧</span></div>
@@ -1739,12 +1752,24 @@ function dgDrawCell(cell, now){
       }
     }
   }
-  if(dgSt.hint===cell.i && now<dgSt.hintUntil){
-    dgCtx.globalAlpha = .55+.45*(Math.sin(now/90)*.5+.5);
+  var lit = (dgSt.hint===cell.i && now<dgSt.hintUntil) || (cell.hinted && !cell.collected);
+  if(lit){
+    var pulse = .55+.45*(Math.sin(now/90)*.5+.5);
+    dgCtx.globalAlpha = pulse;
     dgCtx.fillStyle='#f0c15c';
-    dgCtx.fillRect(p.x,p.y,T,4); dgCtx.fillRect(p.x,p.y+T-4,T,4);
-    dgCtx.fillRect(p.x,p.y,4,T); dgCtx.fillRect(p.x+T-4,p.y,4,T);
+    dgCtx.fillRect(p.x,p.y,T,5); dgCtx.fillRect(p.x,p.y+T-5,T,5);
+    dgCtx.fillRect(p.x,p.y,5,T); dgCtx.fillRect(p.x+T-5,p.y,5,T);
+    /* 四角小括号，像"这里有人"的标记 */
+    dgCtx.fillRect(p.x+12,p.y-4,20,3); dgCtx.fillRect(p.x+T-32,p.y-4,20,3);
+    dgCtx.globalAlpha = pulse*.55;
+    dgCtx.fillStyle='#f0c15c';
+    dgCtx.fillRect(p.x+2,p.y+2,T-4,T-4);
     dgCtx.globalAlpha=1;
+    dgCtx.fillStyle='#f0c15c';
+    dgCtx.font='bold 15px "Zpix","Microsoft YaHei",monospace';
+    dgCtx.textAlign='center'; dgCtx.textBaseline='middle';
+    dgCtx.fillText('探到器物', p.x+T/2, p.y+T/2);
+    dgCtx.textAlign='left'; dgCtx.textBaseline='alphabetic';
   }
   if(dgSt.hover===cell){
     dgCtx.fillStyle='rgba(247,231,195,.7)';
@@ -1852,7 +1877,7 @@ function dgBrush(cell){
   dgHUD();
 }
 function dgCollect(cell){
-  cell.collected=true;
+  cell.collected=true; cell.hinted=false;
   dgSt.collected.push(cell.relic);
   var p=dgCellXY(cell);
   dgSpark(p.x+DG.TILE/2,p.y+DG.TILE/2,10);
@@ -1894,6 +1919,7 @@ function dgProbe(){
   /* 一次一支，不耗体力；直接探到一件器物的位置 */
   var t = targets[Math.floor(Math.random()*targets.length)];
   dgSt.probes = 0;
+  t.hinted = true;
   dgSt.hint = t.i;
   dgSt.hintUntil = performance.now() + 6000;
   dgSt.cursor = { c:t.c, r:t.r };
@@ -2038,15 +2064,16 @@ function dgRenderTools(){
   DG_TOOLS.forEach(function(t){
     var el=dgEl('dgTool_'+t.k); if(!el) return;
     if(t.k==='probe'){
-      el.classList.toggle('off', probeOff);
+      el.classList.toggle('used', dgSt.probes<=0);
+      el.classList.toggle('off', probeOff && dgSt.probes>0);
       el.classList.remove('on');
     }else{
       el.classList.toggle('on', dgSt.tool===t.k && dgSt.status==='playing' && !dgSt.paused);
       el.classList.remove('off');
     }
   });
-  var pt=dgEl('dgProbeText');
-  if(pt) pt.textContent = dgSt.probes + ' 次';
+  var pt=dgEl('dgToolTip_probe') || dgEl('dgProbeText');
+  if(pt) pt.textContent = dgSt.probes>0 ? '标出一件·仅一次' : '已用完';
 }
 function dgSetTool(k){
   dgSt.tool = k;
