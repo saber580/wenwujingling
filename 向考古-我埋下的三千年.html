@@ -2213,7 +2213,7 @@ function buildReport(){
 /* AI 随机替你选一套随葬品 */
 function aiPickOffering(){
   var zones = ['head','chest','side','feet','fill'];
-  var n = 2 + Math.floor(Math.random()*3); /* 2~4 件 */
+  var n = 2 + Math.floor(Math.random()*4); /* 2~5 件，绝不为 0 */
   var pool = ITEMS.slice();
   /* 洗牌 */
   for(var i=pool.length-1;i>0;i--){
@@ -2239,6 +2239,19 @@ function aiPickOffering(){
         picks.push(it.name+' → '+({head:'头边',chest:'胸前',side:'手侧',feet:'脚端',fill:'填土'})[sname]);
         ok=true;
       }
+    }
+  }
+  /* 兜底：保证至少 2 件、最多 5 件（AI 永远不会让你空着手上路） */
+  var filled = placedList().length;
+  if(filled < 2 || filled > 5){
+    S.place={head:[],chest:[],side:[],feet:[],fill:[]};
+    S.broken={};
+    var want = filled < 2 ? 2 : 5;
+    var rest = pool.slice(), pi = 0, zi = 0, guard = 0;
+    while(pi < want && pi < rest.length && guard++ < 60){
+      var zname = zones[zi % zones.length]; zi++;
+      if(S.place[zname].length >= SLOT_CAP[zname]) continue;
+      S.place[zname].push(rest[pi].id); pi++;
     }
   }
   renderAll();
