@@ -7,7 +7,7 @@
 (function () {
   "use strict";
 
-  var KEY = "relic_nb_v1";          /* 看过就记一笔，之后不再自动弹 */
+  var KEY = "relic_nb_v2";          /* 看过就记一笔，之后不再自动弹（v2：第 6 步换成「捕捉精灵」） */
 
   var STEPS = [
     {
@@ -36,9 +36,9 @@
       sel: [".aq", "#aqBall"]
     },
     {
-      t: "想用 AI，先登录一下",
-      d: "识别、修复、聊天这些要<em>登录</em>才用得了（右上角）。<br>不登录也能随便逛，想动手了再登。",
-      sel: ["#authBtn", ".auth-btn", '.mtab [data-key="me"]']
+      t: "把野生的精灵收下来",
+      d: "上面这些是已经跟着你的伙伴。想再收新的：去站点<em>📷 打卡拍照 · 唤醒文物</em>，收进图鉴后点它<em>「挑战捕捉」</em>——<br>答对题才掷得动骰子，把它打到<em>残血</em>（或直接打倒）就归你了。",
+      sel: ["#home-mine .rh-mine-body", ".rh-mine-body", ".rh-mine .rh-seals"]
     }
   ];
 
