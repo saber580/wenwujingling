@@ -1672,22 +1672,24 @@ function dgHUD(){
 
 function dgTray(){
   var box = dgEl('dgTray'); box.innerHTML='';
-  var all = placedList();
-  all.forEach(function(p){
-    var it = item(p.id);
-    var got = dgSt.collected.some(function(r){ return r.id===p.id && r.slot===p.slot; });
+  /* 登记册只登记"已经取出来"的器物：没出土的不显示名字，免得泄露埋了什么 */
+  var got = dgSt.collected.slice();
+  if(!got.length){
+    box.innerHTML = '<p class="dg-tip">还没有清理出器物。<br>先揭土，见器物再换毛刷。</p>';
+    return;
+  }
+  got.forEach(function(r){
+    var it = item(r.id);
     var d = document.createElement('div');
-    d.className = 'dg-slot' + (got?' found':'');
+    d.className = 'dg-slot found';
     d.innerHTML = '<canvas width="34" height="34"></canvas><b>'+esc(it.name)+'</b>'+
-                  '<small>'+(got? ('T0512③:'+ (dgSt.collected.filter(function(r){return r.id===p.id&&r.slot===p.slot;})[0]||{no:'-'}).no) : SLOT_NAME[p.s]+' · 未提取')+'</small>';
+                  '<small>T0512③:'+r.no+' · '+SLOT_NAME[r.slot]+'</small>';
     box.appendChild(d);
     var cc = d.querySelector('canvas').getContext('2d');
     cc.imageSmoothingEnabled=false;
     cc.fillStyle='#1a100a'; cc.fillRect(0,0,34,34);
-    if(got) dgSpriteOn(cc, DG_SPRITE_OF[p.id]||'jade', 17, 17, 2);
-    else { cc.fillStyle='#3a2418'; cc.fillRect(10,16,14,2); cc.fillRect(16,10,2,14); }
+    dgSpriteOn(cc, DG_SPRITE_OF[r.id]||'jade', 17, 17, 2);
   });
-  if(!all.length) box.innerHTML = '<p class="dg-tip">这一座墓里，你什么都没有留下。</p>';
 }
 
 function dgCellXY(cell){ return { x:DG.OX+cell.c*(DG.TILE+DG.GAP), y:DG.OY+cell.r*(DG.TILE+DG.GAP) }; }
