@@ -722,6 +722,33 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
   .foot-bar{gap:6px 18px;font-size:11.5px}
 }
 
+/* =========================================================
+   手机端性能：去掉滚动时每帧重算的东西
+   · 固定底纹(fixed) 滚动时会整屏重绘 → 手机改普通渐变
+   · 全屏混合层 grain → 关掉
+   · 顶栏实时毛玻璃 → 换半透实色
+   · 序章徽记无限旋转（conic-gradient 每帧重栅格化）→ 停
+   · body 背景过渡 → 关掉
+   ========================================================= */
+@media (max-width:860px){
+  body,body.act-bury,body.act-earth,body.act-dig,body.act-paper{
+    background:linear-gradient(180deg,#fdfaf4 0%,#f7f1e5 55%,#f2ebdd 100%) !important;
+    transition:none !important;
+    background-attachment:scroll !important;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .grain{display:none !important}
+  .hd{backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+    background:rgba(255,253,248,.97);box-shadow:0 2px 10px rgba(120,90,40,.10)}
+  .s0-mark{animation:none !important}
+  .dg-modal{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+  .panel,.dg-panel,.order,.rep,.objwrap,.cast-fig{
+    box-shadow:0 4px 14px rgba(80,60,30,.08) !important}
+  .btn,.opt,.slot,.dg-tile,.mold{transition-duration:.12s}
+  .steps{-webkit-overflow-scrolling:touch}
+  html{scroll-behavior:auto}
+}
+
 </style>
 </head>
 <body class="act-bury">
@@ -1826,6 +1853,13 @@ function dgDraw(now){
 }
 
 function dgLoop(now){
+  /* 不在第三步时停掉动画循环，省电也省性能 */
+  var sec = document.getElementById('s3');
+  if(!sec || !sec.classList.contains('on')){
+    dgRaf = 0;
+    for(var k=dgSt.particles.length-1;k>=0;k--) dgSt.particles.splice(k,1);
+    return;
+  }
   var dt = Math.min(.05,(now-dgLast)/1000); dgLast=now;
   if(dgSt.status==='playing' && !dgSt.paused){
     dgSt.time = Math.max(0, dgSt.time-dt);
@@ -2114,8 +2148,19 @@ function dgUseTool(cell){
   var cv = dgEl('dgCanvas');
   cv.addEventListener('pointermove', function(e){ dgSt.hover = dgCellAt(dgPoint(e).x, dgPoint(e).y); });
   cv.addEventListener('pointerleave', function(){ dgSt.hover=null; });
+  /* 触摸友好：按下只记起点，抬起时若几乎没移动才判定为"点"；
+     手指拖动交给页面滚动，不再 preventDefault 把滚动吃掉 */
+  var dgDown = null;
   cv.addEventListener('pointerdown', function(e){
-    e.preventDefault(); cv.focus({preventScroll:true});
+    dgDown = { x:e.clientX, y:e.clientY };
+    cv.focus({preventScroll:true});
+  });
+  cv.addEventListener('pointercancel', function(){ dgDown = null; });
+  cv.addEventListener('pointerup', function(e){
+    if(!dgDown) return;
+    var dx = e.clientX - dgDown.x, dy = e.clientY - dgDown.y;
+    dgDown = null;
+    if(Math.sqrt(dx*dx + dy*dy) > 12) return;   /* 拖动 → 只是滚页面 */
     var p=dgPoint(e), cell=dgCellAt(p.x,p.y);
     if(!cell) return;
     dgSt.cursor={c:cell.c,r:cell.r};

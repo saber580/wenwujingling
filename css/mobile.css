@@ -234,14 +234,60 @@
   .overlay .auth-panel{padding:20px 20px 18px}
   .overlay .auth-panel h3{font-size:20px}
 
-  /* ---------------- 10 · 红舞狮：缩小让位，别压字 ---------------- */
+  /* ---------------- 10 · 红舞狮：只缩本体，不缩对话框 ----------------
+     原来给 .aq 整体 scale(.52)，对话框(.aq-panel)是它的子元素，
+     会跟着被缩成一半并推off到屏幕外 —— 手机上"小答的对话框没了"就是这个原因 */
   .aq{
-    right:-4px;bottom:calc(50px + env(safe-area-inset-bottom));
-    transform:scale(.52) translateZ(0);transform-origin:100% 100%;
-    z-index:58;
+    right:3px;bottom:calc(44px + env(safe-area-inset-bottom));
+    width:clamp(104px,30vw,132px);height:clamp(114px,33vw,146px);
+    z-index:60;
+    transform:none!important;      /* 关键：不要整体缩放，否则对话框跟着缩小、被推出屏外 */
   }
+  .aq .aq-ball{
+    transform:scale(.62);transform-origin:100% 100%;transition:transform .2s;
+  }
+  .aq.open .aq-ball{transform:scale(.46);transform-origin:100% 100%}
   .aq-tip{display:none!important}
-  .aq-panel{width:min(320px,calc(100vw - 16px))!important;right:0!important;left:auto!important}
+  /* 对话框：按屏宽自适应，始终留 12px 边距，且始终在视口内 */
+  .aq-panel{
+    width:min(342px,calc(100vw - 30px))!important;
+    right:0!important;left:auto!important;
+    bottom:calc(100% + 6px)!important;
+    max-height:min(58vh,420px);
+    border-radius:16px;
+  }
+  .aq-body{max-height:min(36vh,268px);padding:10px 11px 4px;gap:8px}
+  .aq-msg{font-size:12.5px;line-height:1.7}
+
+
+  /* ---------------- 13 · 手机端再收一轮：主干滚动重绘 ----------------
+     首页 6000px 长，下列动画都是「每帧重算整块绘制」的东西：
+     渐变扫光、星星旋转、呼吸光晕、图片浮动、跑马灯 —— 手机上一律停帧。
+     对话框与操作反馈类动画（小答、弹层、提示）保留。 */
+  .sc-stage,.sc-stage *,
+  .rh-title-cn,.rh-title-cn *,
+  .rh-hero-cta .starbtn,.rh-hero-cta .starbtn *,
+  .rh-moon-art,.rh-moon-art *,
+  .aw-tip,
+  .rh-band-track,.rh-band-track *{
+    animation:none!important;
+  }
+  .rh-band-track{transform:none!important}
+  img,.tk-art,.tk-art *,.fc-art,.fc-art *,.aw-breathe,.aw-float,.rh-float{animation:none!important}
+  /* 用 #app 提升优先级，压掉带 !important 的入场/扫光关键帧 */
+  #app .rh-hero,#app .rh-hero *,
+  #app .rh-band,#app .rh-band *,
+  #app .rh-moon-art,#app .rh-moon-art *,
+  #app .stars,#app .stars *,
+  #app .rh-title-cn,#app .rh-title-cn *{animation:none!important}
+
+  /* 残留的实时模糊：bgm 面板 / 星空按钮 / 登录弹层 换成实色 */
+  .bgm-panel,.rh-hero-cta .starbtn,
+  .overlay .sheet,.overlay{
+    -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  }
+  .rh-hero-cta .starbtn{background:linear-gradient(135deg,#d8452a,#a82613)}
+  .overlay{background:rgba(30,12,8,.66)}
 
   /* ---------------- 11 · 手机流畅度：卸掉最吃 GPU 的装饰开销 ----------------
      下面几项都是「全屏级、每帧重算」的开销，桌面留着好看，手机上会拖垮滑动帧率：

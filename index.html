@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="css/red-inner.css?v=ri8">
 <link rel="stylesheet" href="css/bg-paint.css?v=bp4">
 <link rel="stylesheet" href="css/intro-scroll.css?v=sc9">
-<link rel="stylesheet" href="css/mobile.css?v=m3">
+<link rel="stylesheet" href="css/mobile.css?v=m6">
 <style>
 /* ===== 对战舞台校准（只作用于本页） =====
    1) 原来的 .unit 写死 132px，名字一长就向外溢出、被舞台的 overflow:hidden 切掉一截；
@@ -809,5 +809,43 @@
 <script src="js/aw-mystery.js?v=my2"></script>
 <script src="js/aw-craft.js?v=cf4"></script>
 <script src="js/mobile-nav.js?v=m4"></script>
+
+<script>
+/* 手机流畅度兜底：把"无限循环的装饰动画"停掉（CSS 压不住的 JS 驱动动画也一起处理）
+   只保留小答与弹层反馈；桌面端不执行。 */
+(function(){
+  try{
+    if(!window.matchMedia || !matchMedia('(max-width:860px)').matches) return;
+    var KEEP = /(^|\s)aq(\s|$)|aq-|sheet|toast|spark|tip/;
+    function prune(){
+      var list;
+      try{ list = document.getAnimations ? document.getAnimations() : []; }catch(e){ return; }
+      list.forEach(function(a){
+        try{
+          if(a.playState!=='running') return;
+          var t=a.effect && a.effect.target;
+          if(!t) return;
+          var cn=String(t.className||'');
+          if(KEEP.test(cn)) return;
+          var it=1;
+          if(a.effect.getTiming) it=a.effect.getTiming().iterations;
+          if(it===Infinity || (typeof it==='number' && it>100)) a.cancel();
+        }catch(e){}
+      });
+    }
+    prune();
+    setTimeout(prune,900); setTimeout(prune,2200); setTimeout(prune,4200);
+    /* 开屏/收起扉页后动画会重新起来，所以再盯一阵 + 滚动时顺手清一次 */
+    var n=0, timer=setInterval(function(){ prune(); if(++n>8) clearInterval(timer); }, 2000);
+    var scT=0;
+    window.addEventListener('scroll', function(){
+      if(scT) return;
+      scT=setTimeout(function(){ scT=0; prune(); }, 260);
+    }, {passive:true});
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) prune(); });
+    window.addEventListener('load', function(){ setTimeout(prune,600); });
+  }catch(e){}
+})();
+</script>
 </body>
 </html>
