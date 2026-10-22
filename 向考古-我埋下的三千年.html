@@ -77,7 +77,7 @@ body.act-paper .st.on{color:var(--red-d);border-color:rgba(181,67,47,.4);backgro
 body.act-paper .st.done{color:var(--jade)}
 
 /* ---------- 幕容器 ---------- */
-main{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
+main{max-width:1180px;margin:0 auto;padding:20px 18px 34px}
 .act{display:none;animation:fade .6s ease}
 .act.on{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -98,27 +98,28 @@ body.act-paper .btn.primary{background:linear-gradient(180deg,#c2452f,#8e3220);c
 body.act-paper .btn.ghost{background:transparent;color:var(--ink2)}
 
 /* ================= 幕 0 · 序章 ================= */
-.s0-wrap{max-width:760px;margin:6vh auto 0;text-align:center;padding:0 6px}
-.s0-mark{width:112px;height:112px;margin:0 auto 22px;border-radius:50%;display:grid;place-items:center;
+.s0-wrap{max-width:840px;margin:clamp(10px,2.6vh,34px) auto 0;text-align:center;padding:0 10px}
+.s0-mark{width:104px;height:104px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;
   background:
     radial-gradient(circle at 50% 50%,rgba(242,228,198,.10) 0 56%,transparent 57%),
     conic-gradient(from 0deg,#c2452f 0 25%,#2b2622 25% 50%,#c2452f 50% 75%,#2b2622 75% 100%);
   box-shadow:0 0 0 6px rgba(230,199,101,.16),0 18px 44px rgba(0,0,0,.5);
   animation:spin 26s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.s0-mark span{width:70px;height:70px;border-radius:50%;background:radial-gradient(circle at 40% 34%,#4a3320,#241a10);
+.s0-mark span{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 40% 34%,#4a3320,#241a10);
   display:grid;place-items:center;font-size:26px;color:#e6c765}
-.s0-wrap h2{margin:0 0 6px;font-size:34px;letter-spacing:8px;color:#f4e2bd;font-weight:800;text-shadow:0 4px 18px rgba(0,0,0,.6)}
-.s0-wrap .en{font-size:11px;letter-spacing:4px;color:#a08a66;margin-bottom:24px}
-.s0-lead{font-family:var(--serif);font-size:17px;line-height:2.15;color:#e5d5b4;margin:0 auto 12px;max-width:660px;text-align:left}
+.s0-wrap h2{margin:0 0 4px;font-size:33px;letter-spacing:8px;color:#f4e2bd;font-weight:800;text-shadow:0 4px 18px rgba(0,0,0,.6)}
+.s0-wrap .en{font-size:11px;letter-spacing:4px;color:#b09a7c;margin-bottom:20px}
+.s0-lead{font-family:var(--serif);font-size:17px;line-height:2.1;color:#e5d5b4;margin:0 auto 10px;max-width:720px;text-align:left}
 .s0-lead em{font-style:normal;color:#e6c765}
-.s0-quote{margin:26px auto;max-width:640px;padding:16px 20px;border-left:3px solid var(--gold);
+.s0-lead:last-of-type{text-align:center;font-size:17.5px;margin-top:4px}
+.s0-quote{margin:22px auto;max-width:700px;padding:16px 22px;border-left:3px solid var(--gold);
   background:rgba(230,199,101,.07);border-radius:0 10px 10px 0;
   font-family:var(--serif);font-size:15px;line-height:1.95;color:#dccaa6;text-align:left}
-.s0-meta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:26px 0 8px}
+.s0-meta{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:22px 0 6px}
 .chip{font-size:11.5px;letter-spacing:1px;padding:5px 12px;border-radius:999px;
   border:1px solid rgba(230,199,101,.32);color:#cbb894;background:rgba(0,0,0,.18)}
-.s0-go{margin-top:26px}
+.s0-go{margin-top:22px}
 
 /* ================= 幕 1 · 下葬 ================= */
 .grid2{display:grid;grid-template-columns:1fr 400px;gap:24px;align-items:start}
@@ -200,7 +201,11 @@ body.act-paper .btn.ghost{background:transparent;color:var(--ink2)}
 .slot-fill .cap{bottom:-17px}
 
 /* 葬式形态：左侧墓坑跟着选项一起变 */
-/* 屈肢：大腿自髋部上折，小腿自膝部回折 —— 侧躺蜷缩 */
+/* 骨头整体容器（可整体倾斜，不影响槽位） */
+.bones{position:absolute;inset:0;pointer-events:none;transform-origin:50% 46%;
+  transition:transform .45s cubic-bezier(.3,.8,.3,1)}
+/* 屈肢：整体斜着侧躺 + 大腿上折、小腿回折 */
+.burial.pose-bent .bones{transform:rotate(-15deg)}
 .thigh-l,.thigh-r,.shin-l,.shin-r{display:none}
 .burial.pose-bent .leg-l,.burial.pose-bent .leg-r{display:none}
 .burial.pose-bent .thigh-l,.burial.pose-bent .thigh-r,
@@ -685,20 +690,21 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
 .foot{margin-top:40px;background:linear-gradient(180deg,#aa241c,#7c1511 90%);
   border-top:1px solid rgba(255,226,180,.32);color:#d9d3ca}
 .foot-in,.foot-bar{max-width:1180px;margin:0 auto;padding-left:26px;padding-right:26px}
-.foot-in{display:flex;justify-content:space-between;gap:40px 52px;flex-wrap:wrap;padding-top:44px;padding-bottom:30px}
+.foot-in{display:flex;justify-content:space-between;align-items:flex-start;gap:36px 48px;flex-wrap:wrap;padding-top:40px;padding-bottom:26px}
 .foot-logo{display:flex;align-items:center;gap:10px}
 .foot-logo img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
 .foot-logo b{color:#fff6e6;font-size:19px;letter-spacing:1.5px}
 .foot-logo .en{color:#edc48f;font-size:11px;letter-spacing:2.6px;margin-top:3px;white-space:nowrap}
-.foot-brand p{margin:18px 0 0;color:#f6d7b6;font-size:14px;letter-spacing:.4px}
-.foot-cols{display:flex;gap:48px;flex-wrap:wrap}
-.fc{display:flex;flex-direction:column;gap:11px;font-size:13.5px}
+.foot-brand{max-width:280px}
+.foot-brand p{margin:16px 0 0;color:#f6d7b6;font-size:13.5px;line-height:1.8;letter-spacing:.3px}
+.foot-cols{display:flex;flex:1;justify-content:flex-end;gap:clamp(22px,3.6vw,56px);flex-wrap:wrap}
+.fc{display:flex;flex-direction:column;gap:9px;font-size:13px;min-width:118px}
 .fc b{color:#edc48f;font-weight:400;font-size:12px;letter-spacing:1.5px;margin-bottom:4px}
 .fc a,.fc span{color:#ffeedd;text-decoration:none;line-height:1.5}
 .fc a:hover{color:#ffd9a0}
 .foot-decl{max-width:1180px;margin:0 auto;padding:0 26px}
 .foot-decl-in{border-top:1px solid rgba(255,236,206,.26);padding:13px 0 15px}
-.foot-decl p{margin:0 0 6px;font-size:11.5px;line-height:1.9;color:#f0c3ad;letter-spacing:.2px}
+.foot-decl p{margin:0 0 7px;font-size:12px;line-height:1.95;color:#f6cdb8;letter-spacing:.2px}
 .foot-decl p:last-child{margin-bottom:0}
 .foot-decl b{font-weight:600;color:#ffe3c6;margin-right:6px}
 .foot-bar{border-top:1px solid rgba(255,236,206,.3);padding-top:14px;padding-bottom:22px;
@@ -707,9 +713,13 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
 .fb-r em{font-style:normal}
 
 @media (max-width:860px){
-  .foot-in{padding-top:30px;padding-bottom:22px}
-  .foot-cols{gap:30px}
-  .foot-decl p{font-size:11px}
+  .foot-in{padding-top:28px;padding-bottom:20px;flex-direction:column;gap:20px}
+  .foot-brand{max-width:none}
+  .foot-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px 22px;justify-content:stretch;width:100%}
+  .fc{min-width:0}
+  .foot-decl{padding:0 18px}
+  .foot-decl p{font-size:11px;line-height:1.85}
+  .foot-bar{gap:6px 18px;font-size:11.5px}
 }
 
 </style>
@@ -780,18 +790,20 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
           <div class="pit-scale">比例尺 1 : 20　·　长 2.1 m</div>
           <div class="ochre-dust" id="dust"></div>
           <div class="burial" id="burial">
-            <div class="bone skull"></div>
-            <div class="bone spine"></div>
-            <div class="bone ribs"><i></i><i></i><i></i><i></i><i></i></div>
-            <div class="bone pelvis"></div>
-            <div class="bone arm-l"></div>
-            <div class="bone arm-r"></div>
-            <div class="bone leg-l"></div>
-            <div class="bone leg-r"></div>
-            <div class="bone thigh-l"></div><div class="bone shin-l"></div>
-            <div class="bone thigh-r"></div><div class="bone shin-r"></div>
+            <div class="bones">
+              <div class="bone skull"></div>
+              <div class="bone spine"></div>
+              <div class="bone ribs"><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="bone pelvis"></div>
+              <div class="bone arm-l"></div>
+              <div class="bone arm-r"></div>
+              <div class="bone leg-l"></div>
+              <div class="bone leg-r"></div>
+              <div class="bone thigh-l"></div><div class="bone shin-l"></div>
+              <div class="bone thigh-r"></div><div class="bone shin-r"></div>
+              <div class="scatter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
             <div class="urn-body"></div>
-            <div class="scatter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
             <div class="slot" data-s="head"><span class="cap" data-cap="head">头侧</span></div>
             <div class="slot" data-s="chest"><span class="cap" data-cap="chest">胸前</span></div>
             <div class="slot" data-s="side"><span class="cap" data-cap="side">身侧</span></div>
