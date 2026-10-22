@@ -199,6 +199,40 @@ body.act-paper .btn.ghost{background:transparent;color:var(--ink2)}
 .slot-fill{position:absolute;right:10px;bottom:14px;width:78px;min-height:60px;z-index:5}
 .slot-fill .cap{bottom:-17px}
 
+/* 葬式形态：左侧墓坑跟着选项一起变 */
+.burial.pose-bent .leg-l{top:178px;height:132px;transform-origin:top center;transform:rotate(152deg)}
+.burial.pose-bent .leg-r{top:178px;height:128px;transform-origin:top center;transform:rotate(-146deg)}
+.burial.pose-bent .arm-l{transform:rotate(26deg)}
+.burial.pose-bent .arm-r{transform:rotate(-22deg)}
+.burial.pose-bent .ribs{transform:scaleX(.92)}
+.burial.pose-bent .pelvis{top:158px}
+
+.burial.pose-prone .skull::before{opacity:0}
+.burial.pose-prone .skull::after{left:20px;top:39px;width:10px;height:4px;background:rgba(107,90,65,.45);opacity:.7}
+.burial.pose-prone .arm-l{transform:rotate(5deg)}
+.burial.pose-prone .arm-r{transform:rotate(-5deg)}
+.burial.pose-prone .bone{background:rgba(238,225,200,.86)}
+
+.burial.pose-second .bone{display:none}
+.burial.pose-second .scatter{display:block}
+.scatter{display:none;position:absolute;inset:0;pointer-events:none}
+.scatter i{position:absolute;width:12px;height:5px;border-radius:4px;
+  background:rgba(244,232,208,.9);box-shadow:0 1px 3px rgba(0,0,0,.42)}
+.scatter i:nth-child(1){left:16%;top:5%;transform:rotate(22deg)}
+.scatter i:nth-child(2){left:46%;top:9%;transform:rotate(-14deg);width:9px}
+.scatter i:nth-child(3){left:30%;top:16%;transform:rotate(64deg);width:14px}
+.scatter i:nth-child(4){left:58%;top:22%;transform:rotate(-38deg)}
+.scatter i:nth-child(5){left:12%;top:29%;transform:rotate(8deg);width:10px}
+.scatter i:nth-child(6){left:40%;top:34%;transform:rotate(-58deg);width:15px}
+.scatter i:nth-child(7){left:64%;top:41%;transform:rotate(18deg)}
+.scatter i:nth-child(8){left:22%;top:47%;transform:rotate(-24deg);width:9px}
+.scatter i:nth-child(9){left:48%;top:53%;transform:rotate(72deg);width:13px}
+.scatter i:nth-child(10){left:14%;top:61%;transform:rotate(-6deg)}
+.scatter i:nth-child(11){left:56%;top:67%;transform:rotate(34deg);width:11px}
+.scatter i:nth-child(12){left:34%;top:73%;transform:rotate(-46deg);width:14px}
+.scatter i:nth-child(13){left:62%;top:81%;transform:rotate(12deg);width:9px}
+.scatter i:nth-child(14){left:28%;top:88%;transform:rotate(-32deg)}
+
 /* 赭石散布 */
 .ochre-dust{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .6s;z-index:4}
 .ochre-dust.on{opacity:1}
@@ -498,6 +532,8 @@ body:not(.act-paper) .foot{color:#8d7a5c}
   .pelvis{top:130px;width:44px;margin-left:-22px}
   .arm-l,.arm-r{top:56px;height:100px}
   .leg-l,.leg-r{top:156px;height:134px}
+  .burial.pose-bent .leg-l{top:156px;height:112px}
+  .burial.pose-bent .leg-r{top:156px;height:108px}
   .slot,.dslot{width:58px;min-height:54px}
   .slot[data-s="head"],.dslot[data-s="head"]{left:60%;top:-4px}
   .slot[data-s="chest"],.dslot[data-s="chest"]{left:-10px;top:88px}
@@ -742,6 +778,7 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
             <div class="bone leg-l"></div>
             <div class="bone leg-r"></div>
             <div class="urn-body"></div>
+            <div class="scatter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
             <div class="slot" data-s="head"><span class="cap" data-cap="head">头侧</span></div>
             <div class="slot" data-s="chest"><span class="cap" data-cap="chest">胸前</span></div>
             <div class="slot" data-s="side"><span class="cap" data-cap="side">身侧</span></div>
@@ -1241,8 +1278,16 @@ function toggleBroken(id){
 function renderSlots(){
   $('.burial').style.transform = 'rotate('+HEAD[S.head].deg+'deg)';
   $('.burial').style.setProperty('--cr', (-HEAD[S.head].deg)+'deg');
-  $('.burial').classList.toggle('urn', S.pose==='urn');
-  $('#pitTag').textContent = (S.pose==='urn' ? 'M3 · 瓮棺葬（陶瓮 + 陶钵扣合）' : 'M3 · 长方形竖穴土坑墓');
+  var bEl = $('.burial');
+  bEl.classList.toggle('urn', S.pose==='urn');
+  ['pose-bent','pose-prone','pose-second','pose-straight'].forEach(function(k){ bEl.classList.remove(k); });
+  if(S.pose==='bent') bEl.classList.add('pose-bent');
+  else if(S.pose==='prone') bEl.classList.add('pose-prone');
+  else if(S.pose==='second') bEl.classList.add('pose-second');
+  else bEl.classList.add('pose-straight');
+  $('#pitTag').textContent = (S.pose==='urn'
+    ? 'M3 · 瓮棺葬（陶瓮 + 陶钵扣合）'
+    : 'M3 · 长方形竖穴土坑墓 · ' + POSE[S.pose].name);
   var caps = S.pose==='urn' ? {head:'瓮口旁',chest:'瓮内',side:'瓮侧',feet:'坑底'} : SLOT_NAME;
   $$('.slot').forEach(function(el){
     var s = el.getAttribute('data-s');
