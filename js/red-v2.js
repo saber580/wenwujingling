@@ -40,7 +40,8 @@
     { no: "04", big: "肆", em: "🎨", title: "AI 赋彩", desc: "把 36 幅黑白文物稿，亲手还上颜色。", href: "#/dye" },
     { no: "05", big: "伍", em: "🔍", title: "AI 文物识别", desc: "拍一张照片，报出名字、年代与来历。", href: "#/ident" },
     { no: "06", big: "陆", em: "🃏", title: "心仪卡工坊", desc: "把心头好调成一张全息典藏卡，可存图。", href: "#/heart" },
-    { no: "07", big: "柒", em: "🗺", title: "AI 旅游攻略", desc: "几天、爱看什么、和谁去，排成一条路线。", href: "#/guide" }
+    { no: "07", big: "柒", em: "🗺", title: "AI 旅游攻略", desc: "几天、爱看什么、和谁去，排成一条路线。", href: "#/guide" },
+    { no: "08", big: "捌", em: "⛏", title: "向考古", desc: "先当先民埋下一座墓，三千年后再亲手挖开。", href: "向考古-我埋下的三千年.html" }
   ];
 
   let deck = "a";
@@ -314,21 +315,6 @@
             <a class="rh-ai-cfg" href="#/" onclick="return aiCfgOpen()">☁️ 云端 AI →</a>
           </div>
           <div class="rh-tools">${tools}</div>
-
-          <!-- 全宽横幅 · 向考古（独立玩法页） -->
-          <a class="rh-feature" href="向考古-我埋下的三千年.html">
-            <span class="rh-feature-glow" aria-hidden="true"></span>
-            <span class="rh-feature-main">
-              <span class="rh-feature-no">新玩法 · 视角反转</span>
-              <b class="rh-feature-t">向考古 · 我埋下的三千年</b>
-              <span class="rh-feature-d">先当一回四千六百年前的先民，亲手为逝者布置一座墓；再跳到三千年后，带队挖开同一座墓。你埋下的是思念，他们读到的是社会。</span>
-              <span class="rh-feature-tags"><i>四幕叙事</i><i>像素发掘</i><i>约 3 分钟一局</i></span>
-            </span>
-            <span class="rh-feature-side">
-              <span class="rh-feature-em" aria-hidden="true">⛏</span>
-              <span class="rh-feature-go">进入探方 →</span>
-            </span>
-          </a>
         </div>
       </section>
 
