@@ -381,19 +381,24 @@ body:not(.act-paper) .foot{color:#8d7a5c}
 .dg{display:grid;grid-template-columns:200px minmax(0,1fr) 208px;gap:14px;align-items:start}
 .dg-panel{border:2px solid #5a3a22;background:#24170f;padding:11px 12px;box-shadow:4px 4px 0 rgba(0,0,0,.45)}
 .dg-panel h4{margin:0 0 9px;font-size:11px;letter-spacing:2px;color:#f0c15c;font-weight:800}
-.dg-stat{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:#b99a72;margin-bottom:5px}
-.dg-stat b{font-size:14px;color:#f7e7c3}
-.dg-meter{height:7px;background:#120c08;border:1px solid #5a3a22;margin:0 0 8px;overflow:hidden}
+.dg-stat{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:#c9ab84;margin-bottom:6px}
+.dg-stat b{font-size:18px;color:#f7e7c3;letter-spacing:.5px}
+.dg-meter{height:8px;background:#120c08;border:1px solid #5a3a22;margin:0 0 10px;overflow:hidden}
 .dg-meter i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#d13a2f,#f0c15c);transition:width .2s}
-.dg-tool{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-.dg-key{flex:none;width:26px;height:26px;display:grid;place-items:center;background:#312015;border:2px solid #7a5230;
-  color:#f7e7c3;font-size:12px;font-weight:800}
-.dg-tool div b{display:block;font-size:12px;color:#f7e7c3}
-.dg-tool div small{display:block;font-size:9.5px;color:#7f624a;letter-spacing:.3px}
-.dg-btn{display:block;width:100%;margin-top:4px;padding:7px 8px;cursor:pointer;font-family:inherit;
-  background:#312015;border:2px solid #7a5230;color:#f7e7c3;font-size:11.5px;font-weight:800;letter-spacing:.5px}
-.dg-btn small{display:block;font-size:9.5px;color:#7f624a;font-weight:400;margin-top:1px}
-.dg-btn:disabled{opacity:.4;cursor:not-allowed}
+/* 工具：可选中按钮 · 像素图 */
+.dg-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:2px}
+.dg-tile{cursor:pointer;user-select:none;text-align:center;padding:10px 4px 9px;border-radius:10px;
+  border:2px solid #7a5230;background:#312015;transition:.16s;font-family:inherit;color:inherit}
+.dg-tile:hover{background:#3d2818}
+.dg-tile.on{border-color:#f0c15c;background:rgba(240,193,92,.16);
+  box-shadow:inset 0 0 12px rgba(240,193,92,.15),0 0 10px rgba(240,193,92,.12)}
+.dg-tile.off{opacity:.45;cursor:not-allowed}
+.dg-tile canvas{width:46px;height:46px;image-rendering:pixelated;display:block;margin:0 auto 6px}
+.dg-tile b{display:block;font-size:13.5px;color:#f7e7c3;letter-spacing:1.5px}
+.dg-tile small{display:block;font-size:10px;color:#b99a72;line-height:1.55;margin-top:3px}
+.dg-tile .tk{display:inline-block;margin-top:5px;font-size:9px;letter-spacing:1px;color:#8d7a5c;
+  border:1px solid #5a3a22;padding:1px 6px;border-radius:99px}
+.dg-tile.on .tk{color:#f0c15c;border-color:#8d7a5c}
 .dg-hint{margin:8px 0 0;font-size:9.5px;line-height:1.7;color:#6b5340;letter-spacing:.3px}
 .dg-tip{margin:0;font-size:11px;line-height:1.8;color:#b99a72}
 
@@ -613,8 +618,13 @@ body:not(.act-paper) .foot{color:#8d7a5c}
           <div class="opt-row" id="headRow"></div>
         </div>
         <div class="panel">
-          <h3>④ 随葬品（点选后放入墓坑）</h3>
+          <h3>④ 随葬品（AI 替你选 / 也可自己点）</h3>
           <p class="tip">同一处最多放 3 件。陶器可标记「口沿打破」——你相信打破了才算送到另一个世界。</p>
+          <div style="margin:10px 0 12px">
+            <button class="btn primary" id="aiPick" type="button" style="width:100%;font-size:14.5px;padding:12px">
+              🎲 AI 随机替我选一套
+            </button>
+          </div>
           <div class="pool" id="pool"></div>
           <div class="pickhint" id="pickHint"></div>
         </div>
@@ -658,11 +668,9 @@ body:not(.act-paper) .foot{color:#8d7a5c}
           <div class="dg-stat"><span>陶片</span><b id="dgShard">0</b></div>
         </div>
         <div class="dg-panel">
-          <h4>工　具</h4>
-          <div class="dg-tool"><span class="dg-key">铲</span><div><b>小铲</b><small>点土格 · 挖一层 · 5 体力</small></div></div>
-          <div class="dg-tool"><span class="dg-key">刷</span><div><b>毛刷</b><small>器物露出后刷两次</small></div></div>
-          <button class="dg-btn" id="dgProbe" type="button">探针 <small id="dgProbeText">2 次 · 12 体力</small></button>
-          <p class="dg-hint">方向键移动 · Enter 操作 · P 探针</p>
+          <h4>工　具　·　点选使用</h4>
+          <div class="dg-tools" id="dgTools"><!-- 工具按钮由 JS 生成 --></div>
+          <p class="dg-hint">方向键移动 · Enter 用工具 · 数字键 1/2 换工具 · 3 探针</p>
         </div>
       </aside>
 
@@ -1353,8 +1361,7 @@ function dgHUD(){
   dgEl('dgClock').textContent = (Math.floor(s/60)<10?'0':'')+Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60);
   dgEl('dgFound').textContent = dgSt.collected.length + ' / ' + dgSt.goal;
   dgEl('dgShard').textContent = String(dgSt.shards);
-  dgEl('dgProbeText').textContent = dgSt.probes + ' 次 · 12 体力';
-  dgEl('dgProbe').disabled = dgSt.status!=='playing' || dgSt.paused || dgSt.probes<=0 || dgSt.energy<12;
+  dgRenderTools();
   dgEl('dgStatus').textContent = dgSt.status==='ready' ? '等待开工'
     : dgSt.status==='ended' ? '探方收工' : (dgSt.paused ? '清理中 · 暂停' : '发掘中');
   dgEl('digN').textContent = String(dgSt.collected.length);
@@ -1674,6 +1681,97 @@ function dgStart(){
   dgRaf = requestAnimationFrame(dgLoop);
 }
 
+/* ---- 工具系统：铲 / 刷 / 探针，可点选切换 ---- */
+var DG_TOOL_SPR = {
+  shovel:{ pal:{1:"#a8794c",2:"#8a5a30",3:"#c8ccd0",4:"#5f4529"}, rows:[
+    "......11........","......11........","......11........","......11........",
+    "......11........",".....2112.......","....221122......","...22211222.....",
+    "...22111222.....","...22111222.....","....221122......",".....2112.......",
+    "......22........","......44........","......44........","................"]},
+  brush:{ pal:{1:"#8a5a30",2:"#a8794c",3:"#d9b98b",4:"#6d4529"}, rows:[
+    "................","................","..11111111111...","..12222222221...",
+    "..12222222221...","..11111111111...","....444444......","....4444444.....",
+    "....444444......","...34444444.....","..3344.44.44....","..33............",
+    "..33............","................","................","................"]},
+  probe:{ pal:{1:"#e8dcc0",2:"#c9a227",3:"#8a5a30"}, rows:[
+    "............11..","...........111..","..........111...",".........111....",
+    "........111.....",".......111......","......111.......",".....111........",
+    "....111.........","...111..........","..221...........",".221............",
+    ".22.............","22..............","22..............","................"]}
+};
+var DG_TOOLS = [
+  {k:'shovel', n:'小铲', tip:'挖一层 · 5 体力', key:'1'},
+  {k:'brush',  n:'毛刷', tip:'清灰两次出土', key:'2'},
+  {k:'probe',  n:'探针', tip:'高亮示器物',   key:'3'}
+];
+dgSt.tool = 'shovel';
+
+function dgDrawIcon(c2, name, sc){
+  var s = DG_TOOL_SPR[name]; if(!s) return;
+  c2.clearRect(0,0,c2.canvas.width,c2.canvas.height);
+  c2.imageSmoothingEnabled = false;
+  var rows=s.rows, pal=s.pal;
+  var w=rows[0].length*sc, h=rows.length*sc;
+  var x0=Math.round((c2.canvas.width-w)/2), y0=Math.round((c2.canvas.height-h)/2);
+  for(var ry=0;ry<rows.length;ry++){
+    var row=rows[ry];
+    for(var rx=0;rx<row.length;rx++){
+      var ch=row.charAt(rx);
+      if(ch==='.') continue;
+      c2.fillStyle = pal[ch] || '#fff';
+      c2.fillRect(x0+rx*sc, y0+ry*sc, sc, sc);
+    }
+  }
+}
+function dgRenderTools(){
+  var box = dgEl('dgTools'); if(!box) return;
+  if(!box.childElementCount){
+    DG_TOOLS.forEach(function(t){
+      var b=document.createElement('button');
+      b.type='button'; b.className='dg-tile'; b.id='dgTool_'+t.k;
+      b.innerHTML='<canvas width="56" height="56"></canvas><b>'+t.n+'</b>'+
+        '<small id="dgToolTip_'+t.k+'">'+t.tip+'</small><span class="tk">'+t.key+'</span>';
+      b.addEventListener('click', function(){
+        if(t.k==='probe'){ dgProbe(); return; }
+        dgSetTool(t.k);
+      });
+      box.appendChild(b);
+      dgDrawIcon(b.querySelector('canvas').getContext('2d'), t.k, 3);
+    });
+  }
+  var probeOff = dgSt.status!=='playing' || dgSt.paused || dgSt.probes<=0 || dgSt.energy<12;
+  DG_TOOLS.forEach(function(t){
+    var el=dgEl('dgTool_'+t.k); if(!el) return;
+    if(t.k==='probe'){
+      el.classList.toggle('off', probeOff);
+      el.classList.remove('on');
+    }else{
+      el.classList.toggle('on', dgSt.tool===t.k && dgSt.status==='playing' && !dgSt.paused);
+      el.classList.remove('off');
+    }
+  });
+  var pt=dgEl('dgProbeText');
+  if(pt) pt.textContent = dgSt.probes + ' 次';
+}
+function dgSetTool(k){
+  dgSt.tool = k;
+  dgRenderTools();
+  dgToast(k==='shovel' ? '换小铲——点土格挖土。' : '换毛刷——点露出的器物清灰。');
+  if(dgCv) dgCv.focus({preventScroll:true});
+}
+function dgUseTool(cell){
+  if(dgSt.status!=='playing' || dgSt.paused || !cell) return;
+  if(dgSt.tool==='brush'){
+    if(cell.layers===0 && cell.relic && !cell.collected){ dgBrush(cell); return; }
+    if(cell.relic && cell.layers>0){ dgToast('还埋着呢——先用小铲揭土。'); return; }
+    dgToast('这格没有要清的东西。'); return;
+  }
+  /* 小铲：挖土；露出器物时提示换刷 */
+  if(cell.layers>0){ dgDig(cell); return; }
+  if(cell.relic && !cell.collected){ dgToast('器物露出来了——切到毛刷（2）。'); return; }
+  dgToast('这格已经到底了，换一块。');
+}
+
 /* 事件（只绑一次） */
 (function(){
   var cv = dgEl('dgCanvas');
@@ -1684,9 +1782,7 @@ function dgStart(){
     var p=dgPoint(e), cell=dgCellAt(p.x,p.y);
     if(!cell) return;
     dgSt.cursor={c:cell.c,r:cell.r};
-    if(cell.layers>0) dgDig(cell);
-    else if(cell.relic && !cell.collected) dgBrush(cell);
-    else dgToast('这格已经到底了，换一块。');
+    dgUseTool(cell);
   });
   document.addEventListener('keydown', function(e){
     if(dgEl('dgRelic').classList.contains('on') || dgEl('dgEnd').classList.contains('on')) return;
@@ -1707,13 +1803,14 @@ function dgStart(){
       if(dgSt.status!=='playing'||dgSt.paused) return;
       e.preventDefault();
       var cell=dgCells[dgSt.cursor.r*DG.COLS+dgSt.cursor.c];
-      if(cell.layers>0) dgDig(cell);
-      else if(cell.relic && !cell.collected) dgBrush(cell);
+      dgUseTool(cell);
       return;
     }
     if(k==='p'||k==='P'){ e.preventDefault(); dgProbe(); }
+    if(k==='1'){ dgSetTool('shovel'); }
+    if(k==='2'){ dgSetTool('brush'); }
+    if(k==='3'){ dgProbe(); }
   });
-  dgEl('dgProbe').addEventListener('click', dgProbe);
   dgEl('dgRelicClose').addEventListener('click', dgCloseRelic);
   dgEl('dgEndGo').addEventListener('click', function(){
     dgEl('dgEnd').classList.remove('on');
@@ -1906,9 +2003,45 @@ function buildReport(){
   $('#rep').innerHTML = html;
 }
 
+/* AI 随机替你选一套随葬品 */
+function aiPickOffering(){
+  var zones = ['head','chest','side','feet','fill'];
+  var n = 2 + Math.floor(Math.random()*3); /* 2~4 件 */
+  var pool = ITEMS.slice();
+  /* 洗牌 */
+  for(var i=pool.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=pool[i]; pool[i]=pool[j]; pool[j]=t;
+  }
+  S.place={head:[],chest:[],side:[],feet:[],fill:[]};
+  S.broken={}; S.picked=null;
+  var picks=[];
+  for(var k=0;k<n && k<pool.length;k++){
+    var it=pool[k];
+    var zs=zones.slice();
+    for(var z=zs.length-1;z>0;z--){
+      var zj=Math.floor(Math.random()*(z+1));
+      var zt=zs[z]; zs[z]=zs[zj]; zs[zj]=zt;
+    }
+    var ok=false;
+    for(var q=0;q<zs.length && !ok;q++){
+      var sname=zs[q];
+      if(S.place[sname].length < SLOT_CAP[sname]){
+        S.place[sname].push(it.id);
+        if(it.breakable && Math.random()<0.5) S.broken[it.id]=1;
+        picks.push(it.name+' → '+({head:'头边',chest:'胸前',side:'手侧',feet:'脚端',fill:'填土'})[sname]);
+        ok=true;
+      }
+    }
+  }
+  renderAll();
+  $('#pickHint').innerHTML = 'AI 替你放好了 <b>'+picks.length+' 件</b>。不满意就再点一次 🎲，也可以自己点选修改。';
+  say('AI 替你放好了：<b>'+picks.join('；')+'</b>。不满意就再点一次，也可以自己点选修改。');
+}
 /* =========================================================
    八、事件绑定
    ========================================================= */
+$('#aiPick').onclick = aiPickOffering;
 $('#goBury').onclick = function(){ renderAll(); goto(1); };
 $('#goEarth').onclick = function(){
   goto(2); runEarth();
