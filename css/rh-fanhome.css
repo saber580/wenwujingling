@@ -1,0 +1,319 @@
+/* =========================================================
+   扇形牌阵 · 首页排版预设（只在 body.rh-fanhome 下生效）
+   思路：把首页的「一排折扇牌」换成一把握在手里的扇子——
+   牌绕下方远处的圆心旋转（第 i 张 rotate i×9.5°），叠成一柄摊开的扇；
+   悬停整把张开、单张抬起，点一张换档签。
+   背景仍走 bg-paint 的山河画，主调换成鲜亮朱红。
+   扉页与开卷完全不动，其余页面与功能一行未改。
+   ========================================================= */
+
+/* 让扇形的角度/抬起/缩放能带过渡（不支持 @property 的浏览器只是没有缓动，仍能用） */
+@property --fh-rot  { syntax:'<angle>';  inherits:false; initial-value:0deg }
+@property --fh-rise { syntax:'<length>'; inherits:false; initial-value:0px }
+@property --fh-sc   { syntax:'<number>'; inherits:false; initial-value:1 }
+@property --fh-yaw  { syntax:'<angle>';  inherits:false; initial-value:0deg }
+
+/* ---- 一 · 朱红主调：山河画当底，罩一层鲜亮中国红 ---- */
+body.rh-fanhome .rh-hero{
+  min-height:min(884px,calc(100vh - 64px));
+  background:none;
+}
+body.rh-fanhome .rh-hero::before{
+  background-image:
+    url("../装饰/万字底纹.webp"),
+    repeating-linear-gradient(90deg,rgba(255,238,204,.05) 0 1px,transparent 1px 92px),
+    radial-gradient(900px 560px at 82% 0%,rgba(255,206,140,.42) 0%,rgba(255,206,140,0) 60%),
+    radial-gradient(720px 520px at 2% 98%,rgba(104,0,8,.52) 0%,rgba(104,0,8,0) 66%),
+    linear-gradient(156deg,
+      rgba(255,90,56,.70) 0%,
+      rgba(244,46,32,.66) 20%,
+      rgba(205,10,24,.68) 54%,
+      rgba(136,3,11,.72) 100%);
+  background-size:84px 84px,auto,auto,auto,auto;
+  opacity:1;
+  -webkit-mask-image:none;mask-image:none;
+}
+/* 底部祥云带更实一点，压住扇脚 */
+body.rh-fanhome .rh-hero::after{opacity:.62;height:120px}
+body.rh-fanhome .rh-hero-bg{
+  background:url("../装饰/背景-山河祥云.webp") center 42%/cover no-repeat;
+  mix-blend-mode:screen;opacity:.30;
+}
+body.rh-fanhome .rh-hero-bg::before{color:rgba(255,238,204,.075);font-size:420px;right:-120px;top:-130px}
+body.rh-fanhome .rh-hero-bg::after{color:rgba(255,238,204,.06);font-size:280px}
+
+/* ---- 二 · 版面：题字居中在上，巨扇在下 ---- */
+body.rh-fanhome .rh-hero-wrap{
+  position:static;
+  display:flex;flex-direction:column;align-items:center;
+  max-width:none;width:100%;
+  padding:clamp(16px,2vw,30px) 26px 0;
+  gap:0;
+}
+body.rh-fanhome .rh-hero-copy{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding-left:0;width:100%;max-width:1080px;
+}
+body.rh-fanhome .rh-rail{display:none}
+body.rh-fanhome .rh-eyebrow{justify-content:center}
+body.rh-fanhome .rh-eyebrow::after{
+  content:"";width:36px;height:1px;
+  background:linear-gradient(270deg,rgba(255,236,196,.9),rgba(255,236,196,0));
+}
+body.rh-fanhome .rh-motto{margin-left:auto;margin-right:auto}
+body.rh-fanhome .rh-title{justify-content:center}
+body.rh-fanhome .rh-lede{max-width:44em;text-align:center;margin-bottom:0;font-size:clamp(12.5px,1vw,14px);line-height:1.9}
+body.rh-fanhome .rh-hero-copy{position:static}
+
+/* 数据与按钮落到左下角，和右下的档签左右对称，中间整片留给扇 */
+body.rh-fanhome .rh-nums{
+  position:absolute;left:clamp(16px,2.2vw,34px);bottom:150px;z-index:22;
+  margin:0;max-width:232px;gap:0;
+  padding:12px 14px;border-radius:3px;
+  background:linear-gradient(180deg,rgba(96,4,10,.42),rgba(64,2,6,.5));
+  border:1px solid rgba(255,232,190,.26);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  box-shadow:0 16px 34px rgba(40,0,3,.34),inset 0 0 0 1px rgba(255,240,214,.08);
+}
+body.rh-fanhome .rh-nums>div{padding:0 10px;border-left-color:rgba(255,236,200,.18)}
+body.rh-fanhome .rh-nums b{font-size:clamp(20px,1.9vw,26px)}
+body.rh-fanhome .rh-nums span{font-size:9.5px;letter-spacing:1.2px;margin-top:5px}
+body.rh-fanhome .rh-hero-cta{
+  position:absolute;left:clamp(16px,2.2vw,34px);bottom:34px;z-index:22;
+  flex-direction:column;align-items:stretch;gap:7px;width:min(232px,24vw);
+}
+body.rh-fanhome .rh-hero-cta .rh-btn-solid{justify-content:center}
+body.rh-fanhome .rh-hero-cta .rh-btn-line{justify-content:center}
+
+/* 月洞在扇阵里是多余的（扇面本身就是立绘），收起后只留档签 */
+body.rh-fanhome .rh-moon{display:none}
+body.rh-fanhome .rh-hero-window{
+  position:absolute;right:clamp(18px,2.4vw,38px);top:50%;transform:translateY(-50%);
+  width:min(244px,24vw);margin:0;z-index:24;align-items:stretch;
+}
+body.rh-fanhome .rh-hero-window::before{display:none}
+body.rh-fanhome .rh-plate{width:100%;margin-top:0;z-index:20}
+body.rh-fanhome .rh-stamp{display:none}
+body.rh-fanhome .rh-moon-side{display:none}
+
+/* ---- 三 · 扇：把牌阵摊成一柄扇 ---- */
+body.rh-fanhome .rh-fanbar{position:relative;z-index:6;margin-top:auto;padding:0 0 clamp(26px,3vw,40px);width:100%}
+body.rh-fanhome .rh-fanbar-in{max-width:none;padding:0}
+
+/* 分组 = 两页圭形朱漆签牌：上角斜切、内嵌金线、左「壹/贰」朱印、右「七」铜钱 */
+body.rh-fanhome .rh-decks{
+  position:absolute;left:50%;bottom:clamp(30px,3.2vw,44px);transform:translateX(-50%);
+  z-index:80;display:flex;justify-content:center;align-items:center;margin:0;gap:22px;
+  height:auto;padding:0;   /* 抵消正式版符牌容器的高度与内边距 */
+  filter:drop-shadow(0 10px 18px rgba(38,0,3,.52));
+}
+/* 两页牌之间的一粒小金坠，把它们串成一对 */
+body.rh-fanhome .rh-decks::before{
+  content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;
+  margin:-4px 0 0 -4px;transform:rotate(45deg);pointer-events:none;
+  background:linear-gradient(135deg,#FFF7E6,#E7C48A 52%,#A97B33);
+  box-shadow:0 0 0 1px rgba(110,6,12,.5),0 0 10px rgba(255,206,150,.42);
+}
+body.rh-fanhome .rh-decks button{
+  position:relative;box-sizing:border-box;
+  width:clamp(162px,15.8vw,188px);height:46px;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 40px 0 47px;border:0;opacity:.9;
+  font-family:inherit;font-size:13px;font-weight:700;letter-spacing:3px;
+  color:rgba(255,238,210,.78);
+  clip-path:polygon(0 100%,0 12px,12px 0,calc(100% - 12px) 0,100% 12px,100% 100%);
+  background:
+    linear-gradient(112deg,rgba(255,255,255,.20) 0%,rgba(255,255,255,.04) 30%,rgba(255,255,255,0) 54%),
+    linear-gradient(180deg,#8C0C14 0%,#6B060D 56%,#4E0308 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,214,150,.38),
+    inset 0 -1px 0 rgba(255,214,150,.32);
+  transition:transform .26s cubic-bezier(.22,.9,.28,1),color .26s,opacity .26s,
+             background .26s,box-shadow .26s;
+}
+/* 左侧那枚朱印：未选是金底朱字（阳文），选中翻成朱底描金（阴文） */
+body.rh-fanhome .rh-decks button::before{
+  content:"壹";position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  width:22px;height:22px;border-radius:2px;display:grid;place-items:center;
+  font-size:11px;font-weight:700;letter-spacing:0;line-height:1;
+  color:#8C0A12;background:linear-gradient(180deg,#FFF7E6,#EAD0A0);
+  box-shadow:0 0 0 1px rgba(110,6,12,.5),inset 0 0 0 1px rgba(255,255,255,.55);
+  transition:color .26s,background .26s,box-shadow .26s;
+}
+body.rh-fanhome .rh-decks button[data-rh-deck="b"]::before{content:"贰"}
+/* 右侧一枚铜钱，写汉字数目 */
+body.rh-fanhome .rh-decks button::after{
+  content:"七";position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;border-radius:50%;display:grid;place-items:center;
+  font-size:9.5px;font-weight:800;letter-spacing:0;line-height:1;
+  color:#6B050B;
+  background:radial-gradient(circle at 36% 30%,#FFF6E0,#E5C488 56%,#B0863F);
+  box-shadow:0 0 0 1px rgba(255,232,190,.45),0 1px 4px rgba(38,0,3,.45);
+}
+body.rh-fanhome .rh-decks button i{display:none}
+body.rh-fanhome .rh-decks button:hover{opacity:1;transform:translateY(-2px)}
+body.rh-fanhome .rh-decks button.active{
+  opacity:1;transform:translateY(-3px);color:#FFF8EC;
+  background:
+    linear-gradient(112deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,.06) 30%,rgba(255,255,255,0) 54%),
+    linear-gradient(180deg,#C8171F 0%,#A00B14 56%,#72040A 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,228,174,.92),
+    inset 0 -12px 20px rgba(255,178,104,.20);
+}
+body.rh-fanhome .rh-decks button.active:hover{transform:translateY(-4px)}
+body.rh-fanhome .rh-decks button.active::before{
+  color:#FFF8EC;background:linear-gradient(180deg,#D8232A,#8E0810);
+  box-shadow:0 0 0 1px rgba(255,232,190,.75),0 0 14px rgba(255,190,120,.55);
+}
+
+body.rh-fanhome .rh-fanbar{padding:0 0 clamp(26px,3vw,40px)}
+body.rh-fanhome .rh-fan{
+  position:relative;height:clamp(286px,27.5vw,340px);
+  perspective:1500px;perspective-origin:50% 92%;
+}
+/* 扇后的一轮暖光，把牌从红墙上托起来 */
+body.rh-fanhome .rh-fan{
+  background:radial-gradient(52% 62% at 50% 88%,
+    rgba(255,206,140,.24) 0%,rgba(255,178,96,.10) 44%,rgba(255,170,80,0) 76%);
+}
+/* 扇下的投影与扇轴 */
+body.rh-fanhome .rh-fan::before{
+  width:min(1080px,94%);height:120px;bottom:-6px;
+  background:radial-gradient(ellipse at 50% 100%,rgba(46,0,3,.46) 0%,rgba(46,0,3,.16) 48%,rgba(46,0,3,0) 76%);
+}
+body.rh-fanhome .rh-fan::after{
+  width:12px;height:12px;bottom:clamp(2px,.6vw,10px);
+  background:radial-gradient(circle at 38% 32%,#FFF8EA,#E7C07E 62%,#B9832F);
+  box-shadow:0 0 0 4px rgba(255,240,214,.28),0 0 0 5px rgba(140,10,18,.5),0 6px 14px rgba(50,0,3,.5);
+}
+
+/* 卡片：绕下方远圆心旋转，第 i 张 rotate(i×step) */
+body.rh-fanhome .rh-fancard{
+  top:0;bottom:auto;
+  width:clamp(132px,11.4vw,164px);height:clamp(176px,15.2vw,218px);
+  transform-origin:50% calc(100% + var(--fh-r,860px));
+  transform:translateX(-50%) rotate(var(--fh-rot,0deg)) rotateY(var(--fh-yaw,0deg)) translateY(calc(-1 * var(--fh-rise,0px))) scale(var(--fh-sc,1)) !important;
+  transition:
+    --fh-rot .52s cubic-bezier(.22,.9,.28,1),
+    --fh-yaw .52s cubic-bezier(.22,.9,.28,1),
+    --fh-rise .34s cubic-bezier(.22,.9,.28,1),
+    --fh-sc .34s cubic-bezier(.22,.9,.28,1),
+    opacity .3s ease,box-shadow .3s ease,border-color .3s ease !important;
+  will-change:transform;
+  border-radius:4px;
+  box-shadow:0 18px 34px rgba(56,0,4,.42),inset 0 0 0 1px rgba(255,255,255,.55);
+}
+body.rh-fanhome .rh-fancard::after{inset:4px;border-color:rgba(200,154,82,.4)}
+/* 编号做成朱红小印，牌名也用朱红——整把扇立刻有了中国红 */
+body.rh-fanhome .rh-fancard .fc-no{
+  position:absolute;top:6px;right:6px;z-index:3;
+  min-width:21px;height:17px;padding:0 4px;border-radius:2px;
+  display:grid;place-items:center;align-self:auto;
+  background:linear-gradient(180deg,#E22528,#A60D16);
+  color:#FFEFD1;font-size:9px;letter-spacing:.6px;font-weight:800;
+  box-shadow:0 2px 6px rgba(90,0,6,.42),inset 0 0 0 1px rgba(255,236,200,.35);
+}
+body.rh-fanhome .rh-fancard .fc-name{
+  font-size:14px;letter-spacing:2.4px;color:#A50F17;font-weight:700;
+  position:relative;padding-bottom:2px;
+}
+body.rh-fanhome .rh-fancard .fc-name::after{
+  content:"";position:absolute;left:12%;right:12%;bottom:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(165,15,23,.4),transparent);
+}
+body.rh-fanhome .rh-fancard .fc-era{font-size:9.5px;color:#9A6A56}
+body.rh-fanhome .rh-fancard.is-sel .fc-name{color:#7A060D}
+/* 悬停：抬起、变亮、压到最上层 */
+body.rh-fanhome .rh-fancard:hover{
+  z-index:90 !important;opacity:1 !important;
+  border-color:rgba(255,246,224,.98);
+  box-shadow:0 30px 60px rgba(52,0,4,.54),0 0 0 2px rgba(255,226,170,.8),0 0 36px rgba(255,214,150,.5);
+}
+body.rh-fanhome .rh-fancard.is-sel{z-index:70}
+body.rh-fanhome .rh-fancard.is-sel .fc-name{color:#A50F17}
+
+body.rh-fanhome .rh-fan-hint{
+  position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);
+  margin:0;z-index:70;white-space:nowrap;text-align:center;
+  font-size:0;letter-spacing:0;color:rgba(255,240,214,.5);
+  text-shadow:0 2px 10px rgba(60,0,4,.6);
+}
+body.rh-fanhome .rh-fan-hint::before{
+  content:"← →   曳 扇 换 牌   ·   拾 牌 观 物";
+  font-size:9.5px;letter-spacing:3.2px;
+}
+
+/* ---- 四 · 窄屏 ---- */
+@media (max-width:1080px){
+  body.rh-fanhome .rh-hero-window{width:min(226px,26vw)}
+  body.rh-fanhome .rh-nums{max-width:210px}
+  body.rh-fanhome .rh-hero-cta{width:min(210px,26vw)}
+}
+
+/* 手机：全部回到单列，扇接在题字下面，档签与数据排在扇后 */
+@media (max-width:820px){
+  body.rh-fanhome .rh-hero{min-height:0;padding-bottom:26px}
+  /* 让 .rh-hero-wrap 不生成盒子，题字 / 扇 / 档签 直接排在 hero 里，方便调顺序 */
+  body.rh-fanhome .rh-hero-wrap{display:contents}
+  body.rh-fanhome .rh-hero-copy{order:1;padding:12px 16px 4px}
+  body.rh-fanhome .rh-fanbar{order:2}
+  body.rh-fanhome .rh-hero-window{order:3}
+  body.rh-fanhome .rh-title-cn{font-size:clamp(40px,13vw,64px)}
+  body.rh-fanhome .rh-lede{font-size:12.5px;line-height:1.85}
+
+  body.rh-fanhome .rh-fanbar{
+    margin-top:2px;padding:0 0 14px;
+    display:flex;flex-direction:column-reverse;
+  }
+  body.rh-fanhome .rh-decks{
+    position:static;transform:none;order:0;
+    margin:14px 0 0;justify-content:center;gap:14px;
+  }
+  body.rh-fanhome .rh-decks button{
+    width:clamp(124px,31vw,152px);height:40px;
+    font-size:11px;letter-spacing:2px;padding:0 31px 0 37px;
+  }
+  body.rh-fanhome .rh-decks button::before{left:9px;width:19px;height:19px;font-size:10px}
+  body.rh-fanhome .rh-decks button::after{right:8px;width:17px;height:17px;font-size:8.5px}
+  body.rh-fanhome .rh-fan{
+    order:1;height:clamp(196px,58vw,248px);
+    perspective:900px;perspective-origin:50% 88%;
+  }
+  body.rh-fanhome .rh-fan-hint{display:none}
+  body.rh-fanhome .rh-fancard{
+    width:clamp(84px,23vw,104px);height:clamp(110px,30vw,136px);
+  }
+  body.rh-fanhome .rh-fancard .fc-no{top:4px;right:4px;min-width:18px;height:15px;font-size:8px}
+  body.rh-fanhome .rh-fancard .fc-name{font-size:11px;letter-spacing:1.2px}
+  body.rh-fanhome .rh-fancard .fc-era{font-size:8px}
+
+  body.rh-fanhome .rh-hero-window{
+    position:static;transform:none;width:min(320px,100%);
+    margin:18px auto 0;
+  }
+  body.rh-fanhome .rh-plate{width:100%}
+  body.rh-fanhome .rh-nums{
+    position:static;margin:16px auto 0;max-width:none;width:min(320px,100%);
+  }
+  body.rh-fanhome .rh-hero-cta{
+    position:static;width:min(320px,100%);margin:10px auto 0;
+    flex-direction:row;flex-wrap:wrap;
+  }
+  body.rh-fanhome .rh-hero-cta>*{flex:1 1 auto}
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.rh-fanhome .rh-fancard{transition:none !important}
+}
+
+/* 与正式版符牌解耦：签牌自己定形状，不继承竖排、穿孔与裁切 */
+body.rh-fanhome .rh-decks button{
+  writing-mode:horizontal-tb;text-orientation:mixed;white-space:normal;overflow:visible;
+}
+body.rh-fanhome .rh-decks button::before,
+body.rh-fanhome .rh-decks button::after{
+  clip-path:none;border:0;right:auto;bottom:auto;left:auto;
+}
+body.rh-fanhome .rh-decks button::before{left:13px;right:auto;bottom:auto}
+body.rh-fanhome .rh-decks button::after{right:11px;left:auto;bottom:auto}

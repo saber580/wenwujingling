@@ -1,0 +1,917 @@
+/* =========================================================
+   文物精灵 · 红版预设 V2 —— 内页统一（朱墙 · 装裱手卷）
+   只作用于「非首页」：精灵档案 / 图鉴 / 十三站 / 博物馆 / 文创
+   / 打卡海报 / AI 修复 / 茶话会 / 赋彩 / 拍照唤醒
+   首页由 css/red-v2.css 负责，两者互不干扰
+   ========================================================= */
+
+:root{
+  --ri-red:#A50F17;
+  --ri-red-2:#C2141C;
+  --ri-red-3:#7A0810;
+  --ri-ink:#3A241C;
+  --ri-ink-2:#7C5B45;
+  --ri-paper:#FBF3E1;
+  --ri-paper-2:#FFFCF2;
+  --ri-gold:#C9A25E;
+  --ri-gold-2:#EBD3A0;
+  --ri-line:#E2C893;
+  --ri-serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong","SimSun",serif;
+  --ri-kai:"KaiTi","STKaiti","Kaiti SC","Songti SC",serif;
+}
+
+/* =========================================================
+   一 · 朱墙：内页底色（藏掉原来的山水图，只留朱漆与纹样）
+   ========================================================= */
+body:not([data-page="home"]) .bg-art{display:none}
+
+body:not([data-page="home"]){
+  background:
+    radial-gradient(1400px 700px at 50% -10%,#C01A20 0%,rgba(192,26,32,0) 64%),
+    radial-gradient(900px 500px at 84% 8%,rgba(255,196,120,.16) 0%,rgba(255,196,120,0) 62%),
+    linear-gradient(180deg,#8E0C13 0%,#7B0810 38%,#62050B 72%,#4C0307 100%);
+  background-attachment:fixed,fixed,fixed;
+  color:var(--ri-ink);
+  padding-bottom:0;
+}
+/* 墙上的万字底纹 + 竖金线（像裱墙的界格） */
+body:not([data-page="home"])::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    url("../装饰/万字底纹.webp") repeat,
+    url("../装饰/宣纸纹.webp") repeat;
+  opacity:.1;
+  mix-blend-mode:overlay;
+}
+body:not([data-page="home"])::after{
+  content:"";position:fixed;left:0;right:0;top:0;height:180px;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,214,150,.14),rgba(255,214,150,0));
+}
+
+/* =========================================================
+   二 · 手卷：宣纸画心 + 米绫裱边 + 金色界栏
+   ========================================================= */
+body:not([data-page="home"]) #app{
+  position:relative;
+  max-width:1200px;
+  margin:34px auto 52px;
+  padding:clamp(28px,3.4vw,44px) clamp(20px,3.6vw,46px) clamp(36px,4vw,52px);
+  background:
+    url("../装饰/宣纸纹.webp") repeat,
+    linear-gradient(180deg,#FCF5E5 0%,#F8EDD5 52%,#F4E6C8 100%);
+  border-radius:1px;
+  box-shadow:
+    0 0 0 1px var(--ri-gold),          /* 画心金线 */
+    0 0 0 11px #EFE0BE,                /* 米绫裱边 */
+    0 0 0 12px #B98B3E,                /* 裱边金线 */
+    0 2px 0 12px rgba(255,240,210,.25),
+    0 34px 78px rgba(28,0,3,.52);
+}
+/* 上下锦缎卷杆 */
+body:not([data-page="home"]) #app::before,
+body:not([data-page="home"]) #app::after{
+  content:"";position:absolute;left:-12px;right:-12px;height:15px;pointer-events:none;z-index:3;
+  background:url("../装饰/云雷纹条.webp") repeat-x center/auto 100%,
+             linear-gradient(180deg,#C2141C,#8B0C13 70%,#6E0810);
+  box-shadow:0 3px 10px rgba(50,0,3,.34),inset 0 0 0 1px rgba(240,213,164,.42);
+}
+body:not([data-page="home"]) #app::before{top:-12px;border-radius:2px 2px 0 0}
+body:not([data-page="home"]) #app::after{bottom:-12px;border-radius:0 0 2px 2px;transform:scaleY(-1)}
+
+/* =========================================================
+   三 · 题额：页头
+   ========================================================= */
+body:not([data-page="home"]) .page-head{
+  position:relative;text-align:center;
+  padding:2px 0 24px;margin:0 0 28px;
+  border-bottom:1px solid rgba(165,15,23,.16);
+}
+body:not([data-page="home"]) .page-head::before{
+  content:"燕 趙 拾 遺 · RELIC SOUL";
+  display:block;margin-bottom:10px;
+  font-family:var(--ri-kai);font-size:10.5px;letter-spacing:4px;
+  color:#B08A50;
+}
+body:not([data-page="home"]) .page-head::after{
+  content:"";position:absolute;left:50%;bottom:-4px;transform:translateX(-50%) rotate(45deg);
+  width:7px;height:7px;background:var(--ri-red);box-shadow:0 0 0 2px #FBF3E1;
+}
+body:not([data-page="home"]) .page-head h2{
+  font-family:var(--ri-serif);
+  font-size:clamp(24px,2.3vw,32px);font-weight:700;
+  letter-spacing:7px;color:var(--ri-red-3);
+  text-shadow:0 1px 0 rgba(255,255,255,.7);
+}
+body:not([data-page="home"]) .page-head p{
+  max-width:760px;margin:12px auto 0;
+  font-size:13px;line-height:1.9;color:var(--ri-ink-2);
+  letter-spacing:.4px;
+}
+body:not([data-page="home"]) .page-head p b{color:var(--ri-red);font-weight:700}
+
+/* =========================================================
+   四 · 小标题：印章 + 金线
+   ========================================================= */
+body:not([data-page="home"]) .section-title{
+  display:flex;align-items:center;gap:12px;
+  margin:38px 0 16px;
+  font-family:var(--ri-serif);font-size:19px;font-weight:700;
+  letter-spacing:4px;color:var(--ri-red-3);
+}
+body:not([data-page="home"]) .section-title::before{
+  content:"";width:16px;height:16px;border-radius:2px;flex:none;
+  background:linear-gradient(150deg,#C9141C,#8B0C13);
+  box-shadow:inset 0 0 0 1.5px #F3DCB0,0 3px 8px rgba(120,8,14,.3);
+}
+body:not([data-page="home"]) .section-title::after{
+  content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,var(--ri-line),rgba(226,200,147,0));
+}
+
+/* =========================================================
+   五 · 卡片：宣纸笺
+   ========================================================= */
+body:not([data-page="home"]) .card{
+  position:relative;
+  background:linear-gradient(180deg,#FFFDF6 0%,#FCF6E6 100%);
+  border:1px solid var(--ri-line);
+  border-radius:3px;
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 10px 26px rgba(122,88,40,.1);
+  padding:22px 24px;
+}
+body:not([data-page="home"]) .card.decor-card{
+  border-width:10px;border-image-width:10px;
+  background:linear-gradient(180deg,#FFFDF6,#FBF4E1);
+}
+body:not([data-page="home"]) .muted{color:var(--ri-ink-2);font-size:12.5px;line-height:1.75}
+
+/* 按钮：方正朱印 */
+body:not([data-page="home"]) .btn{
+  border-radius:2px;font-family:var(--ri-serif);
+  letter-spacing:2px;font-weight:700;
+  background:linear-gradient(180deg,#C9141C 0%,#A50F17 58%,#8B0C13 100%);
+  box-shadow:0 8px 18px rgba(90,4,8,.26),inset 0 0 0 1px rgba(240,213,164,.5);
+  transition:transform .12s,box-shadow .18s,filter .18s;
+}
+body:not([data-page="home"]) .btn:hover{filter:brightness(1.06);box-shadow:0 12px 24px rgba(90,4,8,.32),inset 0 0 0 1px rgba(240,213,164,.62)}
+body:not([data-page="home"]) .btn.ghost{
+  background:linear-gradient(180deg,#FFFDF6,#FBF2DD);
+  color:var(--ri-red);border:1px solid var(--ri-gold);
+  box-shadow:inset 0 0 0 1px #fff,0 4px 12px rgba(122,88,40,.1);
+}
+body:not([data-page="home"]) .btn.gold{
+  background:linear-gradient(180deg,#F4DCA6 0%,#D8AE60 60%,#C89A52 100%);
+  color:#5C2A0A;
+  box-shadow:0 8px 18px rgba(150,110,40,.24),inset 0 0 0 1px rgba(255,255,255,.55);
+}
+body:not([data-page="home"]) .btn.jade{
+  background:linear-gradient(180deg,#3F7C5A,#245239);color:#F4EFDF;
+  box-shadow:0 8px 18px rgba(24,60,40,.26),inset 0 0 0 1px rgba(226,240,220,.34);
+}
+
+/* 徽章 */
+body:not([data-page="home"]) .badge{
+  background:linear-gradient(180deg,#FFFDF6,#F8EDD4);
+  border:1px solid var(--ri-line);border-radius:2px;
+  color:#6B4A32;font-weight:600;letter-spacing:.4px;
+}
+body:not([data-page="home"]) .badge.sec{background:linear-gradient(180deg,#FBFDF7,#EFF4E8);border-color:#D5DFC7}
+
+/* 空态 */
+body:not([data-page="home"]) .empty{
+  padding:56px 20px;color:#8A6A4E;font-family:var(--ri-kai);
+  font-size:15px;letter-spacing:2px;
+  border:1px dashed var(--ri-line);border-radius:3px;background:rgba(255,253,246,.5);
+}
+
+/* =========================================================
+   六 · 图鉴
+   ========================================================= */
+body:not([data-page="home"]) .codex-grid{gap:18px}
+body:not([data-page="home"]) .codex-card{
+  background:linear-gradient(180deg,#FFFDF6,#FBF3E0);
+  border:1px solid var(--ri-line);border-radius:3px;
+  box-shadow:0 1px 0 #fff inset,0 8px 20px rgba(122,88,40,.1);
+  transition:transform .18s,box-shadow .18s;
+}
+body:not([data-page="home"]) .codex-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 1px 0 #fff inset,0 16px 32px rgba(122,88,40,.18);
+}
+body:not([data-page="home"]) .codex-card .nm{
+  font-family:var(--ri-serif);color:var(--ri-red-3);
+  font-size:14.5px;letter-spacing:1.6px;
+}
+body:not([data-page="home"]) .codex-card .hist{color:var(--ri-ink-2);font-size:11.5px}
+body:not([data-page="home"]) .codex-card.legend{
+  border:1px solid #D9B96A;
+  background:linear-gradient(180deg,#FFFCF0,#FAEFD4);
+}
+body:not([data-page="home"]) .codex-card.legend .lg-ribbon{
+  background:linear-gradient(180deg,#D4AF37,#A57C21);color:#3B1E05;
+}
+
+/* =========================================================
+   七 · 精灵档案
+   ========================================================= */
+body:not([data-page="home"]) .spirit-hero .info h2{
+  font-family:var(--ri-serif);color:var(--ri-red-3);letter-spacing:3px;
+}
+body:not([data-page="home"]) .alias{
+  font-family:var(--ri-kai);font-size:.62em;letter-spacing:2px;
+  color:#B08A50;margin-left:6px;
+}
+body:not([data-page="home"]) .lineage{margin:10px 0}
+body:not([data-page="home"]) .trait-line{
+  font-size:12px;color:#6B4A32;line-height:1.8;
+  background:linear-gradient(180deg,#FFFBF0,#F9EFD8);
+  border:1px dashed var(--ri-line);border-left:3px solid var(--ri-red);
+  border-radius:2px;padding:8px 12px;margin-top:10px;
+}
+body:not([data-page="home"]) .kb-item{
+  border-left:3px solid var(--ri-gold);
+  padding:2px 0 2px 12px;margin:14px 0;
+}
+body:not([data-page="home"]) .kb-item b{
+  font-family:var(--ri-serif);color:var(--ri-red-3);font-size:13.5px;letter-spacing:1px;
+}
+body:not([data-page="home"]) .kb-item p{color:var(--ri-ink-2);font-size:12.5px;line-height:1.85}
+body:not([data-page="home"]) .actions{gap:10px;margin-top:16px}
+
+/* =========================================================
+   八 · 站点 / 文物卡
+   ========================================================= */
+body:not([data-page="home"]) .relic-card{
+  background:linear-gradient(180deg,#FFFDF6,#FBF3E0);
+  border:1px solid var(--ri-line);border-radius:3px;
+  box-shadow:0 1px 0 #fff inset,0 8px 20px rgba(122,88,40,.1);
+}
+body:not([data-page="home"]) .relic-card .nm{font-family:var(--ri-serif);color:var(--ri-red-3);letter-spacing:1.4px}
+body:not([data-page="home"]) .relic-card .tag{border-radius:2px;letter-spacing:1px;font-size:10px}
+body:not([data-page="home"]) .relic-card .tag.lock{background:#9A8B77}
+body:not([data-page="home"]) .station-card{
+  background:linear-gradient(180deg,#FFFDF6,#FBF3E0);
+  border:1px solid var(--ri-line);border-radius:3px;
+}
+body:not([data-page="home"]) .station-card h3{font-family:var(--ri-serif);color:var(--ri-red-3);letter-spacing:1.4px}
+body:not([data-page="home"]) .station-card .no{
+  border-radius:2px;background:linear-gradient(150deg,#C9141C,#8B0C13);
+  box-shadow:inset 0 0 0 1px rgba(240,213,164,.6);
+}
+body:not([data-page="home"]) .museum-card h3,
+body:not([data-page="home"]) .creative-card h3{
+  font-family:var(--ri-serif);color:var(--ri-red-3);letter-spacing:1.4px;
+}
+body:not([data-page="home"]) .museum-card,
+body:not([data-page="home"]) .creative-card{
+  background:linear-gradient(180deg,#FFFDF6,#FBF3E0);
+  border-radius:3px;
+}
+body:not([data-page="home"]) .m-tag{border-radius:2px;background:#F7EBD2;border:1px solid var(--ri-line);color:#7A5230}
+body:not([data-page="home"]) .m-tag.gold{background:linear-gradient(180deg,#F6E1B4,#E8CA8C);border-color:#D2AE66;color:#5C2A0A}
+body:not([data-page="home"]) .hl,.cr-tag{
+  border-radius:2px;background:#FBF1DA;border:1px solid var(--ri-line);color:#7A5230;
+}
+body:not([data-page="home"]) .creative-note{
+  border-radius:2px;
+  background:linear-gradient(180deg,#FFF8E8,#FBEFD4);
+  border:1px solid var(--ri-line);border-left:3px solid var(--ri-red);
+  color:#6B4A32;
+}
+
+/* 属性图鉴 */
+body:not([data-page="home"]) .attr-card{
+  border:1px solid var(--ri-line);border-radius:3px;
+  background:linear-gradient(180deg,#FFFDF6,#FBF3E0);
+  box-shadow:0 8px 20px rgba(122,88,40,.09);
+}
+body:not([data-page="home"]) .attr-card h3{font-family:var(--ri-serif);color:var(--ri-red-3);letter-spacing:2px}
+
+/* 隐藏站 / 未解锁 */
+body:not([data-page="home"]) .hx-lock{
+  background:linear-gradient(180deg,#FFFCF2,#F8EBD0);
+  border:1px dashed var(--ri-gold);
+}
+body:not([data-page="home"]) .hx-chip{
+  border-radius:2px;background:#FBF1DA;border:1px solid var(--ri-line);color:#7A5230;
+}
+body:not([data-page="home"]) .hx-open{
+  background:linear-gradient(180deg,#FFF6E2,#FBE9C6);
+  border:1px solid var(--ri-gold);color:#8B3A0C;
+}
+
+/* =========================================================
+   九 · AI 工具页：提示条 / 工具栏 / 表单
+   ========================================================= */
+body:not([data-page="home"]) .tea-howto,
+body:not([data-page="home"]) .rs-ai-strip,
+body:not([data-page="home"]) .ident-cloud-state{
+  border-radius:2px;
+  background:linear-gradient(180deg,#FFF9EC,#FAEFD6);
+  border:1px solid var(--ri-line);border-left:3px solid var(--ri-red);
+  color:#6B4A32;line-height:1.9;
+}
+body:not([data-page="home"]) .rs-chip{
+  border-radius:2px;background:#FBF1DA;border:1px solid var(--ri-line);color:#7A5230;
+}
+body:not([data-page="home"]) .rs-chip.on,
+body:not([data-page="home"]) .rs-chip.active{
+  background:linear-gradient(180deg,#C9141C,#8B0C13);border-color:#8B0C13;color:#FFF6E4;
+}
+body:not([data-page="home"]) .rs-bar{border-radius:3px}
+
+body:not([data-page="home"]) input[type="text"],
+body:not([data-page="home"]) input[type="password"],
+body:not([data-page="home"]) input[type="email"],
+body:not([data-page="home"]) input[type="number"],
+body:not([data-page="home"]) input[type="search"],
+body:not([data-page="home"]) select,
+body:not([data-page="home"]) textarea{
+  border:1px solid var(--ri-line);border-radius:2px;
+  background:#FFFDF6;color:var(--ri-ink);
+  font-family:inherit;
+}
+body:not([data-page="home"]) input:focus,
+body:not([data-page="home"]) select:focus,
+body:not([data-page="home"]) textarea:focus{
+  outline:none;border-color:var(--ri-red);
+  box-shadow:0 0 0 2px rgba(165,15,23,.12);
+}
+
+/* 弹层：回忆 / 对话 / 对战 */
+body:not([data-page="home"]) .sheet{
+  background:linear-gradient(180deg,#FFFDF6,#FBF3E1);
+  border:1px solid var(--ri-gold);
+  box-shadow:0 0 0 6px rgba(239,224,190,.5),0 40px 90px rgba(28,0,3,.5);
+}
+
+/* 页脚与手卷之间留一口气 */
+body:not([data-page="home"]) .site-foot{margin-top:0}
+
+/* =========================================================
+   十 · 窄屏：裱边收窄，画心加宽
+   ========================================================= */
+@media (max-width:900px){
+  body:not([data-page="home"]) #app{
+    margin:16px 10px 30px;
+    padding:26px 16px 34px;
+    box-shadow:
+      0 0 0 1px var(--ri-gold),
+      0 0 0 6px #EFE0BE,
+      0 0 0 7px #B98B3E,
+      0 18px 42px rgba(28,0,3,.5);
+  }
+  body:not([data-page="home"]) #app::before,
+  body:not([data-page="home"]) #app::after{left:-7px;right:-7px;height:11px}
+  body:not([data-page="home"]) #app::before{top:-7px}
+  body:not([data-page="home"]) #app::after{bottom:-7px}
+  body:not([data-page="home"]) .page-head h2{letter-spacing:4px}
+  body:not([data-page="home"]) .card{padding:16px 16px}
+  body:not([data-page="home"]) .codex-grid{gap:12px}
+}
+
+/* =========================================================
+   十一 · 补遗：茶话会选框 / 工具页容器 / 图鉴细节
+   ========================================================= */
+body:not([data-page="home"]) .tea-pick{
+  background:linear-gradient(180deg,#FFFDF6,#FBF3E0);
+  border:1px solid var(--ri-line);border-radius:3px;
+  box-shadow:0 1px 0 #fff inset,0 8px 18px rgba(122,88,40,.1);
+}
+body:not([data-page="home"]) .tea-pick .tp-nm{
+  font-family:var(--ri-serif);color:var(--ri-red-3);letter-spacing:1.2px;
+}
+body:not([data-page="home"]) .tea-pick .tp-era{color:var(--ri-ink-2)}
+body:not([data-page="home"]) .tea-pick .tp-ck{
+  border-radius:2px;border-color:var(--ri-gold);color:transparent;
+  box-shadow:inset 0 0 0 2px #FFFDF6;
+}
+body:not([data-page="home"]) .tea-pick.on{
+  border-color:#C9141C;
+  box-shadow:0 0 0 1px #C9141C,0 12px 24px rgba(150,8,14,.18);
+}
+body:not([data-page="home"]) .tea-pick.on .tp-ck{
+  border-radius:2px;border-color:transparent;
+  background:linear-gradient(160deg,#C9141C,#8B0C13);color:#FFF3DC;
+}
+body:not([data-page="home"]) .tea-picks-head h3{
+  font-family:var(--ri-serif);color:var(--ri-red-3);letter-spacing:2px;
+}
+
+/* 工具页：画纸与容器收敛为方角 */
+body:not([data-page="home"]) .dye-cv-wrap,
+body:not([data-page="home"]) .dye-thumb,
+body:not([data-page="home"]) .pick-card,
+body:not([data-page="home"]) .photo-drop,
+body:not([data-page="home"]) .ident-drop,
+body:not([data-page="home"]) .dye-done-tip,
+body:not([data-page="home"]) .dye-brushset button{border-radius:3px}
+body:not([data-page="home"]) .dye-prog{border-radius:2px}
+body:not([data-page="home"]) .dye-prog i{border-radius:2px}
+body:not([data-page="home"]) .dye-cv-wrap{border:1px solid var(--ri-gold);box-shadow:0 10px 26px rgba(122,88,40,.14)}
+body:not([data-page="home"]) .dye-cv-wrap::before{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  box-shadow:inset 0 0 0 4px rgba(239,224,190,.55),inset 0 0 0 5px rgba(185,139,62,.6);
+}
+body:not([data-page="home"]) .photo-drop,
+body:not([data-page="home"]) .ident-drop{
+  border:1px dashed var(--ri-gold);
+  background:linear-gradient(180deg,rgba(255,253,246,.92),rgba(251,243,224,.92));
+}
+
+/* 图鉴卡：正文收口 + 角上朱印 */
+body:not([data-page="home"]) .codex-card{position:relative;overflow:hidden}
+body:not([data-page="home"]) .codex-card:not(.legend)::after{
+  content:"藏";position:absolute;top:8px;right:8px;z-index:2;
+  width:24px;height:24px;line-height:24px;text-align:center;
+  font-family:var(--ri-kai);font-size:13px;
+  color:#FFEFD2;background:linear-gradient(150deg,#C9141C,#8B0C13);
+  border-radius:2px;box-shadow:inset 0 0 0 1px rgba(243,220,176,.75);
+  opacity:.9;pointer-events:none;
+}
+body:not([data-page="home"]) .codex-card .hist{
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;
+  overflow:hidden;max-height:7.6em;
+}
+body:not([data-page="home"]) .codex-card .nm .muted{font-family:var(--ri-kai);letter-spacing:1px;color:#A9825A}
+
+/* 站点 / 文物卡角印 */
+body:not([data-page="home"]) .relic-card{position:relative;overflow:hidden}
+body:not([data-page="home"]) .relic-card::after{
+  content:"";position:absolute;top:9px;right:9px;width:16px;height:16px;z-index:2;
+  border-top:2px solid rgba(201,162,94,.75);border-right:2px solid rgba(201,162,94,.75);
+  pointer-events:none;
+}
+
+/* 二级标题下的说明行 */
+body:not([data-page="home"]) .sec-head h2{font-family:var(--ri-serif);color:var(--ri-red-3);letter-spacing:3px}
+body:not([data-page="home"]) .sec-sub{color:var(--ri-ink-2);line-height:1.85}
+body:not([data-page="home"]) .eyebrow{color:#B08A50;font-family:var(--ri-kai);letter-spacing:3px}
+
+/* =========================================================
+   十二 · 进场：轻缓上浮
+   ========================================================= */
+@keyframes riRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+body:not([data-page="home"]) #app > *{animation:riRise .46s cubic-bezier(.2,.7,.3,1) both}
+body:not([data-page="home"]) #app > *:nth-child(2){animation-delay:.05s}
+body:not([data-page="home"]) #app > *:nth-child(3){animation-delay:.1s}
+body:not([data-page="home"]) #app > *:nth-child(4){animation-delay:.14s}
+body:not([data-page="home"]) #app > *:nth-child(5){animation-delay:.18s}
+
+/* 题额上的英文小字（由脚本生成的页面不加） */
+body:not([data-page="home"]) .ri-crumb{
+  display:flex;align-items:center;gap:10px;margin:0 0 18px;
+  font-family:var(--ri-kai);font-size:12px;letter-spacing:2px;color:#A9825A;
+}
+body:not([data-page="home"]) .ri-crumb a{
+  color:var(--ri-red);text-decoration:none;border-bottom:1px solid rgba(165,15,23,.3);padding-bottom:1px;
+}
+body:not([data-page="home"]) .ri-crumb a:hover{border-bottom-color:var(--ri-red)}
+body:not([data-page="home"]) .ri-crumb i{font-style:normal;color:#C9A25E}
+body:not([data-page="home"]) .ri-crumb b{font-weight:700;color:var(--ri-red-3);letter-spacing:2px}
+
+@media (prefers-reduced-motion:reduce){
+  body:not([data-page="home"]) #app > *{animation:none!important}
+}
+
+/* =========================================================
+   十三 · 画册感：图鉴按 4 列排（大屏 5 列），一屏见骨
+   ========================================================= */
+body:not([data-page="home"]) .codex-grid{
+  grid-template-columns:repeat(auto-fill,minmax(215px,1fr));
+  gap:20px;
+}
+@media (min-width:1600px){
+  body:not([data-page="home"]) #app{max-width:1300px}
+  body:not([data-page="home"]) .codex-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+}
+@media (max-width:640px){
+  body:not([data-page="home"]) .codex-grid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+}
+
+/* 正文更沉稳一点 */
+body:not([data-page="home"]) .page-head p{font-size:13.5px;color:#6E4B36}
+body:not([data-page="home"]) .ri-crumb{font-size:12.5px;color:#8A6242}
+
+/* =========================================================
+   十四 · 站点文物：五件一排铺满，标签改朱红
+   ========================================================= */
+body:not([data-page="home"]) .grid{
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:16px;margin-top:20px;
+}
+@media (max-width:640px){
+  body:not([data-page="home"]) .grid{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+}
+body:not([data-page="home"]) .relic-card{padding:14px 12px}
+body:not([data-page="home"]) .relic-card .tag{
+  border-radius:2px;letter-spacing:1.4px;font-weight:700;
+  background:linear-gradient(180deg,#C9141C,#8B0C13);
+  color:#FFF3DC;border:1px solid rgba(240,213,164,.55);
+  box-shadow:0 3px 8px rgba(90,4,8,.2);
+}
+body:not([data-page="home"]) .relic-card .tag.lock{
+  background:linear-gradient(180deg,#F7E8C8,#EBD3A4);
+  color:#8A3708;border-color:#D2AE66;box-shadow:none;
+}
+body:not([data-page="home"]) .relic-card .badges{gap:5px;margin-top:8px;justify-content:flex-start}
+body:not([data-page="home"]) .relic-card .badge{font-size:10.5px;padding:2px 7px 2px 3px}
+body:not([data-page="home"]) .relic-card .badge img{width:15px;height:15px}
+body:not([data-page="home"]) .relic-card .nm{letter-spacing:2px;margin-top:8px}
+body:not([data-page="home"]) .relic-card .era{font-size:10.5px;color:#96714F;letter-spacing:.5px;margin-top:2px}
+
+/* =========================================================
+   十五 · 卷尾闲章：右上角「文物精靈」朱印
+   ========================================================= */
+body:not([data-page="home"]) #app > .ri-seal{
+  position:absolute;top:26px;right:26px;z-index:4;
+  width:54px;height:54px;padding:4px;
+  display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+  background:linear-gradient(150deg,#C9141C,#8B0C13);
+  border-radius:2px;
+  box-shadow:inset 0 0 0 1.5px rgba(243,220,176,.78),0 6px 16px rgba(90,4,8,.28);
+  transform:rotate(-3deg);pointer-events:none;
+}
+body:not([data-page="home"]) #app > .ri-seal i{
+  display:grid;place-items:center;font-style:normal;
+  font-family:var(--ri-kai);font-size:17px;line-height:1;
+  color:#FFEFD2;opacity:.95;
+}
+@media (max-width:760px){
+  body:not([data-page="home"]) #app > .ri-seal{display:none}
+}
+
+/* =========================================================
+   十六 · 收尾修正：闲章与题签不参与进场动画
+   ========================================================= */
+body:not([data-page="home"]) #app > *:not(.ri-seal):not(.ri-crumb){
+  animation:riRise .46s cubic-bezier(.2,.7,.3,1) both;
+}
+body:not([data-page="home"]) #app > .ri-seal,
+body:not([data-page="home"]) #app > .ri-crumb{animation:none!important;opacity:1!important}
+body:not([data-page="home"]) #app > .ri-seal{transform:rotate(-3deg)}
+
+body:not([data-page="home"]) .ri-crumb{
+  font-size:13px;color:#7A5230;font-weight:700;
+  padding-bottom:10px;border-bottom:1px solid rgba(201,162,94,.35);
+  margin-bottom:22px;
+}
+body:not([data-page="home"]) .museum-tags .m-tag,
+body:not([data-page="home"]) .codex-card .tag-pill,
+body:not([data-page="home"]) .hl,
+body:not([data-page="home"]) .cr-tag{border-radius:2px!important}
+
+/* =========================================================
+   十七 · 心仪卡工坊（内嵌「白相」卡片编辑器）
+   ========================================================= */
+body:not([data-page="home"]) .ri-heart{margin-top:2px}
+body:not([data-page="home"]) .ri-heart-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin:0 0 14px;padding:10px 14px;
+  background:linear-gradient(180deg,#FFFDF6,#FBF3E0);
+  border:1px solid var(--ri-line);border-left:3px solid var(--ri-red);border-radius:2px;
+}
+body:not([data-page="home"]) .ri-heart-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--ri-kai);font-size:13px;font-weight:700;letter-spacing:3px;color:#7A3A18;
+}
+body:not([data-page="home"]) .ri-heart-badge::before{
+  content:"";width:13px;height:13px;border-radius:2px;flex:none;
+  background:linear-gradient(150deg,#C9141C,#8B0C13);
+  box-shadow:inset 0 0 0 1.5px rgba(243,220,176,.85);
+}
+body:not([data-page="home"]) .ri-heart-acts{display:flex;gap:8px;flex-wrap:wrap}
+body:not([data-page="home"]) .ri-heart-acts .btn{padding:8px 14px;font-size:12.5px}
+
+body:not([data-page="home"]) .ri-heart-frame{
+  position:relative;border:1px solid var(--ri-gold);border-radius:2px;overflow:hidden;
+  background:#FAFAF8;
+  box-shadow:0 0 0 6px rgba(239,224,190,.55),0 18px 40px rgba(122,88,40,.18);
+}
+body:not([data-page="home"]) .ri-heart-frame iframe{
+  display:block;width:100%;height:clamp(560px,74vh,900px);
+  border:0;background:#FAFAF8;
+}
+body:not([data-page="home"]) .ri-heart-note{
+  margin:14px 0 0;font-size:12px;line-height:1.9;color:#8A6242;letter-spacing:.3px;
+}
+body:not([data-page="home"]) .ri-heart-note::before{
+  content:"◈ ";color:var(--ri-gold);font-size:11px;
+}
+@media (max-width:760px){
+  body:not([data-page="home"]) .ri-heart-frame iframe{height:clamp(460px,68vh,640px)}
+  body:not([data-page="home"]) .ri-heart-bar{padding:9px 11px}
+}
+
+/* =========================================================
+   十八 · AI 旅游攻略 & 打卡路线
+   ========================================================= */
+body:not([data-page="home"]) .ri-guide{margin-top:2px}
+
+/* ---- 偏好表单：像一张填好的行旅笺 ---- */
+body:not([data-page="home"]) .gd-form-wrap{
+  position:relative;margin:20px 0 26px;padding:clamp(16px,2vw,24px) clamp(15px,2.2vw,26px);
+  background:linear-gradient(180deg,#FFFDF6,#FBF1DC);
+  border:1px solid var(--ri-line);border-left:3px solid var(--ri-red);border-radius:2px;
+  box-shadow:0 12px 26px rgba(122,88,40,.1);
+}
+body:not([data-page="home"]) .gd-form-wrap::after{
+  content:"行 旅 笺";position:absolute;right:14px;top:-9px;padding:0 8px;
+  font-family:var(--ri-kai);font-size:11px;letter-spacing:4px;color:#A8763C;
+  background:#FFFDF6;
+}
+body:not([data-page="home"]) .gd-form{display:flex;flex-direction:column;gap:13px}
+body:not([data-page="home"]) .gd-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+body:not([data-page="home"]) .gd-label{
+  flex:0 0 94px;display:flex;align-items:baseline;gap:6px;white-space:nowrap;
+  font-family:var(--ri-kai);font-size:13px;font-weight:700;letter-spacing:1.5px;color:#6B3A1C;
+}
+body:not([data-page="home"]) .gd-label::before{
+  content:"";width:5px;height:5px;flex:none;transform:rotate(45deg);
+  background:var(--ri-red);margin-bottom:2px;
+}
+body:not([data-page="home"]) .gd-label small{
+  font-size:10px;font-weight:400;letter-spacing:0;color:#A98364;
+}
+body:not([data-page="home"]) .gd-chips{display:flex;flex-wrap:wrap;gap:7px}
+
+body:not([data-page="home"]) .gd-chip{
+  appearance:none;cursor:pointer;
+  padding:6px 14px;border-radius:2px;
+  font-family:var(--ri-serif);font-size:12.5px;letter-spacing:1.2px;
+  color:#5B3A26;background:linear-gradient(180deg,#FFFCF3,#F7EAD0);
+  border:1px solid rgba(201,162,94,.5);
+  transition:all .16s;
+}
+body:not([data-page="home"]) .gd-chip:hover{border-color:rgba(165,15,23,.55);color:var(--ri-red);transform:translateY(-1px)}
+body:not([data-page="home"]) .gd-chip.on{
+  color:#FFF6E4;border-color:var(--ri-red-3);
+  background:linear-gradient(180deg,#C9141C,#8B0C13);
+  box-shadow:inset 0 0 0 1px rgba(243,220,176,.55),0 6px 14px rgba(140,10,16,.26);
+}
+
+body:not([data-page="home"]) .gd-select{
+  appearance:none;cursor:pointer;
+  min-width:150px;padding:6px 30px 6px 12px;border-radius:2px;
+  font-family:var(--ri-serif);font-size:12.5px;letter-spacing:1.2px;color:#5B3A26;
+  border:1px solid rgba(201,162,94,.5);
+  background:
+    url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A50F17' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E") no-repeat right 10px center,
+    linear-gradient(180deg,#FFFCF3,#F7EAD0);
+}
+body:not([data-page="home"]) .gd-go{margin-left:auto;padding:10px 22px!important;font-size:13px!important;letter-spacing:2px}
+
+/* ---- 结果：题头 ---- */
+body:not([data-page="home"]) .gd-empty{
+  padding:34px 20px;text-align:center;
+  font-family:var(--ri-kai);font-size:13px;letter-spacing:1.2px;color:#9A7550;
+  border:1px dashed rgba(201,162,94,.6);border-radius:2px;background:rgba(255,252,240,.6);
+}
+body:not([data-page="home"]) .gd-result{
+  display:grid;grid-template-columns:minmax(240px,318px) 1fr;
+  column-gap:clamp(18px,2.8vw,38px);row-gap:clamp(20px,2.6vw,32px);
+  animation:riRise .5s cubic-bezier(.2,.7,.3,1) both;
+}
+body:not([data-page="home"]) .gd-head{grid-column:1/-1;position:relative;padding-bottom:16px}
+body:not([data-page="home"]) .gd-head::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:linear-gradient(90deg,var(--ri-red),rgba(201,162,94,.55) 42%,rgba(201,162,94,0));
+}
+body:not([data-page="home"]) .gd-head h2{
+  margin:0 0 10px;font-family:var(--ri-serif);font-weight:700;
+  font-size:clamp(21px,2.5vw,29px);letter-spacing:3px;color:#8B0C13;
+}
+body:not([data-page="home"]) .gd-intro{
+  margin:0 0 14px;font-size:13.5px;line-height:2.05;color:#5C3B26;letter-spacing:.4px;
+}
+body:not([data-page="home"]) .gd-facts{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+body:not([data-page="home"]) .gd-facts > span{
+  display:inline-flex;align-items:baseline;gap:4px;
+  padding:5px 12px;border-radius:2px;
+  font-size:11.5px;letter-spacing:1px;color:#7A5A3C;
+  background:rgba(255,252,240,.9);border:1px solid rgba(201,162,94,.42);
+}
+body:not([data-page="home"]) .gd-facts > span b{
+  font-family:var(--ri-serif);font-size:14px;color:var(--ri-red);letter-spacing:0;
+}
+body:not([data-page="home"]) .gd-ai-flag{
+  border-style:dashed!important;color:#8A6242!important;font-size:11px!important;
+  background:rgba(255,248,230,.7)!important;
+}
+body:not([data-page="home"]) .gd-ai-flag:empty{display:none}
+
+/* ---- 路线图（左栏，随滚动停住） ---- */
+body:not([data-page="home"]) .gd-map-box{
+  grid-column:1;align-self:start;position:sticky;top:18px;
+}
+body:not([data-page="home"]) .gd-map{
+  position:relative;width:100%;aspect-ratio:800/1040;
+  border:1px solid var(--ri-gold);border-radius:2px;
+  background:
+    radial-gradient(120% 90% at 50% 0%,rgba(255,244,214,.9),rgba(247,235,208,.6) 70%),
+    url("../装饰/宣纸纹.webp") repeat;
+  box-shadow:0 0 0 5px rgba(239,224,190,.5),0 14px 30px rgba(122,88,40,.16);
+  overflow:hidden;
+}
+body:not([data-page="home"]) .gd-map img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  filter:contrast(1.14) saturate(1.08);
+  opacity:1;pointer-events:none;
+}
+body:not([data-page="home"]) .gd-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+body:not([data-page="home"]) .gd-path{
+  stroke:#A50F17;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;
+  stroke-dasharray:7 5;vector-effect:non-scaling-stroke;
+  filter:drop-shadow(0 0 2px rgba(255,246,224,.95));
+  animation:gdDash 26s linear infinite;
+}
+@keyframes gdDash{to{stroke-dashoffset:-240}}
+
+body:not([data-page="home"]) .gd-dot{
+  position:absolute;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;
+}
+body:not([data-page="home"]) .gd-dot i{
+  width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;font-style:normal;
+  font-family:var(--ri-serif);font-size:11.5px;font-weight:700;color:#FFF6E4;
+  background:linear-gradient(180deg,#D4161D,#8B0C13);
+  box-shadow:0 0 0 2px rgba(255,247,226,.92),0 4px 10px rgba(90,4,8,.4);
+}
+body:not([data-page="home"]) .gd-dot.start i{
+  background:linear-gradient(180deg,#D8B36A,#A8763C);color:#4A2308;font-size:10.5px;
+  box-shadow:0 0 0 2px rgba(255,247,226,.92),0 0 0 5px rgba(216,179,106,.3),0 4px 10px rgba(90,60,10,.36);
+}
+body:not([data-page="home"]) .gd-map-cap{
+  position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
+  padding:3px 12px;border-radius:2px;white-space:nowrap;
+  font-family:var(--ri-kai);font-size:11px;letter-spacing:1.6px;color:#7A3A18;
+  background:rgba(255,252,240,.92);border:1px solid rgba(201,162,94,.5);
+}
+
+/* 图下列站名：比贴在图上好读 */
+body:not([data-page="home"]) .gd-legend{
+  display:flex;flex-wrap:wrap;gap:6px 10px;
+  margin-top:10px;padding:10px 12px;
+  background:rgba(255,252,240,.72);
+  border:1px solid rgba(201,162,94,.38);border-radius:2px;
+}
+body:not([data-page="home"]) .gd-legend > span{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11.5px;letter-spacing:.6px;color:#5C3B26;
+}
+body:not([data-page="home"]) .gd-legend i{
+  width:15px;height:15px;flex:none;border-radius:50%;
+  display:grid;place-items:center;font-style:normal;
+  font-family:var(--ri-serif);font-size:9px;font-weight:700;color:#FFF6E4;
+  background:linear-gradient(180deg,#D4161D,#8B0C13);
+}
+body:not([data-page="home"]) .gd-legend .st i{
+  background:linear-gradient(180deg,#D8B36A,#A8763C);color:#4A2308;
+}
+body:not([data-page="home"]) .gd-legend .st{color:#8B0C13;font-weight:700}
+
+/* ---- 每日行程（右栏） ---- */
+body:not([data-page="home"]) .gd-days{grid-column:2;display:flex;flex-direction:column;gap:clamp(18px,2.2vw,26px)}
+body:not([data-page="home"]) .gd-day{
+  display:grid;grid-template-columns:auto 1fr;gap:clamp(12px,1.8vw,20px);
+}
+body:not([data-page="home"]) .gd-day-tag{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding-top:2px;min-width:44px;
+}
+body:not([data-page="home"]) .gd-day-tag span{
+  font-size:8.5px;font-weight:800;letter-spacing:2.4px;color:#A98364;
+}
+body:not([data-page="home"]) .gd-day-tag b{
+  font-family:var(--ri-serif);font-size:27px;line-height:1;letter-spacing:-1px;color:var(--ri-red);
+  text-shadow:0 1px 0 rgba(255,255,255,.7);
+}
+body:not([data-page="home"]) .gd-day-tag::after{
+  content:"";flex:1;width:1px;margin-top:6px;
+  background:linear-gradient(180deg,rgba(201,162,94,.6),rgba(201,162,94,0));
+}
+body:not([data-page="home"]) .gd-day-main{min-width:0}
+body:not([data-page="home"]) .gd-day-main h3{
+  margin:0 0 12px;padding-bottom:8px;
+  font-family:var(--ri-serif);font-size:15.5px;font-weight:700;letter-spacing:2px;color:#4A2A16;
+  border-bottom:1px solid rgba(201,162,94,.35);
+}
+body:not([data-page="home"]) .gd-stops{list-style:none;margin:0;padding:0}
+body:not([data-page="home"]) .gd-stop{
+  display:grid;grid-template-columns:52px 1fr;gap:10px;padding-bottom:16px;
+}
+body:not([data-page="home"]) .gd-stop:last-child{padding-bottom:2px}
+body:not([data-page="home"]) .gd-time{
+  padding-top:3px;text-align:right;
+  font-family:var(--ri-serif);font-size:11.5px;font-weight:700;letter-spacing:.4px;color:#A50F17;
+}
+body:not([data-page="home"]) .gd-stop-body{
+  position:relative;padding-left:15px;border-left:1px solid rgba(201,162,94,.5);
+}
+body:not([data-page="home"]) .gd-stop-body::before{
+  content:"";position:absolute;left:-4px;top:7px;width:7px;height:7px;border-radius:50%;
+  background:var(--ri-red);box-shadow:0 0 0 3px rgba(165,15,23,.12);
+}
+body:not([data-page="home"]) .gd-stop-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+body:not([data-page="home"]) .gd-stop-head b{
+  font-family:var(--ri-serif);font-size:14px;letter-spacing:1.2px;color:#33180F;
+}
+body:not([data-page="home"]) .gd-slot{
+  font-size:10px;letter-spacing:1px;color:#8A6242;
+  padding:1px 6px;border-radius:2px;background:rgba(201,162,94,.16);
+}
+body:not([data-page="home"]) .gd-stay{
+  font-size:10px;letter-spacing:.6px;color:#A98364;
+}
+body:not([data-page="home"]) .gd-line{
+  margin:6px 0 0;font-size:12.5px;line-height:1.95;color:#5C3B26;letter-spacing:.2px;
+}
+body:not([data-page="home"]) .gd-relics,
+body:not([data-page="home"]) .gd-museum,
+body:not([data-page="home"]) .gd-move{
+  margin:5px 0 0;font-size:11.5px;line-height:1.7;letter-spacing:.3px;
+}
+body:not([data-page="home"]) .gd-relics{color:#7A3A18}
+body:not([data-page="home"]) .gd-relics::before{content:"◈ ";color:var(--ri-gold);font-size:10px}
+body:not([data-page="home"]) .gd-museum{color:#8A6242}
+body:not([data-page="home"]) .gd-museum::before{content:"⌂ ";color:var(--ri-gold)}
+body:not([data-page="home"]) .gd-move{color:#9A7550;font-size:11px}
+body:not([data-page="home"]) .gd-move::before{content:"→ ";color:var(--ri-red);font-weight:700}
+body:not([data-page="home"]) .gd-sleep{
+  margin:10px 0 0;padding:7px 11px;
+  font-size:11px;line-height:1.7;letter-spacing:.3px;color:#7A5230;
+  background:rgba(201,162,94,.1);border-left:2px solid rgba(201,162,94,.6);border-radius:1px;
+}
+
+/* ---- 提醒 / 操作 ---- */
+body:not([data-page="home"]) .gd-tips{
+  grid-column:1/-1;padding:clamp(14px,1.8vw,20px) clamp(15px,2vw,22px);
+  background:linear-gradient(180deg,#FFFDF6,#FAF0D9);
+  border:1px solid var(--ri-line);border-radius:2px;
+}
+body:not([data-page="home"]) .gd-tips h4{
+  margin:0 0 9px;font-family:var(--ri-kai);font-size:12.5px;letter-spacing:3px;color:#8B0C13;
+}
+body:not([data-page="home"]) .gd-tips ul{margin:0;padding-left:18px}
+body:not([data-page="home"]) .gd-tips li{
+  font-size:12px;line-height:1.95;color:#5C3B26;letter-spacing:.2px;
+}
+body:not([data-page="home"]) .gd-tips li::marker{color:var(--ri-gold)}
+body:not([data-page="home"]) .gd-acts{
+  grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+}
+body:not([data-page="home"]) .gd-acts .btn{padding:10px 20px;font-size:12.5px}
+
+/* ---- 窄屏：单栏，地图不再吸顶 ---- */
+@media (max-width:900px){
+  body:not([data-page="home"]) .gd-result{grid-template-columns:1fr}
+  body:not([data-page="home"]) .gd-map-box{
+    grid-column:1;position:relative;top:auto;
+    width:min(100%,340px);margin:0 auto;
+  }
+  body:not([data-page="home"]) .gd-days{grid-column:1}
+  body:not([data-page="home"]) .gd-label{flex-basis:100%}
+  body:not([data-page="home"]) .gd-go{margin-left:0;width:100%}
+  body:not([data-page="home"]) .gd-select{flex:1}
+}
+@media (max-width:560px){
+  body:not([data-page="home"]) .gd-chip{padding:5px 10px;font-size:12px;letter-spacing:.6px}
+  body:not([data-page="home"]) .gd-row{gap:9px}
+  body:not([data-page="home"]) .gd-stop{grid-template-columns:44px 1fr;gap:8px}
+  body:not([data-page="home"]) .gd-day{grid-template-columns:34px 1fr}
+  body:not([data-page="home"]) .gd-day-tag b{font-size:22px}
+  body:not([data-page="home"]) .gd-facts > span{padding:4px 9px;font-size:11px}
+}
+
+/* ---- 打印：只留行程，白纸黑字 ---- */
+@media print{
+  body:not([data-page="home"]){
+    background:#fff!important;color:#111!important;
+  }
+  body:not([data-page="home"])::before,
+  body:not([data-page="home"])::after,
+  body:not([data-page="home"]) #app::before,
+  body:not([data-page="home"]) #app::after,
+  body:not([data-page="home"]) .topnav,
+  body:not([data-page="home"]) .foot,
+  body:not([data-page="home"]) .bg-art,
+  body:not([data-page="home"]) .ri-seal,
+  body:not([data-page="home"]) .ri-crumb,
+  body:not([data-page="home"]) .gd-form-wrap,
+  body:not([data-page="home"]) .gd-acts,
+  body:not([data-page="home"]) .gd-ai-flag{display:none!important}
+  body:not([data-page="home"]) #app{
+    max-width:none;margin:0;padding:0;background:#fff;box-shadow:none;
+  }
+  body:not([data-page="home"]) .gd-result{display:block}
+  body:not([data-page="home"]) .gd-map-box{
+    position:static;width:250px;margin:0 0 14px;
+  }
+  body:not([data-page="home"]) .gd-map{box-shadow:none;border:1px solid #bbb}
+  body:not([data-page="home"]) .gd-day{page-break-inside:avoid;margin-bottom:16px}
+  body:not([data-page="home"]) .gd-head h2,
+  body:not([data-page="home"]) .gd-day-main h3,
+  body:not([data-page="home"]) .gd-line,
+  body:not([data-page="home"]) .gd-intro{color:#111!important}
+}

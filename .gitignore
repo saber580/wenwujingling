@@ -41,3 +41,8 @@ node_modules/
 
 # ---------- 备份/临时 ----------
 *.bak
+
+# ---------- 其它 ----------
+.opencode/
+tools/bridge.log
+*.log
