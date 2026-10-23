@@ -733,7 +733,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
           <a href="#/ident">🔍 AI文物识别</a>
           <a href="#/heart">🃏 心仪卡工坊</a>
           <a href="#/guide">🗺 AI旅游攻略</a>
-          <a href="向考古-我埋下的三千年.html?v=1023b">⛏ 向考古 · 我埋下的三千年</a>
+          <a href="向考古-我埋下的三千年.html?v=1024">⛏ 向考古 · 我埋下的三千年</a>
           <a href="#/" onclick="return aiCfgOpen()">☁️ 云端 AI</a>
         </div>
       </div>
@@ -875,7 +875,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
   <script src="js/cloud-ai.js?v=ca10"></script>
   <script src="js/bg-paint.js?v=bp8"></script>
   <script src="js/flyleaf.js?v=20261020f"></script>
-  <script src="js/red-v2.js?v=red28"></script>
+  <script src="js/red-v2.js?v=red29"></script>
 <script src="js/guide.js?v=gi1"></script>
 <script src="js/red-inner.js?v=ri8"></script>
 
@@ -955,6 +955,26 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
     frag.appendChild(el);
   }
   box.appendChild(frag);
+})();
+</script>
+<script>
+/* 子页面点「回到主页」回来时带 ?home=1：跳过扉页与开场画卷，直接落到正式首页 */
+(function () {
+  try {
+    if (!/[?&](home|skip)=1/.test(location.search || "")) return;
+    var n = 0;
+    var iv = setInterval(function () {
+      n++;
+      if (typeof window.flyleafEnter === "function") {
+        try { window.flyleafEnter(); } catch (e) {}
+        setTimeout(function () { try { introSkip(); } catch (e) {} }, 60);
+        setTimeout(function () { try { introSkip(); } catch (e) {} }, 800);
+        setTimeout(function () { try { introSkip(); } catch (e) {} }, 1600);
+        clearInterval(iv);
+      }
+      if (n > 60) clearInterval(iv);
+    }, 100);
+  } catch (e) {}
 })();
 </script>
 </body>
