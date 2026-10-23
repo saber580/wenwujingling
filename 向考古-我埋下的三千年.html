@@ -1020,8 +1020,7 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
   <section class="act" id="s4">
     <div class="rep" id="rep"></div>
     <div style="text-align:center;margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <a class="btn primary" href="index.html">← 返回主页</a>
-      <button class="btn ghost" id="goAgain">再埋一次</button>
+      <a class="btn primary" href="index.html">回到主页</a>
       <button class="btn ghost" id="goTop">回到序章</button>
     </div>
   </section>
@@ -2486,7 +2485,8 @@ $('#goEarth').onclick = function(){
 };
 $('#goDig').onclick = function(){ goto(3); dgStart(); };
 $('#goReport').onclick = function(){ buildReport(); goto(4); };
-$('#goAgain').onclick = function(){
+/* 「回到序章」= 清空这一局，从序章重新开始（原「再埋一次」的清场逻辑） */
+$('#goTop').onclick = function(){
   S.who='woman'; S.pose='straight'; S.head='west'; S.ochre='off';
   S.place={head:[],chest:[],side:[],feet:[],fill:[]}; S.broken={}; S.picked=null; S.dug=[]; S.dugDone=false;
   $('#sec').innerHTML=''; $('#digN').textContent='0'; $('#buriedN').textContent='0';
@@ -2498,9 +2498,8 @@ $('#goAgain').onclick = function(){
   $('#earthTx').textContent='你把最后一捧土拍实。然后，你转身回寨子去了。';
   $('#dust').classList.remove('on');
   $('#goDig').disabled=true; $('#goReport').disabled=true;
-  renderAll(); goto(1);
+  renderAll(); goto(0);
 };
-$('#goTop').onclick = function(){ goto(0); };
 
 /* 槽位点击 */
 $$('#pit .slot').forEach(function(el){
