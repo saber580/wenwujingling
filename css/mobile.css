@@ -380,15 +380,17 @@
 }
 
 /* =========================================================
-   15 · 首屏流沙：窄屏波形铺长 + 压低
-   1440 宽的波形塞进 390 宽会被压成尖峰，这里把元素加宽到 400%
-   （半个元素 = 一个完整周期，仍然无缝），高度与模糊一并收小
+   15 · 首屏流沙（手机端专用重绘）
+   原来把 1440 宽的波形塞进 390 宽，元素还要撑到 400% 宽再上 blur，
+   真机上整层纹理超预算会被直接丢弃 —— 首屏只剩一片纯红。
+   这里按 390×420 重新画沙脊（迎风坡缓、落风坡陡），两层、200% 宽、
+   不上 blur（柔化做进 SVG 渐变），任何机型都能画出来。
    ========================================================= */
 @media (max-width:860px){
-  .rh-dunes{height:31%!important;opacity:.55!important}
-  .rh-dunes i{width:400%!important}
-  .rh-dunes .d1{filter:blur(1.6px)!important}
-  .rh-dunes .d2{filter:blur(2.0px)!important}
-  .rh-dunes .d3{filter:blur(1.4px)!important}
+  .rh-dunes{height:42%!important;opacity:1!important;z-index:3!important}
+  .rh-dunes i{width:200%!important;background-size:50% 100%!important;background-repeat:repeat-x!important;will-change:auto!important;backface-visibility:visible!important}
+  .rh-dunes .d1{display:none!important}
+  .rh-dunes .d2{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 420' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23FFE0C6' stop-opacity='0.17'/><stop offset='.18' stop-color='%23FFE0C6' stop-opacity='0.30'/><stop offset='1' stop-color='%23FFE0C6' stop-opacity='0'/></linearGradient></defs><path d='M0 168 C26.0 161.8 52.0 106.0 80.6 106.0 C96.2 106.0 120.9 159.3 130.0 168.0 C156.0 163.2 176.8 120.0 205.4 120.0 C221.0 120.0 250.9 161.3 260.0 168.0 C286.0 161.0 309.4 98.0 338.0 98.0 C353.6 98.0 380.9 158.2 390.0 168.0 L390 398 L0 398 Z' fill='url(%23g)'/><path d='M0 168 C26.0 161.8 52.0 106.0 80.6 106.0 C96.2 106.0 120.9 159.3 130.0 168.0 C156.0 163.2 176.8 120.0 205.4 120.0 C221.0 120.0 250.9 161.3 260.0 168.0 C286.0 161.0 309.4 98.0 338.0 98.0 C353.6 98.0 380.9 158.2 390.0 168.0' fill='none' stroke='%23FFE0C6' stroke-opacity='0.26' stroke-width='1.8' stroke-linecap='round'/></svg>")!important;filter:none!important}
+  .rh-dunes .d3{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 420' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23FFD2B2' stop-opacity='0.19'/><stop offset='.18' stop-color='%23FFD2B2' stop-opacity='0.34'/><stop offset='1' stop-color='%23FFD2B2' stop-opacity='0'/></linearGradient></defs><path d='M0 268 C39.0 263.4 66.3 222.0 109.2 222.0 C132.6 222.0 181.4 261.6 195.0 268.0 C234.0 261.8 280.8 206.0 323.7 206.0 C347.1 206.0 376.4 259.3 390.0 268.0 L390 448 L0 448 Z' fill='url(%23g)'/><path d='M0 268 C39.0 263.4 66.3 222.0 109.2 222.0 C132.6 222.0 181.4 261.6 195.0 268.0 C234.0 261.8 280.8 206.0 323.7 206.0 C347.1 206.0 376.4 259.3 390.0 268.0' fill='none' stroke='%23FFD2B2' stroke-opacity='0.30' stroke-width='1.6' stroke-linecap='round'/></svg>")!important;filter:none!important}
   .rh-gold{display:none!important}
 }
