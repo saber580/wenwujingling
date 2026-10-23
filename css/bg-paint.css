@@ -90,13 +90,19 @@ body.bg-paint .topbar.rh-topbar{
   box-shadow:0 12px 30px rgba(26,0,3,.44);
 }
 body.bg-paint .rh-hero{background:none}
-/* 左半压一层暖黑，题字更清楚；右侧月洞留亮 */
+/* 左半压一层暖黑，题字更清楚；但别压死画（原来 0→.74、34%→.46，左侧山石全糊了） */
 body.bg-paint .rh-hero::before{
   background:
-    linear-gradient(100deg,rgba(34,3,4,.74) 0%,rgba(34,3,4,.46) 34%,rgba(34,3,4,.10) 62%,rgba(34,3,4,.26) 100%),
-    radial-gradient(64% 58% at 16% 68%,rgba(26,2,3,.5),rgba(26,2,3,0) 72%);
+    linear-gradient(100deg,rgba(34,3,4,.62) 0%,rgba(34,3,4,.28) 26%,rgba(34,3,4,0) 52%,rgba(34,3,4,.12) 100%),
+    radial-gradient(64% 58% at 16% 68%,rgba(26,2,3,.22),rgba(26,2,3,0) 72%);
   opacity:1;-webkit-mask-image:none;mask-image:none;
 }
+/* 压暗减了，靠文字自身的暖黑投影顶住可读性（不碰匾额，免得红字发脏） */
+body.bg-paint .rh-hero .rh-eyebrow,
+body.bg-paint .rh-hero .rh-en,
+body.bg-paint .rh-hero .rh-lede,
+body.bg-paint .rh-hero .rh-nums,
+body.bg-paint .rh-hero .rh-rail{text-shadow:0 2px 12px rgba(22,1,2,.62),0 1px 2px rgba(22,1,2,.5)}
 body.bg-paint .rh-hero::after{opacity:.34}
 body.bg-paint .rh-hero-bg::before,
 body.bg-paint .rh-hero-bg::after{opacity:.6}
@@ -228,15 +234,57 @@ body.bg-paint #flyleaf .fl-bgchar{z-index:2;opacity:.42}
 }
 
 /* =========================================================
-   五 · 首屏「鎏金流沙」底
-   山河画铺满整页时，首屏下半截全是山石，沙丘压不住也看不清；
-   这里让首屏单独用朱红底（画只留在首屏以下），底部交给 .rh-dunes。
+   五 · 首屏：山河画为底（不再自己铺红）
+   底色就是这幅「山河祥云」（.bgp-base 满铺），首屏保持透明。
+   首屏原来那三层沙丘（.rh-dunes）退役：流沙现在改成整页的一层光
+   （见「六」），两层沙叠在首屏只会互相打架。
    ========================================================= */
-body.bg-paint .rh-hero#rhHero{
-  background:
-    radial-gradient(1150px 620px at 76% 0%,rgba(255,214,150,.30) 0%,rgba(255,214,150,0) 60%),
-    radial-gradient(900px 600px at 6% 100%,rgba(74,2,6,.58) 0%,rgba(74,2,6,0) 68%),
-    linear-gradient(158deg,#FF4B33 0%,#F2382A 18%,#D4101A 54%,#8E0A11 100%);
+body.bg-paint .rh-hero#rhHero{background:none}
+body.bg-paint .rh-dunes{display:none}
+
+/* =======================================
+   六 · 流沙：铺在山河画上的一层金纱（.bgp-sand，js/bg-paint.js 注入）
+   画是底、沙是光：父层走 screen 混合，只把沙提亮，不遮山、不改色；
+   三道沙脊同色系（暖金 → 沙褐），远慢近快、中间一道反向错开速度，
+   画本身几乎不动，只有沙在缓缓流 —— 这就是「流沙」。
+   层级：挂在 .bg-art 的最后（压暗层 .bg-art-veil 之上），否则会被暗角吃光。
+   ======================================= */
+.bgp-sand{position:absolute;left:0;right:0;bottom:0;height:54%;
+  pointer-events:none;overflow:hidden;mix-blend-mode:screen;opacity:.85}
+.bgp-sand i{position:absolute;left:0;bottom:0;width:200%;height:100%;
+  background-repeat:repeat-x;background-size:50% 100%;
+  will-change:transform;backface-visibility:hidden}
+@keyframes bgpSand{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+/* 一道极缓的斜向沙光：沙带之外，整片下沿还有一层薄薄的流动感 */
+.bgp-sand::after{content:"";position:absolute;top:-10%;bottom:-10%;left:-40%;width:46%;
+  background:linear-gradient(102deg,rgba(255,236,204,0) 0%,rgba(255,232,196,.10) 42%,
+    rgba(255,246,224,.18) 50%,rgba(255,232,196,.10) 58%,rgba(255,236,204,0) 100%);
+  animation:bgpSandSweep 46s linear infinite;pointer-events:none}
+@keyframes bgpSandSweep{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(320vw,0,0)}}
+
+/* 远沙：最高、最宽、最慢 */
+.bgp-sand .s1{animation:bgpSand 168s linear infinite;filter:blur(3px);
+  background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxNDQwIDQwMCcgcHJlc2VydmVBc3BlY3RSYXRpbz0nbm9uZSc+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSdnJyBncmFkaWVudFVuaXRzPSd1c2VyU3BhY2VPblVzZScgeDE9JzAnIHkxPScxNTYuMCcgeDI9JzAnIHkyPSc0MDAnPjxzdG9wIG9mZnNldD0nMCcgc3RvcC1jb2xvcj0nI0U5Q0JBMCcgc3RvcC1vcGFjaXR5PScwLjM0Jy8+PHN0b3Agb2Zmc2V0PScuMzAnIHN0b3AtY29sb3I9JyNEMkFDNzgnIHN0b3Atb3BhY2l0eT0nMC4xOCcvPjxzdG9wIG9mZnNldD0nMScgc3RvcC1jb2xvcj0nI0QyQUM3OCcgc3RvcC1vcGFjaXR5PScuMDQnLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cGF0aCBkPSdNMCAyMDAuMCBDNjEuMiAxNjMuOSAxMTguOCAxNjMuOSAxODAuMCAxNTYuMCBDMjQxLjIgMTkyLjEgMjk4LjggMTkyLjEgMzYwLjAgMjAwLjAgQzQyMS4yIDE2My45IDQ3OC44IDE2My45IDU0MC4wIDE1Ni4wIEM2MDEuMiAxOTIuMSA2NTguOCAxOTIuMSA3MjAuMCAyMDAuMCBDNzgxLjIgMTYzLjkgODM4LjggMTYzLjkgOTAwLjAgMTU2LjAgQzk2MS4yIDE5Mi4xIDEwMTguOCAxOTIuMSAxMDgwLjAgMjAwLjAgQzExNDEuMiAxNjMuOSAxMTk4LjggMTYzLjkgMTI2MC4wIDE1Ni4wIEMxMzIxLjIgMTkyLjEgMTM3OC44IDE5Mi4xIDE0NDAuMCAyMDAuMCBMMTQ0MCA0MDAgTDAgNDAwIFonIGZpbGw9J3VybCgjZyknLz48cGF0aCBkPSdNMCAyMDAuMCBDNjEuMiAxNjMuOSAxMTguOCAxNjMuOSAxODAuMCAxNTYuMCBDMjQxLjIgMTkyLjEgMjk4LjggMTkyLjEgMzYwLjAgMjAwLjAgQzQyMS4yIDE2My45IDQ3OC44IDE2My45IDU0MC4wIDE1Ni4wIEM2MDEuMiAxOTIuMSA2NTguOCAxOTIuMSA3MjAuMCAyMDAuMCBDNzgxLjIgMTYzLjkgODM4LjggMTYzLjkgOTAwLjAgMTU2LjAgQzk2MS4yIDE5Mi4xIDEwMTguOCAxOTIuMSAxMDgwLjAgMjAwLjAgQzExNDEuMiAxNjMuOSAxMTk4LjggMTYzLjkgMTI2MC4wIDE1Ni4wIEMxMzIxLjIgMTkyLjEgMTM3OC44IDE5Mi4xIDE0NDAuMCAyMDAuMCcgZmlsbD0nbm9uZScgc3Ryb2tlPScjRkZGNkUyJyBzdHJva2Utb3BhY2l0eT0nMC40NCcgc3Ryb2tlLXdpZHRoPSczJyBzdHJva2UtbGluZWNhcD0ncm91bmQnLz48L3N2Zz4=")}
+/* 中沙：反向走，和上下两层错开，才不像整块平移 */
+.bgp-sand .s2{animation:bgpSand 232s linear infinite reverse;filter:blur(3.5px);
+  background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxNDQwIDQwMCcgcHJlc2VydmVBc3BlY3RSYXRpbz0nbm9uZSc+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSdnJyBncmFkaWVudFVuaXRzPSd1c2VyU3BhY2VPblVzZScgeDE9JzAnIHkxPScyMjYuMCcgeDI9JzAnIHkyPSc0MDAnPjxzdG9wIG9mZnNldD0nMCcgc3RvcC1jb2xvcj0nI0U0QzA4Qycgc3RvcC1vcGFjaXR5PScwLjQ0Jy8+PHN0b3Agb2Zmc2V0PScuMzAnIHN0b3AtY29sb3I9JyNDOTlDNjInIHN0b3Atb3BhY2l0eT0nMC4yNCcvPjxzdG9wIG9mZnNldD0nMScgc3RvcC1jb2xvcj0nI0M5OUM2Micgc3RvcC1vcGFjaXR5PScuMDQnLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cGF0aCBkPSdNMCAyMjYuMCBDODEuNiAyNjguNiAxNTguNCAyNjguNiAyNDAuMCAyNzguMCBDMzIxLjYgMjM1LjQgMzk4LjQgMjM1LjQgNDgwLjAgMjI2LjAgQzU2MS42IDI2OC42IDYzOC40IDI2OC42IDcyMC4wIDI3OC4wIEM4MDEuNiAyMzUuNCA4NzguNCAyMzUuNCA5NjAuMCAyMjYuMCBDMTA0MS42IDI2OC42IDExMTguNCAyNjguNiAxMjAwLjAgMjc4LjAgQzEyODEuNiAyMzUuNCAxMzU4LjQgMjM1LjQgMTQ0MC4wIDIyNi4wIEwxNDQwIDQwMCBMMCA0MDAgWicgZmlsbD0ndXJsKCNnKScvPjxwYXRoIGQ9J00wIDIyNi4wIEM4MS42IDI2OC42IDE1OC40IDI2OC42IDI0MC4wIDI3OC4wIEMzMjEuNiAyMzUuNCAzOTguNCAyMzUuNCA0ODAuMCAyMjYuMCBDNTYxLjYgMjY4LjYgNjM4LjQgMjY4LjYgNzIwLjAgMjc4LjAgQzgwMS42IDIzNS40IDg3OC40IDIzNS40IDk2MC4wIDIyNi4wIEMxMDQxLjYgMjY4LjYgMTExOC40IDI2OC42IDEyMDAuMCAyNzguMCBDMTI4MS42IDIzNS40IDEzNTguNCAyMzUuNCAxNDQwLjAgMjI2LjAnIGZpbGw9J25vbmUnIHN0cm9rZT0nI0ZGRjZFMicgc3Ryb2tlLW9wYWNpdHk9JzAuNTInIHN0cm9rZS13aWR0aD0nMycgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJy8+PC9zdmc+")}
+/* 近沙：最低、最快，贴着画面下沿流过去 */
+.bgp-sand .s3{animation:bgpSand 118s linear infinite;filter:blur(2.5px);
+  background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxNDQwIDQwMCcgcHJlc2VydmVBc3BlY3RSYXRpbz0nbm9uZSc+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSdnJyBncmFkaWVudFVuaXRzPSd1c2VyU3BhY2VPblVzZScgeDE9JzAnIHkxPSczMDIuMCcgeDI9JzAnIHkyPSc0MDAnPjxzdG9wIG9mZnNldD0nMCcgc3RvcC1jb2xvcj0nI0RGQjc3Ricgc3RvcC1vcGFjaXR5PScwLjUwJy8+PHN0b3Agb2Zmc2V0PScuMzAnIHN0b3AtY29sb3I9JyNCRThCNTAnIHN0b3Atb3BhY2l0eT0nMC4yNycvPjxzdG9wIG9mZnNldD0nMScgc3RvcC1jb2xvcj0nI0JFOEI1MCcgc3RvcC1vcGFjaXR5PScuMDQnLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cGF0aCBkPSdNMCAzNDIuMCBDOTcuOSAzMDkuMiAxOTAuMSAzMDkuMiAyODguMCAzMDIuMCBDMzg1LjkgMzM0LjggNDc4LjEgMzM0LjggNTc2LjAgMzQyLjAgQzY3My45IDMwOS4yIDc2Ni4xIDMwOS4yIDg2NC4wIDMwMi4wIEM5NjEuOSAzMzQuOCAxMDU0LjEgMzM0LjggMTE1Mi4wIDM0Mi4wIEMxMjQ5LjkgMzA5LjIgMTM0Mi4xIDMwOS4yIDE0NDAuMCAzMDIuMCBMMTQ0MCA0MDAgTDAgNDAwIFonIGZpbGw9J3VybCgjZyknLz48cGF0aCBkPSdNMCAzNDIuMCBDOTcuOSAzMDkuMiAxOTAuMSAzMDkuMiAyODguMCAzMDIuMCBDMzg1LjkgMzM0LjggNDc4LjEgMzM0LjggNTc2LjAgMzQyLjAgQzY3My45IDMwOS4yIDc2Ni4xIDMwOS4yIDg2NC4wIDMwMi4wIEM5NjEuOSAzMzQuOCAxMDU0LjEgMzM0LjggMTE1Mi4wIDM0Mi4wIEMxMjQ5LjkgMzA5LjIgMTM0Mi4xIDMwOS4yIDE0NDAuMCAzMDIuMCcgZmlsbD0nbm9uZScgc3Ryb2tlPScjRkZGNkUyJyBzdHJva2Utb3BhY2l0eT0nMC41OCcgc3Ryb2tlLXdpZHRoPSczJyBzdHJva2UtbGluZWNhcD0ncm91bmQnLz48L3N2Zz4=")}
+
+/* 沙粒：细小的金色尘点，斜着往上飘，像被风带起来的沙 */
+.bgp-dust{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.bgp-dust i{position:absolute;bottom:-6vh;border-radius:50%;opacity:0;will-change:transform,opacity;
+  background:radial-gradient(circle,rgba(255,246,220,1) 0%,rgba(240,206,142,.95) 44%,rgba(210,160,80,0) 100%);
+  box-shadow:0 0 7px rgba(255,220,150,.55);
+  animation:bgpDustRise linear infinite}
+@keyframes bgpDustRise{
+  0%{transform:translate3d(0,0,0) scale(.6);opacity:0}
+  12%{opacity:var(--o,.5)}
+  80%{opacity:calc(var(--o,.5) * .68)}
+  100%{transform:translate3d(var(--dx,2vw),-94vh,0) scale(1);opacity:0}}
+
+@media (prefers-reduced-motion:reduce){
+  .bgp-sand i,.bgp-dust i{animation:none!important}
+  .bgp-dust{display:none}
 }
-/* 首屏里的水墨纹样（万字）压淡一点，让金粉与沙脊更清楚 */
-body.bg-paint .rh-hero#rhHero::before{opacity:.34}

@@ -9,9 +9,9 @@
 <link rel="stylesheet" href="css/style.css?v=20261023h" />
 <link rel="stylesheet" href="css/red-v2.css?v=red29">
 <link rel="stylesheet" href="css/red-inner.css?v=ri8">
-<link rel="stylesheet" href="css/bg-paint.css?v=bp5">
+<link rel="stylesheet" href="css/bg-paint.css?v=bp8">
 <link rel="stylesheet" href="css/intro-scroll.css?v=sc10">
-<link rel="stylesheet" href="css/mobile.css?v=m12">
+<link rel="stylesheet" href="css/mobile.css?v=m14">
 <link rel="stylesheet" href="css/newbie.css?v=nb1">
 <style>
 /* ===== 对战舞台校准（只作用于本页） =====
@@ -496,6 +496,73 @@
   .rh-fan-hint{margin-top:8px}
 }
 </style>
+
+<style id="bg-shanhe-sand">
+/* ===== 山河祥云 · 主背景 + 鎏金流沙 ===== */
+body.bg-paint .bg-art-img{
+  display:block!important;
+  opacity:1!important;
+  animation:none!important;
+  background:url("背景/山河祥云.webp") no-repeat!important;
+  background-size:cover!important;
+  background-position:56% 46%!important;
+  filter:brightness(1.06) saturate(1.04)!important;
+}
+/* 隐掉与底图重复的程序绘制层 */
+body.bg-paint .bg-mtn,
+body.bg-paint .bg-sun,
+body.bg-paint .bg-cloud,
+body.bg-paint .bg-crack,
+body.bg-paint .bg-bloom,
+body.bg-paint .bg-water{display:none!important}
+
+/* 压暗：只留很轻的一层，让山色露出来；靠文字自身阴影保可读 */
+body.bg-paint .bg-art-veil{
+  background:
+    linear-gradient(90deg, rgba(12,4,4,.34) 0%, rgba(12,4,4,.16) 20%, rgba(12,4,4,.02) 40%, rgba(12,4,4,0) 56%),
+    radial-gradient(130% 90% at 50% 24%, rgba(12,4,4,0) 46%, rgba(12,4,4,.40) 100%),
+    linear-gradient(180deg, rgba(12,4,4,.30) 0%, rgba(12,4,4,.04) 26%, rgba(12,4,4,.34) 100%)!important;
+}
+body.bg-paint .bg-art-paper{opacity:.08!important}
+
+/* 取景：桌面宽屏往右挪一点，把大祥云与宫殿留在右侧视觉重心 */
+@media (min-width:1600px){ body.bg-paint .bg-art-img{background-position:58% 46%!important} }
+@media (max-width:1280px){ body.bg-paint .bg-art-img{background-position:54% 44%!important} }
+@media (max-width:1024px){ body.bg-paint .bg-art-img{background-position:50% 42%!important} }
+
+/* 竖屏 / 手机：保住屋脊与主山，别切到只剩云 */
+@media (max-width:820px){
+  body.bg-paint .bg-art-img{background-position:52% 34%!important}
+  body.bg-paint .bg-art-veil{
+    background:
+      radial-gradient(140% 80% at 50% 20%, rgba(12,4,4,0) 38%, rgba(12,4,4,.52) 100%),
+      linear-gradient(180deg, rgba(12,4,4,.34) 0%, rgba(12,4,4,.08) 30%, rgba(12,4,4,.44) 100%)!important;
+  }
+}
+@media (orientation:portrait) and (min-width:821px){
+  body.bg-paint .bg-art-img{background-position:center 40%!important}
+}
+
+/* —— 鎏金流沙 —— */
+.bg-art .bg-sand{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.bg-art .bg-sand i{
+  position:absolute;bottom:-8vh;border-radius:50%;
+  background:radial-gradient(circle,#FFEFC6 0%,rgba(255,214,140,.90) 38%,rgba(255,190,90,0) 72%);
+  box-shadow:0 0 10px rgba(255,214,140,.55);
+  animation:sandRise linear infinite;
+  will-change:transform,opacity;
+}
+@keyframes sandRise{
+  0%{transform:translate3d(0,0,0) scale(.55);opacity:0}
+  10%{opacity:.90}
+  76%{opacity:.62}
+  100%{transform:translate3d(4vw,-112vh,0) scale(1.05);opacity:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .bg-art .bg-sand i{animation:none!important;opacity:0!important}
+}
+</style>
 </head>
 <body data-bg="e" class="intro-on bg-paint">
   <!-- 扉页 · 双扇牌阵(进入正式版前的封面;主按钮进入后强制先看开场画卷;flyleaf.js 负责牌阵交互) -->
@@ -692,6 +759,7 @@
   <!-- 蓝金山水 · 动态网站背景(固定层,不参与内容交互;五套国风方案:一·青绿山水 / 二·水墨烟雨 / 三·鎏金宫阙 / 四·天青青花 / 五·中国红(默认)) -->
   <div class="bg-art" aria-hidden="true">
     <div class="bg-art-img"></div>
+    <div class="bg-sand"></div>
     <div class="bg-water"></div>
     <div class="bg-art-veil"></div>
     <div class="bg-art-paper"></div>
@@ -805,7 +873,7 @@
   <script src="js/app.js?v=20261023g"></script>
   <script src="js/vendor/workbuddy-cloud-sdk.js"></script>
   <script src="js/cloud-ai.js?v=ca10"></script>
-  <script src="js/bg-paint.js?v=bp5"></script>
+  <script src="js/bg-paint.js?v=bp8"></script>
   <script src="js/flyleaf.js?v=20261020f"></script>
   <script src="js/red-v2.js?v=red27"></script>
 <script src="js/guide.js?v=gi1"></script>
@@ -865,5 +933,29 @@
 })();
 </script>
 <script src="js/newbie.js?v=nb4"></script>
+
+<script id="bg-sand-js">
+(function(){
+  var host = document.querySelector('.bg-art');
+  if(!host) return;
+  var box = host.querySelector('.bg-sand');
+  if(!box){ box = document.createElement('div'); box.className='bg-sand'; host.appendChild(box); }
+  var narrow = matchMedia('(max-width:820px)').matches;
+  var n = narrow ? 18 : 34;
+  var frag = document.createDocumentFragment();
+  for(var i=0;i<n;i++){
+    var el = document.createElement('i');
+    var s = (narrow?1.4:1.6) + Math.random()*(narrow?2.8:3.8);
+    el.style.width = s+'px';
+    el.style.height = s+'px';
+    el.style.left = (Math.random()*100)+'%';
+    el.style.animationDuration = (11 + Math.random()*17)+'s';
+    el.style.animationDelay = (-Math.random()*26)+'s';
+    el.style.opacity = (0.30 + Math.random()*0.45).toFixed(2);
+    frag.appendChild(el);
+  }
+  box.appendChild(frag);
+})();
+</script>
 </body>
 </html>
