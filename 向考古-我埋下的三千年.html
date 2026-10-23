@@ -96,6 +96,17 @@ body.act-paper .btn{border-color:var(--line);color:var(--ink);background:var(--p
 body.act-paper .btn:hover{background:#fff;border-color:var(--gold)}
 body.act-paper .btn.primary{background:linear-gradient(180deg,#c2452f,#8e3220);color:#fff5e0;border-color:var(--gold)}
 body.act-paper .btn.ghost{background:transparent;color:var(--ink2)}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+
+/* 顶栏常驻「返回主页」——任何一幕、任何滚动位置都能退出 */
+.hd-home{flex:none;margin-left:2px;display:inline-flex;align-items:center;gap:5px;
+  font-size:12.5px;letter-spacing:1px;color:#8e3220;text-decoration:none;white-space:nowrap;
+  padding:6px 13px;border-radius:999px;border:1px solid rgba(181,67,47,.34);
+  background:#fff;box-shadow:0 1px 3px rgba(120,80,40,.10);transition:.22s}
+.hd-home:hover{color:#fff;border-color:#b5432f;background:#b5432f;transform:translateY(-1px)}
+body.act-paper .hd-home{color:var(--red-d);border-color:rgba(181,67,47,.38);background:#fff;
+  box-shadow:0 1px 3px rgba(120,80,40,.10)}
+body.act-paper .hd-home:hover{color:#fff;border-color:var(--red-d);background:var(--red-d);transform:translateY(-1px)}
 
 /* ================= 幕 0 · 序章 ================= */
 .s0-wrap{max-width:840px;margin:clamp(10px,2.6vh,34px) auto 0;text-align:center;padding:0 10px}
@@ -749,6 +760,26 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
   html{scroll-behavior:auto}
 }
 
+/* =========================================================
+   顶栏「返回主页」· 响应式（放最后，压过上面的 860 断点）
+   ========================================================= */
+@media (max-width:700px){
+  /* 手机：按钮固定在右上角，步骤条单独占一行，避免互相挤 */
+  .hd-in{position:relative;gap:8px}
+  .brand{flex:1 1 auto;min-width:0;padding-right:112px}
+  .hd-home{position:absolute;right:12px;top:11px;padding:5px 10px;font-size:12px}
+  .steps{flex-basis:100%;justify-content:flex-start;gap:3px;margin-top:2px}
+  .st{padding:3px 7px;font-size:11px;letter-spacing:.6px}
+  .hd h1,body.act-paper .hd h1{font-size:14px;letter-spacing:1px;white-space:nowrap}
+}
+@media (max-width:400px){
+  /* 360/320 小屏：标题收字号，按钮缩成「← 主页」，保证标题不被压 */
+  .brand{padding-right:92px}
+  .hd h1,.hd-in h1,body.act-paper .hd h1{font-size:13px;letter-spacing:.8px}
+  .hd-home{padding:5px 9px}
+  .hd-home .hw{display:none}
+}
+
 </style>
 </head>
 <body class="act-bury">
@@ -770,6 +801,7 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
       <span class="st" data-k="3">③ 发掘</span>
       <span class="st" data-k="4">④ 报告</span>
     </nav>
+    <a class="hd-home" href="index.html" title="返回文物精灵主页">← <span class="hw">返回</span>主页</a>
   </div>
 </header>
 
@@ -988,7 +1020,8 @@ body.act-paper .hd{background:rgba(255,253,248,.88)}
   <section class="act" id="s4">
     <div class="rep" id="rep"></div>
     <div style="text-align:center;margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button class="btn primary" id="goAgain">再埋一次</button>
+      <a class="btn primary" href="index.html">← 返回主页</a>
+      <button class="btn ghost" id="goAgain">再埋一次</button>
       <button class="btn ghost" id="goTop">回到序章</button>
     </div>
   </section>
