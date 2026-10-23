@@ -21,7 +21,7 @@
     else art.insertBefore(wrap, art.firstChild);
 
     /* 落花：随机大小 / 速度 / 起点，负延迟让一进页面就已经在飘 */
-    var i, n = 12, p, s;
+    var i, n = 7, p, s;
     for (i = 0; i < n; i++) {
       p = document.createElement("i");
       p.className = "bgp-petal";
@@ -30,7 +30,7 @@
       p.style.height = (s * 0.72).toFixed(1) + "px";
       p.style.left = (Math.random() * 108 - 4).toFixed(1) + "%";
       p.style.setProperty("--o", (0.24 + Math.random() * 0.32).toFixed(2));
-      p.style.animationDuration = (24 + Math.random() * 26).toFixed(1) + "s";
+      p.style.animationDuration = (38 + Math.random() * 34).toFixed(1) + "s";
       p.style.animationDelay = (-Math.random() * 46).toFixed(1) + "s";
       wrap.appendChild(p);
     }

@@ -29,16 +29,16 @@ body.bg-paint .bg-art-veil{
 /* ---- 二 · 会动的那几层（js/bg-paint.js 注入） ---- */
 .bgp{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 
-/* 底图：极缓推镜，72 秒一个来回 */
+/* 底图：极缓推镜，118 秒一个来回（原为 72 秒、幅度也大一倍，久看会晕） */
 .bgp-base{
   position:absolute;inset:-4%;
   background:url("../装饰/背景-山河祥云.webp") center 60%/cover no-repeat;
   transform-origin:52% 58%;will-change:transform;
-  animation:bgpZoom 72s ease-in-out infinite alternate;
+  animation:bgpZoom 118s ease-in-out infinite alternate;
 }
 @keyframes bgpZoom{
-  0%{transform:scale(1.02) translate3d(0,0,0)}
-  100%{transform:scale(1.115) translate3d(-1.3%,-1.5%,0)}
+  0%{transform:scale(1.035) translate3d(0,0,0)}
+  100%{transform:scale(1.072) translate3d(-.55%,-.6%,0)}
 }
 
 /* 上层：同一幅画的预模糊版，只留天空段，反向慢移 → 云在走、山不动 */
@@ -48,28 +48,28 @@ body.bg-paint .bg-art-veil{
   opacity:.52;transform-origin:50% 18%;will-change:transform;
   -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.5) 38%,rgba(0,0,0,0) 66%);
   mask-image:linear-gradient(180deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.5) 38%,rgba(0,0,0,0) 66%);
-  animation:bgpSky 104s ease-in-out infinite alternate;
+  animation:bgpSky 160s ease-in-out infinite alternate;
 }
 @keyframes bgpSky{
-  0%{transform:scale(1.04) translate3d(0,0,0)}
-  100%{transform:scale(1.12) translate3d(2.6%,-1.2%,0)}
+  0%{transform:scale(1.045) translate3d(0,0,0)}
+  100%{transform:scale(1.078) translate3d(1%,-.45%,0)}
 }
 
 /* 两道雾带：纯渐变椭圆（不用 filter:blur），横向缓移，一快一慢拉出纵深 */
 .bgp-mist{position:absolute;height:30vh;opacity:.5;
   background:radial-gradient(58% 50% at 50% 50%,rgba(255,248,232,.5),rgba(255,246,228,.18) 52%,rgba(255,246,228,0) 76%)}
-.bgp-mist.m1{left:-16%;right:16%;top:30%;animation:bgpDriftA 62s ease-in-out infinite alternate}
-.bgp-mist.m2{left:14%;right:-18%;top:56%;height:24vh;opacity:.34;animation:bgpDriftB 88s ease-in-out infinite alternate}
-@keyframes bgpDriftA{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(11%,-2.5%,0)}}
-@keyframes bgpDriftB{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-13%,2%,0)}}
+.bgp-mist.m1{left:-16%;right:16%;top:30%;animation:bgpDriftA 100s ease-in-out infinite alternate}
+.bgp-mist.m2{left:14%;right:-18%;top:56%;height:24vh;opacity:.34;animation:bgpDriftB 140s ease-in-out infinite alternate}
+@keyframes bgpDriftA{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(4.5%,-1%,0)}}
+@keyframes bgpDriftB{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-5.5%,.9%,0)}}
 
-/* 晨光：左上暖光呼吸，screen 叠色，不压暗画面 */
+/* 晨光：左上暖光呼吸，screen 叠色，只轻轻起伏（亮度差收窄，避免整屏闪） */
 .bgp-glow{position:absolute;inset:0;mix-blend-mode:screen;
   background:
     radial-gradient(46vw 46vw at 20% 12%,rgba(255,224,160,.20),rgba(255,224,160,0) 64%),
     radial-gradient(40vw 40vw at 84% 76%,rgba(255,186,126,.14),rgba(255,186,126,0) 68%);
-  animation:bgpGlow 36s ease-in-out infinite alternate}
-@keyframes bgpGlow{0%{opacity:.45;transform:scale(1)}100%{opacity:.95;transform:scale(1.05)}}
+  animation:bgpGlow 64s ease-in-out infinite alternate}
+@keyframes bgpGlow{0%{opacity:.62;transform:scale(1)}100%{opacity:.80;transform:scale(1.02)}}
 
 /* 花瓣：几片慢慢飘落，呼应画里的花树 */
 .bgp-petal{position:absolute;top:-6vh;border-radius:60% 40% 56% 44%/54% 62% 38% 46%;

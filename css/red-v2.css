@@ -140,7 +140,7 @@ body[data-page="home"] #app{max-width:none;width:100%;margin:0;padding:0}
    顶上压金粉（桌面端才生成）。任何一帧都是完整画面，
    动画被停掉也不会出现断口。
    ========================================================= */
-.rh-dunes{position:absolute;left:0;right:0;bottom:0;height:62%;z-index:3;opacity:.5;
+.rh-dunes{position:absolute;left:0;right:0;bottom:0;height:62%;z-index:3;opacity:.40;
   pointer-events:none;overflow:hidden}
 .rh-dunes i{position:absolute;left:0;bottom:0;width:200%;height:100%;
   background-repeat:repeat-x;background-size:50% 100%;
@@ -149,12 +149,12 @@ body[data-page="home"] #app{max-width:none;width:100%;margin:0;padding:0}
 /* 沙脊顶沿的暖反光 + 贴底压一档，方便跟画面对接 */
 .rh-dunes::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,196,150,.10) 0%,rgba(255,170,120,0) 30%,rgba(34,4,5,.20) 100%)}
-.rh-dunes .d1{animation:rhDune 108s linear infinite;filter:blur(2.2px);
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23F6B092' stop-opacity='.50'/><stop offset='.42' stop-color='%23C4604A' stop-opacity='.16'/><stop offset='1' stop-color='%23300A0A' stop-opacity='0'/></linearGradient></defs><path d='M0 150 C115 150 288 46 446 46 C605 58 677 150 720 150 C835 150 1008 46 1166 46 C1325 58 1397 150 1440 150 L1440 320 L0 320 Z' fill='url(%23g)'/><path d='M0 150 C115 150 288 46 446 46 C605 58 677 150 720 150 C835 150 1008 46 1166 46 C1325 58 1397 150 1440 150' fill='none' stroke='%23FFD9B4' stroke-opacity='.26' stroke-width='2.4'/></svg>")}
-.rh-dunes .d2{animation:rhDune 146s linear infinite reverse;filter:blur(3.6px);
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23E68B6C' stop-opacity='.42'/><stop offset='.42' stop-color='%23B8503C' stop-opacity='.18'/><stop offset='1' stop-color='%23300A0A' stop-opacity='0'/></linearGradient></defs><path d='M0 198 C77 198 192 114 298 114 C403 124 451 198 480 198 C557 198 672 114 778 114 C883 124 931 198 960 198 C1037 198 1152 114 1258 114 C1363 124 1411 198 1440 198 L1440 320 L0 320 Z' fill='url(%23g)'/><path d='M0 198 C77 198 192 114 298 114 C403 124 451 198 480 198 C557 198 672 114 778 114 C883 124 931 198 960 198 C1037 198 1152 114 1258 114 C1363 124 1411 198 1440 198' fill='none' stroke='%23FFD9B4' stroke-opacity='.26' stroke-width='2.4'/></svg>")}
-.rh-dunes .d3{animation:rhDune 84s linear infinite;filter:blur(2.4px);
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23D87455' stop-opacity='.46'/><stop offset='.42' stop-color='%23A83B2E' stop-opacity='.24'/><stop offset='1' stop-color='%23300A0A' stop-opacity='0'/></linearGradient></defs><path d='M0 246 C115 246 288 180 446 180 C605 187 677 246 720 246 C835 246 1008 180 1166 180 C1325 187 1397 246 1440 246 L1440 320 L0 320 Z' fill='url(%23g)'/><path d='M0 246 C115 246 288 180 446 180 C605 187 677 246 720 246 C835 246 1008 180 1166 180 C1325 187 1397 246 1440 246' fill='none' stroke='%23FFD9B4' stroke-opacity='.26' stroke-width='2.4'/></svg>")}
+.rh-dunes .d1{animation:rhDune 185s linear infinite;filter:blur(2.8px);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23F6B092' stop-opacity='.32'/><stop offset='.42' stop-color='%23C4604A' stop-opacity='.10'/><stop offset='1' stop-color='%23300A0A' stop-opacity='0'/></linearGradient></defs><path d='M0 150 C115 150 288 46 446 46 C605 58 677 150 720 150 C835 150 1008 46 1166 46 C1325 58 1397 150 1440 150 L1440 320 L0 320 Z' fill='url(%23g)'/><path d='M0 150 C115 150 288 46 446 46 C605 58 677 150 720 150 C835 150 1008 46 1166 46 C1325 58 1397 150 1440 150' fill='none' stroke='%23FFD9B4' stroke-opacity='.15' stroke-width='2.2'/></svg>")}
+.rh-dunes .d2{animation:rhDune 250s linear infinite reverse;filter:blur(4.2px);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23E68B6C' stop-opacity='.26'/><stop offset='.42' stop-color='%23B8503C' stop-opacity='.12'/><stop offset='1' stop-color='%23300A0A' stop-opacity='0'/></linearGradient></defs><path d='M0 198 C77 198 192 114 298 114 C403 124 451 198 480 198 C557 198 672 114 778 114 C883 124 931 198 960 198 C1037 198 1152 114 1258 114 C1363 124 1411 198 1440 198 L1440 320 L0 320 Z' fill='url(%23g)'/><path d='M0 198 C77 198 192 114 298 114 C403 124 451 198 480 198 C557 198 672 114 778 114 C883 124 931 198 960 198 C1037 198 1152 114 1258 114 C1363 124 1411 198 1440 198' fill='none' stroke='%23FFD9B4' stroke-opacity='.15' stroke-width='2.2'/></svg>")}
+.rh-dunes .d3{animation:rhDune 145s linear infinite;filter:blur(3.0px);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23D87455' stop-opacity='.28'/><stop offset='.42' stop-color='%23A83B2E' stop-opacity='.16'/><stop offset='1' stop-color='%23300A0A' stop-opacity='0'/></linearGradient></defs><path d='M0 246 C115 246 288 180 446 180 C605 187 677 246 720 246 C835 246 1008 180 1166 180 C1325 187 1397 246 1440 246 L1440 320 L0 320 Z' fill='url(%23g)'/><path d='M0 246 C115 246 288 180 446 180 C605 187 677 246 720 246 C835 246 1008 180 1166 180 C1325 187 1397 246 1440 246' fill='none' stroke='%23FFD9B4' stroke-opacity='.15' stroke-width='2.2'/></svg>")}
 
 /* 金粉：细小、很淡，自下而上飘，桌面端才注入 */
 .rh-gold{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
@@ -163,9 +163,9 @@ body[data-page="home"] #app{max-width:none;width:100%;margin:0;padding:0}
   animation:rhGold linear infinite}
 @keyframes rhGold{
   0%{transform:translate3d(0,0,0) scale(.6);opacity:0}
-  14%{opacity:.9}
-  78%{opacity:.55}
-  100%{transform:translate3d(2vw,-62vh,0) scale(1.05);opacity:0}}
+  16%{opacity:.62}
+  80%{opacity:.4}
+  100%{transform:translate3d(1.4vw,-58vh,0) scale(1.02);opacity:0}}
 
 /* 底部祥云带 + 金色压边 */
 .rh-hero::after{
