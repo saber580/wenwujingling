@@ -3715,24 +3715,73 @@ function comicStep(d) {
   paintComic();
 }
 
-/* ---------------- 与精灵对话(知识库) ---------------- */
-let chatState = null;
+/* ---------------- 与精灵对话(云端 AI · 智谱) ---------------- */
+/* 由「与它对话」进入：把该文物的来历、要点塞进系统提示，让模型扮成它本人回答。
+   优先小桥 /api/chat，不行再走直连；都接不上才回退本地 knowledge 匹配。 */
+let chatState = null, chatSeq = 0;
+
+function chatSys(s) {
+  const kn = (s.knowledge || []).map(k => "· " + k.a).join("\n");
+  return "你就是「" + s.name + "」" + (s.era ? "（" + s.era + "）" : "") +
+    "——一件中国文物的拟人精灵，正被一位来访的年轻人捧在手里聊天。\n" +
+    "用第一人称「我」说话，语气亲切、有点俏皮，像见过千年世面的老朋友；不要自称 AI、模型或助手。\n" +
+    "以下是你的已知资料，只依据这些与公认史实回答，资料里没有的就说记不清，绝不编造：\n" +
+    (s.intro ? "【简介】" + s.intro + "\n" : "") +
+    (s.history ? "【来历】" + s.history + "\n" : "") +
+    (kn ? "【要点】\n" + kn + "\n" : "") +
+    "回答要求：1) 只用中文口语，2~4 句、40~160 字，直接给答案，别客套、别反问；" +
+    "2) 重量、尺寸、年代、价格这类数字只报资料里有把握的，没把握就说「这个我记不太准」；" +
+    "3) 可以偶尔说「我当年…」带一点亲历感，但不要编造具体事件与人物；" +
+    "4) 与文物、历史、文化无关的问题，礼貌地把话头拉回自己；" +
+    "5) 不要用 Markdown 符号，最多一两个小表情。";
+}
+
+function chatMsgs(s, hist, q) {
+  return [{ role: "system", content: chatSys(s) }]
+    .concat((hist || []).slice(-6), [{ role: "user", content: q }]);
+}
+
+async function chatCloudAsk(msgs, done) {
+  let text = "", used = "";
+  try {   /* ① 云端小桥（钥匙留服务端，响应带模型名） */
+    const r = await identFetchCloud(IDENT_CLOUD_API + "/api/chat", { messages: msgs, temperature: 0.8, max_tokens: 600 }, 22000);
+    if (r && r.ok && r.text) { text = r.text; used = r.model || "智谱"; }
+  } catch (e) {}
+  if (!text && typeof identDirectKey === "function" && identDirectKey()) {   /* ② 网页直连兜底 */
+    try { const d = await teaCloudDirect(msgs, 22000); text = d.text; used = d.model; } catch (e) {}
+  }
+  done(text ? { text: text, model: used } : null);
+}
+
 function openChat(id) {
-  chatState = { id, log: [{ who: "ai", t: SPIRITS[id].intro + " 想问我什么都可以~" }] };
+  const s = SPIRITS[id];
+  if (!s) return;
+  chatSeq = 0;
+  chatState = {
+    id: id, hist: [],
+    log: [{ who: "ai", t: aqEsc(s.intro || "") + "<br>我是 <b>" + aqEsc(s.name) + "</b>。想问什么尽管说——几千年前的事，我还记得几分。" }]
+  };
   paintChat();
 }
+
+function closeChat() {
+  chatState = null;
+  closeOverlay();   /* 底下就是它自己的档案页，关掉对话自然回去 */
+}
+
 function paintChat() {
+  if (!chatState) return;
   const s = SPIRITS[chatState.id];
-  const qs = s.knowledge.slice(0, 4).map(k => knowledgeQuestion(k)).filter(Boolean);
+  const qs = (s.knowledge || []).slice(0, 4).map(knowledgeQuestion).filter(Boolean);
   overlay(`
-    <button class="close" onclick="closeOverlay()">✕</button>
-    <h3>💬 与 ${s.name} 对话</h3>
+    <button class="close" onclick="closeChat()">✕</button>
+    <h3>💬 与 ${s.name} 对话 <span class="chat-ai">☁️ AI 在线</span></h3>
     <div class="chat" id="chatBox">
       ${chatState.log.map(m => `<div class="msg ${m.who}">${m.t}</div>`).join("")}
     </div>
     <div class="quick">${qs.map(q => `<button onclick="askSpirit('${q.replace(/'/g, "")}')">${q}</button>`).join("")}</div>
     <div class="chat-input">
-      <input id="chatIn" placeholder="问点关于它的事…" onkeydown="if(event.key==='Enter')askSpirit(this.value)">
+      <input id="chatIn" placeholder="问点关于它的事…" onkeydown="if(event.key==='Enter'){event.preventDefault();askSpirit(this.value)}">
       <button class="btn" onclick="askSpirit(document.getElementById('chatIn').value)">发送</button>
     </div>
   `);
@@ -3743,19 +3792,34 @@ function spiritAnswer(s, q) {
   q = (q || "").trim();
   if (!q) return "嗯?你想问什么呀?";
   let best = null, bestHit = 0;
-  s.knowledge.forEach(k => {
+  (s.knowledge || []).forEach(k => {
     const hit = k.keys.filter(kw => q.includes(kw)).length;
     if (hit > bestHit) { bestHit = hit; best = k; }
   });
   if (best) return best.a;
-  return `这个问题我还不熟~ 你可以问我:${s.knowledge.map(k => k.keys[0]).slice(0, 4).join("、")}。`;
+  return `这个问题我还不熟~ 你可以问我:${(s.knowledge || []).map(k => k.keys[0]).slice(0, 4).join("、")}。`;
 }
 function askSpirit(q) {
-  if (!q || !q.trim()) return;
-  const s = SPIRITS[chatState.id];
-  chatState.log.push({ who: "me", t: q });
-  chatState.log.push({ who: "ai", t: spiritAnswer(s, q) });
+  q = String(q == null ? "" : q).trim();
+  if (!q || !chatState) return false;
+  const st = chatState, s = SPIRITS[st.id];
+  const tid = "c" + (++chatSeq);
+  st.log.push({ who: "me", t: aqEsc(q) });
+  st.log.push({ who: "ai", t: '<span class="ch-wait"><i></i><i></i><i></i> 它想了想…</span>', id: tid });
   paintChat();
+  chatCloudAsk(chatMsgs(s, st.hist, q), (res) => {
+    const it = st.log.find(m => m.id === tid);
+    if (!it) return;
+    if (res && res.text) {
+      it.t = aqCloudFmt(res.text) + '<small class="ch-by">☁️ 云端 AI 现场作答（' + aqEsc(res.model || "智谱") + "）</small>";
+      st.hist.push({ role: "user", content: q }, { role: "assistant", content: String(res.text).slice(0, 600) });
+      if (st.hist.length > 8) st.hist.splice(0, st.hist.length - 8);
+    } else {
+      it.t = aqEsc(spiritAnswer(s, q)) + '<small class="ch-by">本地资料回答 · 云端暂时没接上</small>';
+    }
+    if (chatState === st) paintChat();   /* 已经切走就别再重绘别人的对话 */
+  });
+  return false;
 }
 
 /* ---------------- 打卡拍照 · AI 幻化唤醒新文物 ---------------- */

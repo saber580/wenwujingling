@@ -168,6 +168,19 @@
       return '<span class="rh-attr" title="' + esc(a.desc) + '"><img src="' + esc(attrIcon("secondary", k)) + '" alt=""><b>' + esc(a.name) + "</b></span>";
     }).join("");
 
+    /* 首屏金粉：20 粒，尺寸 1.4~4.4px，越小的越慢，负延迟让页面一打开就是满场 */
+    const goldDust = (function () {
+      let out = "";
+      for (let i = 0; i < 20; i++) {
+        const sz = (1.4 + Math.random() * 3).toFixed(1);
+        out += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;width:' + sz + "px;height:" + sz +
+          "px;animation-duration:" + (13 + Math.random() * 15).toFixed(1) +
+          "s;animation-delay:" + (-Math.random() * 26).toFixed(1) +
+          "s;opacity:" + (0.28 + Math.random() * 0.42).toFixed(2) + '"></i>';
+      }
+      return out;
+    })();
+
     const marquee = (function () {
       const one = [
         "讲 好 中 国 故 事", "让 文 物 活 起 来",
@@ -180,6 +193,8 @@
     return `
     <section class="rh-hero" id="rhHero">
       <i class="rh-hero-bg" aria-hidden="true"></i>
+      <div class="rh-dunes" aria-hidden="true"><i class="d1"></i><i class="d2"></i><i class="d3"></i></div>
+      <div class="rh-gold" aria-hidden="true">${goldDust}</div>
       <div class="rh-hero-wrap">
         <div class="rh-hero-copy">
           <div class="rh-rail" aria-hidden="true"><span>燕赵拾遗</span></div>

@@ -2111,3 +2111,17 @@ body.flyleaf-on #intro{display:none!important}
 @media (prefers-reduced-motion:reduce){
   .fl-cta .txt-box,.fl-cta .frame,.fl-cta .txt{animation:none!important}
 }
+
+/* =========================================================
+   与它对话 · 云端 AI
+   对话统一从文物档案里的「💬 与它对话」进入，
+   右下角那个踩梅花桩的浮动小答不再出现在页面里。
+   ========================================================= */
+.chat-ai{display:inline-block;vertical-align:2px;margin-left:6px;font-size:11px;font-weight:500;
+  color:#1f6b52;background:#eaf6f0;border:1px solid #cfe8dd;border-radius:999px;padding:1px 8px;letter-spacing:.2px}
+.ch-by{display:block;margin-top:6px;font-size:10.5px;color:#8b8175;letter-spacing:.2px}
+.ch-wait{display:inline-flex;align-items:center;gap:5px;color:#8b8175;font-size:12.5px}
+.ch-wait i{width:5px;height:5px;border-radius:50%;background:#c0392b;opacity:.3;animation:chDot 1s ease-in-out infinite}
+.ch-wait i:nth-child(2){animation-delay:.16s}
+.ch-wait i:nth-child(3){animation-delay:.32s}
+@keyframes chDot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}

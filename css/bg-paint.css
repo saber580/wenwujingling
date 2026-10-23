@@ -226,3 +226,17 @@ body.bg-paint #flyleaf .fl-bgchar{z-index:2;opacity:.42}
   body.bg-paint .flbg-sweep,
   body.bg-paint .flbg-mote{display:none}
 }
+
+/* =========================================================
+   五 · 首屏「鎏金流沙」底
+   山河画铺满整页时，首屏下半截全是山石，沙丘压不住也看不清；
+   这里让首屏单独用朱红底（画只留在首屏以下），底部交给 .rh-dunes。
+   ========================================================= */
+body.bg-paint .rh-hero#rhHero{
+  background:
+    radial-gradient(1150px 620px at 76% 0%,rgba(255,214,150,.30) 0%,rgba(255,214,150,0) 60%),
+    radial-gradient(900px 600px at 6% 100%,rgba(74,2,6,.58) 0%,rgba(74,2,6,0) 68%),
+    linear-gradient(158deg,#FF4B33 0%,#F2382A 18%,#D4101A 54%,#8E0A11 100%);
+}
+/* 首屏里的水墨纹样（万字）压淡一点，让金粉与沙脊更清楚 */
+body.bg-paint .rh-hero#rhHero::before{opacity:.34}

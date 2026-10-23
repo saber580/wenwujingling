@@ -378,3 +378,17 @@
   .aq .aq-panel{width:min(276px,calc(100vw - 92px))!important}
   .aq-chips{max-height:74px}
 }
+
+/* =========================================================
+   15 · 首屏流沙：窄屏波形铺长 + 压低
+   1440 宽的波形塞进 390 宽会被压成尖峰，这里把元素加宽到 400%
+   （半个元素 = 一个完整周期，仍然无缝），高度与模糊一并收小
+   ========================================================= */
+@media (max-width:860px){
+  .rh-dunes{height:31%!important;opacity:.82!important}
+  .rh-dunes i{width:400%!important}
+  .rh-dunes .d1{filter:blur(1.4px)!important}
+  .rh-dunes .d2{filter:blur(1.8px)!important}
+  .rh-dunes .d3{filter:blur(1.2px)!important}
+  .rh-gold{display:none!important}
+}
