@@ -348,6 +348,35 @@
         </div>
       </section>
 
+      <!-- 伍 · 文以载道（本机预设，未上线）：引文出自求是网《习近平：讲好中国故事，传播好中国声音》 -->
+      <section class="rh-sec rh-verse" id="home-verse">
+        <div class="rh-head">
+          <span class="rh-no" aria-hidden="true">伍</span>
+          <div class="rh-head-txt">
+            <span class="rh-kicker">TELL CHINA'S STORY · 文以载道</span>
+            <h2>让文物，替中国说话</h2>
+            <p>一件器物，就是一段看得见的文明。把它的来处讲清楚，把它的话传出去——这是这卷长卷最想落下的一句。</p>
+          </div>
+        </div>
+        <div class="rh-verse-card">
+          <div class="rh-verse-side" aria-hidden="true">
+            <span class="rh-verse-seal">文以载道</span>
+            <i class="rh-verse-rule"></i>
+          </div>
+          <div class="rh-verse-body">
+            <blockquote class="rh-verse-q">要向全世界讲好中国历史故事。要运用我国考古成果和历史研究成果，通过对外宣传、交流研讨等方式，向国际社会展示博大精深的中华文明，讲清楚中华文明的灿烂成就和对人类文明的重大贡献，让世界了解中国历史、了解中华民族精神，从而不断加深对当今中国的认知和理解。</blockquote>
+            <div class="rh-verse-src">
+              <b>—— 习近平</b>
+              <span>2020 年 9 月 28 日 · 在十九届中央政治局第二十三次集体学习时的讲话</span>
+              <a href="https://www.qstheory.cn/zhuanqu/2021-06/02/c_1127522386.htm" target="_blank" rel="noopener noreferrer">求是网原文 ↗</a>
+            </div>
+            <p class="rh-verse-also">“要更好推动中华文化走出去，<em>以文载道、以文传声、以文化人</em>，向世界阐释推介更多具有中国特色、体现中国精神、蕴藏中国智慧的优秀文化。”
+              <span>—— 2021 年 5 月 31 日，在十九届中央政治局第三十次集体学习时的讲话</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section class="rh-final">
         <div class="rh-final-in">
           <span class="rh-kicker">START YOUR JOURNEY</span>
