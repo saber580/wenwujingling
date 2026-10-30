@@ -326,6 +326,18 @@
   body.bg-paint .bgp-sky{opacity:.42}
   body.bg-paint .bgp-glow{opacity:.6}
 
+  /* (a2) 山河画回到首屏后，窄屏只露出一条竖条，画太满压字：
+     上亮下暗的薄纱（中间留空给题字和说明牌），画照旧是主角 */
+  body.bg-paint .bg-art-veil{
+    opacity:1;
+    background:
+      radial-gradient(122% 88% at 50% 44%,rgba(38,6,4,0) 42%,rgba(30,3,3,.46) 100%),
+      linear-gradient(180deg,rgba(30,3,3,.30) 0%,rgba(30,3,3,.02) 22%,
+        rgba(30,3,3,.22) 52%,rgba(28,2,2,.60) 100%);
+  }
+  /* 沙丘层只留一丝流动感，不跟画抢 */
+  body.bg-paint .rh-dunes{opacity:.12!important}
+
   /* (b) backdrop-filter 滚动时每帧重算背景模糊，手机端换成等效的半透实色 */
   body.bg-paint .topbar.rh-topbar{
     -webkit-backdrop-filter:none;backdrop-filter:none;
@@ -390,7 +402,25 @@
   .rh-dunes{height:42%!important;opacity:1!important;z-index:3!important}
   .rh-dunes i{width:200%!important;background-size:50% 100%!important;background-repeat:repeat-x!important;will-change:auto!important;backface-visibility:visible!important}
   .rh-dunes .d1{display:none!important}
-  .rh-dunes .d2{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 420' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23FFE0C6' stop-opacity='0.17'/><stop offset='.18' stop-color='%23FFE0C6' stop-opacity='0.30'/><stop offset='1' stop-color='%23FFE0C6' stop-opacity='0'/></linearGradient></defs><path d='M0 168 C26.0 161.8 52.0 106.0 80.6 106.0 C96.2 106.0 120.9 159.3 130.0 168.0 C156.0 163.2 176.8 120.0 205.4 120.0 C221.0 120.0 250.9 161.3 260.0 168.0 C286.0 161.0 309.4 98.0 338.0 98.0 C353.6 98.0 380.9 158.2 390.0 168.0 L390 398 L0 398 Z' fill='url(%23g)'/><path d='M0 168 C26.0 161.8 52.0 106.0 80.6 106.0 C96.2 106.0 120.9 159.3 130.0 168.0 C156.0 163.2 176.8 120.0 205.4 120.0 C221.0 120.0 250.9 161.3 260.0 168.0 C286.0 161.0 309.4 98.0 338.0 98.0 C353.6 98.0 380.9 158.2 390.0 168.0' fill='none' stroke='%23FFE0C6' stroke-opacity='0.26' stroke-width='1.8' stroke-linecap='round'/></svg>")!important;filter:none!important}
-  .rh-dunes .d3{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 420' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23FFD2B2' stop-opacity='0.19'/><stop offset='.18' stop-color='%23FFD2B2' stop-opacity='0.34'/><stop offset='1' stop-color='%23FFD2B2' stop-opacity='0'/></linearGradient></defs><path d='M0 268 C39.0 263.4 66.3 222.0 109.2 222.0 C132.6 222.0 181.4 261.6 195.0 268.0 C234.0 261.8 280.8 206.0 323.7 206.0 C347.1 206.0 376.4 259.3 390.0 268.0 L390 448 L0 448 Z' fill='url(%23g)'/><path d='M0 268 C39.0 263.4 66.3 222.0 109.2 222.0 C132.6 222.0 181.4 261.6 195.0 268.0 C234.0 261.8 280.8 206.0 323.7 206.0 C347.1 206.0 376.4 259.3 390.0 268.0' fill='none' stroke='%23FFD2B2' stroke-opacity='0.30' stroke-width='1.6' stroke-linecap='round'/></svg>")!important;filter:none!important}
+  .rh-dunes .d2{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzOTAgNDIwJyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSdub25lJz48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9J2cnIHgxPScwJyB5MT0nMCcgeDI9JzAnIHkyPScxJz48c3RvcCBvZmZzZXQ9JzAnIHN0b3AtY29sb3I9JyNGRkUwQzYnIHN0b3Atb3BhY2l0eT0nMC4xNycvPjxzdG9wIG9mZnNldD0nLjE4JyBzdG9wLWNvbG9yPScjRkZFMEM2JyBzdG9wLW9wYWNpdHk9JzAuMzAnLz48c3RvcCBvZmZzZXQ9JzEnIHN0b3AtY29sb3I9JyNGRkUwQzYnIHN0b3Atb3BhY2l0eT0nMCcvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxwYXRoIGQ9J00wIDE2OCBDMjYuMCAxNjEuOCA1Mi4wIDEwNi4wIDgwLjYgMTA2LjAgQzk2LjIgMTA2LjAgMTIwLjkgMTU5LjMgMTMwLjAgMTY4LjAgQzE1Ni4wIDE2My4yIDE3Ni44IDEyMC4wIDIwNS40IDEyMC4wIEMyMjEuMCAxMjAuMCAyNTAuOSAxNjEuMyAyNjAuMCAxNjguMCBDMjg2LjAgMTYxLjAgMzA5LjQgOTguMCAzMzguMCA5OC4wIEMzNTMuNiA5OC4wIDM4MC45IDE1OC4yIDM5MC4wIDE2OC4wIEwzOTAgMzk4IEwwIDM5OCBaJyBmaWxsPSd1cmwoI2cpJy8+PHBhdGggZD0nTTAgMTY4IEMyNi4wIDE2MS44IDUyLjAgMTA2LjAgODAuNiAxMDYuMCBDOTYuMiAxMDYuMCAxMjAuOSAxNTkuMyAxMzAuMCAxNjguMCBDMTU2LjAgMTYzLjIgMTc2LjggMTIwLjAgMjA1LjQgMTIwLjAgQzIyMS4wIDEyMC4wIDI1MC45IDE2MS4zIDI2MC4wIDE2OC4wIEMyODYuMCAxNjEuMCAzMDkuNCA5OC4wIDMzOC4wIDk4LjAgQzM1My42IDk4LjAgMzgwLjkgMTU4LjIgMzkwLjAgMTY4LjAnIGZpbGw9J25vbmUnIHN0cm9rZT0nI0ZGRTBDNicgc3Ryb2tlLW9wYWNpdHk9JzAuMjYnIHN0cm9rZS13aWR0aD0nMS44JyBzdHJva2UtbGluZWNhcD0ncm91bmQnLz48L3N2Zz4=")!important;filter:none!important}
+  .rh-dunes .d3{background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzOTAgNDIwJyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSdub25lJz48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9J2cnIHgxPScwJyB5MT0nMCcgeDI9JzAnIHkyPScxJz48c3RvcCBvZmZzZXQ9JzAnIHN0b3AtY29sb3I9JyNGRkQyQjInIHN0b3Atb3BhY2l0eT0nMC4xOScvPjxzdG9wIG9mZnNldD0nLjE4JyBzdG9wLWNvbG9yPScjRkZEMkIyJyBzdG9wLW9wYWNpdHk9JzAuMzQnLz48c3RvcCBvZmZzZXQ9JzEnIHN0b3AtY29sb3I9JyNGRkQyQjInIHN0b3Atb3BhY2l0eT0nMCcvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxwYXRoIGQ9J00wIDI2OCBDMzkuMCAyNjMuNCA2Ni4zIDIyMi4wIDEwOS4yIDIyMi4wIEMxMzIuNiAyMjIuMCAxODEuNCAyNjEuNiAxOTUuMCAyNjguMCBDMjM0LjAgMjYxLjggMjgwLjggMjA2LjAgMzIzLjcgMjA2LjAgQzM0Ny4xIDIwNi4wIDM3Ni40IDI1OS4zIDM5MC4wIDI2OC4wIEwzOTAgNDQ4IEwwIDQ0OCBaJyBmaWxsPSd1cmwoI2cpJy8+PHBhdGggZD0nTTAgMjY4IEMzOS4wIDI2My40IDY2LjMgMjIyLjAgMTA5LjIgMjIyLjAgQzEzMi42IDIyMi4wIDE4MS40IDI2MS42IDE5NS4wIDI2OC4wIEMyMzQuMCAyNjEuOCAyODAuOCAyMDYuMCAzMjMuNyAyMDYuMCBDMzQ3LjEgMjA2LjAgMzc2LjQgMjU5LjMgMzkwLjAgMjY4LjAnIGZpbGw9J25vbmUnIHN0cm9rZT0nI0ZGRDJCMicgc3Ryb2tlLW9wYWNpdHk9JzAuMzAnIHN0cm9rZS13aWR0aD0nMS42JyBzdHJva2UtbGluZWNhcD0ncm91bmQnLz48L3N2Zz4=")!important;filter:none!important}
   .rh-gold{display:none!important}
+}
+
+/* =======================================
+   16 · 手机端：山河画取景 + 流沙
+   竖屏 390×844，横构图的画铺进来只剩中间一窄条 —— 取景框往下压一点，
+   让云脊与殿脊都进画面，不把人挤进纯红的天。
+   流沙统一走 .bgp-sand（整页一层金纱）：手机上只留两道、去掉 blur、
+   速度提上来，否则 390 宽的窄屏里根本看不出在流。
+   ======================================= */
+@media (max-width:860px){
+  body.bg-paint .bgp-base{background-position:52% 34%}
+  body.bg-paint .bgp-sand{height:50%;opacity:.95}
+  body.bg-paint .bgp-sand i{filter:none!important;will-change:transform}
+  body.bg-paint .bgp-sand .s1{display:none!important}
+  body.bg-paint .bgp-sand .s2{animation-duration:128s!important;
+    background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzOTAgNDIwJyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSdub25lJz48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9J2cnIGdyYWRpZW50VW5pdHM9J3VzZXJTcGFjZU9uVXNlJyB4MT0nMCcgeTE9JzE5OC4wJyB4Mj0nMCcgeTI9JzQyMCc+PHN0b3Agb2Zmc2V0PScwJyBzdG9wLWNvbG9yPScjRUREMkE4JyBzdG9wLW9wYWNpdHk9JzAuNDgnLz48c3RvcCBvZmZzZXQ9Jy4zMCcgc3RvcC1jb2xvcj0nI0QyQTg3NCcgc3RvcC1vcGFjaXR5PScwLjI2Jy8+PHN0b3Agb2Zmc2V0PScxJyBzdG9wLWNvbG9yPScjRDJBODc0JyBzdG9wLW9wYWNpdHk9Jy4wNCcvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxwYXRoIGQ9J00wIDE5OC4wIEM0NC4yIDIyNC4yIDg1LjggMjI0LjIgMTMwLjAgMjMwLjAgQzE3NC4yIDIwMy44IDIxNS44IDIwMy44IDI2MC4wIDE5OC4wIEMzMDQuMiAyMjQuMiAzNDUuOCAyMjQuMiAzOTAuMCAyMzAuMCBMMzkwIDQyMCBMMCA0MjAgWicgZmlsbD0ndXJsKCNnKScvPjxwYXRoIGQ9J00wIDE5OC4wIEM0NC4yIDIyNC4yIDg1LjggMjI0LjIgMTMwLjAgMjMwLjAgQzE3NC4yIDIwMy44IDIxNS44IDIwMy44IDI2MC4wIDE5OC4wIEMzMDQuMiAyMjQuMiAzNDUuOCAyMjQuMiAzOTAuMCAyMzAuMCcgZmlsbD0nbm9uZScgc3Ryb2tlPScjRkZGNkUyJyBzdHJva2Utb3BhY2l0eT0nMC41Nicgc3Ryb2tlLXdpZHRoPSczJyBzdHJva2UtbGluZWNhcD0ncm91bmQnLz48L3N2Zz4=")!important}
+  body.bg-paint .bgp-sand .s3{animation-duration:86s!important;
+    background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzOTAgNDIwJyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSdub25lJz48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9J2cnIGdyYWRpZW50VW5pdHM9J3VzZXJTcGFjZU9uVXNlJyB4MT0nMCcgeTE9JzI4Ni4wJyB4Mj0nMCcgeTI9JzQyMCc+PHN0b3Agb2Zmc2V0PScwJyBzdG9wLWNvbG9yPScjRTJCQTg0JyBzdG9wLW9wYWNpdHk9JzAuNTQnLz48c3RvcCBvZmZzZXQ9Jy4zMCcgc3RvcC1jb2xvcj0nI0MwOEM1MScgc3RvcC1vcGFjaXR5PScwLjI4Jy8+PHN0b3Agb2Zmc2V0PScxJyBzdG9wLWNvbG9yPScjQzA4QzUxJyBzdG9wLW9wYWNpdHk9Jy4wNCcvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxwYXRoIGQ9J00wIDMxNC4wIEM2Ni4zIDI5MS4wIDEyOC43IDI5MS4wIDE5NS4wIDI4Ni4wIEMyNjEuMyAzMDkuMCAzMjMuNyAzMDkuMCAzOTAuMCAzMTQuMCBMMzkwIDQyMCBMMCA0MjAgWicgZmlsbD0ndXJsKCNnKScvPjxwYXRoIGQ9J00wIDMxNC4wIEM2Ni4zIDI5MS4wIDEyOC43IDI5MS4wIDE5NS4wIDI4Ni4wIEMyNjEuMyAzMDkuMCAzMjMuNyAzMDkuMCAzOTAuMCAzMTQuMCcgZmlsbD0nbm9uZScgc3Ryb2tlPScjRkZGNkUyJyBzdHJva2Utb3BhY2l0eT0nMC42MCcgc3Ryb2tlLXdpZHRoPSczJyBzdHJva2UtbGluZWNhcD0ncm91bmQnLz48L3N2Zz4=")!important}
 }

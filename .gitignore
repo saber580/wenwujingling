@@ -18,6 +18,7 @@ id_rsa*
 # ---------- 2. 本机调试产物 ----------
 _debug/
 __pycache__/
+存档/
 *.py[cod]
 *.egg-info/
 

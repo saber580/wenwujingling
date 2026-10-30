@@ -20,6 +20,18 @@
     if (anchor && anchor.parentNode === art) art.insertBefore(wrap, anchor.nextSibling);
     else art.insertBefore(wrap, art.firstChild);
 
+    /* 流沙层单独摆在 .bg-art 的最后：它在压暗层（.bg-art-veil）之上，
+       才不会被暗角吃掉；它下面还有内容层，pointer-events 已关掉 */
+    var sand = document.createElement("div");
+    sand.className = "bgp-sand";
+    sand.setAttribute("aria-hidden", "true");
+    sand.innerHTML = '<i class="s1"></i><i class="s2"></i><i class="s3"></i>';
+    var dust = document.createElement("div");
+    dust.className = "bgp-dust";
+    dust.setAttribute("aria-hidden", "true");
+    art.appendChild(sand);
+    art.appendChild(dust);
+
     /* 落花：随机大小 / 速度 / 起点，负延迟让一进页面就已经在飘 */
     var i, n = 7, p, s;
     for (i = 0; i < n; i++) {
@@ -33,6 +45,23 @@
       p.style.animationDuration = (38 + Math.random() * 34).toFixed(1) + "s";
       p.style.animationDelay = (-Math.random() * 46).toFixed(1) + "s";
       wrap.appendChild(p);
+    }
+
+    /* 沙粒：细小的金色尘点，斜着往上飘，跟着沙带一起走 */
+    if (dust) {
+      var dn = window.matchMedia("(max-width:860px)").matches ? 12 : 22;
+      for (i = 0; i < dn; i++) {
+        var d = document.createElement("i");
+        s = 2.2 + Math.random() * 3.4;
+        d.style.width = s.toFixed(1) + "px";
+        d.style.height = s.toFixed(1) + "px";
+        d.style.left = (Math.random() * 104 - 2).toFixed(1) + "%";
+        d.style.setProperty("--o", (0.45 + Math.random() * 0.4).toFixed(2));
+        d.style.setProperty("--dx", (Math.random() * 10 - 3).toFixed(1) + "vw");
+        d.style.animationDuration = (26 + Math.random() * 26).toFixed(1) + "s";
+        d.style.animationDelay = (-Math.random() * 44).toFixed(1) + "s";
+        dust.appendChild(d);
+      }
     }
   }
   /* 扉页（#flyleaf）的金线山河：会呼吸的一幅画 */
