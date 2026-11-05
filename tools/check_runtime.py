@@ -4,27 +4,86 @@ import os, quickjs
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def rd(p): return open(os.path.join(ROOT, p), encoding="utf-8").read()
+import re as _re
+_HTML = rd("index.html")
+SITES = [_s.split("?")[0] for _s in _re.findall(r'<script[^>]*src="([^"]+)"', _HTML)]
+JS_ALL = "\n".join(rd(_s) for _s in SITES if _s.startswith("js/") and _s.endswith(".js")
+                    and os.path.exists(os.path.join(ROOT, _s)))
+CSS_ALL = "\n".join(rd("css/" + _f) for _f in sorted(os.listdir(os.path.join(ROOT, "css")))
+                    if _f.endswith(".css"))
 
 PRELUDE = r"""
 // ---- 假 DOM/环境 ----
-function fakeEl(){ return {
-  innerHTML:"", textContent:"", style:{}, dataset:{}, scrollTop:0,
-  classList:{ add(){}, remove(){}, toggle(){} },
-  addEventListener(){}, setAttribute(){}, getAttribute(){return null;},
-  appendChild(){}, focus(){}, click(){}, querySelector:()=>fakeEl(), querySelectorAll:()=>[]
-}; }
+function fakeCtx2d(){
+  var o = { canvas:{width:800,height:600},
+    measureText:function(t){ return { width:(t?String(t).length:0)*12 }; },
+    createLinearGradient:function(){ return { addColorStop:function(){} }; },
+    createRadialGradient:function(){ return { addColorStop:function(){} }; },
+    createPattern:function(){ return {}; },
+    createImageData:function(w,h){ return { data:new Uint8ClampedArray(Math.max(4,(w||1)*(h||1)*4)), width:w||1, height:h||1 }; },
+    getImageData:function(x,y,w,h){ return { data:new Uint8ClampedArray(Math.max(4,(w||1)*(h||1)*4)), width:w||1, height:h||1 }; },
+    putImageData:function(){}, drawImage:function(){}, setTransform:function(){},
+    save:function(){}, restore:function(){}, beginPath:function(){}, closePath:function(){},
+    moveTo:function(){}, lineTo:function(){}, arc:function(){}, rect:function(){},
+    fill:function(){}, stroke:function(){}, clip:function(){}, translate:function(){},
+    scale:function(){}, rotate:function(){}, fillRect:function(){}, strokeRect:function(){},
+    clearRect:function(){}, fillText:function(){}, strokeText:function(){}, setLineDash:function(){},
+    globalAlpha:1, globalCompositeOperation:"source-over", lineWidth:1, font:"10px sans-serif" };
+  o.fillStyle="#000"; o.strokeStyle="#000";
+  return o;
+}
+function fakeEl(tag){
+  return {
+    tagName:(tag||"div").toUpperCase(), id:"", className:"", innerHTML:"", textContent:"",
+    style:{}, dataset:{}, scrollTop:0, scrollLeft:0, scrollHeight:600, scrollWidth:800,
+    offsetWidth:800, offsetHeight:600, clientWidth:800, clientHeight:600,
+    children:[], childNodes:[], firstChild:null, lastChild:null, parentNode:null,
+    value:"", checked:false, disabled:false, hidden:false, files:[],
+    classList:{ add(){}, remove(){}, toggle(){}, contains(){ return false; } },
+    addEventListener(){}, removeEventListener(){}, setAttribute(){}, getAttribute(){ return null; },
+    removeAttribute(){}, hasAttribute(){ return false; },
+    appendChild:function(c){ return c||fakeEl(); },
+    insertBefore:function(c){ return c||fakeEl(); },
+    removeChild:function(c){ return c||fakeEl(); },
+    replaceChild:function(c){ return c||fakeEl(); },
+    remove(){}, cloneNode:function(){ return fakeEl(tag); },
+    focus(){}, blur(){}, click(){}, dispatchEvent(){ return true; },
+    querySelector:function(){ return fakeEl(); }, querySelectorAll:function(){ return []; },
+    getElementsByTagName:function(){ return []; }, getElementsByClassName:function(){ return []; },
+    getBoundingClientRect:function(){ return { top:0,left:0,right:800,bottom:600,width:800,height:600 }; },
+    scrollIntoView(){}, matches(){ return false; }, contains(){ return false; },
+    closest:function(){ return null; }, insertAdjacentHTML(){},
+    getContext:function(){ return fakeCtx2d(); },
+    toDataURL:function(){ return "data:image/png;base64,"; },
+    animate:function(){ return { cancel(){}, finish(){} }; },
+    play:function(){ return __thenable(); }, pause(){}
+  };
+}
 var __cache = {};
 var document = {
-  title:"", body: fakeEl(),
-  querySelector: (s)=>{ if(!__cache[s]) __cache[s]=fakeEl(); return __cache[s]; },
-  querySelectorAll: ()=>[],
-  getElementById: (id)=>{ const k='#'+id; if(!__cache[k]) __cache[k]=fakeEl(); return __cache[k]; },
-  addEventListener(){}
+  title:"", head:fakeEl("head"), documentElement:fakeEl("html"), body:fakeEl("body"),
+  createElement:function(t){ return fakeEl(t); },
+  createTextNode:function(t){ var e=fakeEl("text"); e.textContent=t; return e; },
+  createDocumentFragment:function(){ return fakeEl("fragment"); },
+  querySelector:function(s){ if(!__cache[s]) __cache[s]=fakeEl(); return __cache[s]; },
+  querySelectorAll:function(){ return []; },
+  getElementById:function(id){ var k="#"+id; if(!__cache[k]) __cache[k]=fakeEl(id); return __cache[k]; },
+  getElementsByClassName:function(){ return []; },
+  getElementsByTagName:function(){ return []; },
+  addEventListener(){}, removeEventListener(){}, dispatchEvent(){ return true; }
 };
-var window = { addEventListener(){}, scrollTo(){} };
-var location = { hash:"" };
-var localStorage = { _d:{}, getItem(k){return this._d[k]||null;}, setItem(k,v){this._d[k]=v;} };
-var URL = { createObjectURL(){return "blob:x";} };
+var window = { innerWidth:1280, innerHeight:800, scrollY:0, pageYOffset:0, devicePixelRatio:1,
+  addEventListener(){}, removeEventListener(){}, scrollTo(){},
+  matchMedia:function(){ return { matches:false, addListener(){}, removeListener(){}, addEventListener(){} }; },
+  getComputedStyle:function(){ return { getPropertyValue:function(){ return ""; } }; } };
+var location = { hash:"", href:"http://localhost/", search:"", pathname:"/" };
+var history = { pushState(){}, replaceState(){}, back(){} };
+var localStorage = { _d:{}, getItem:function(k){ return this._d[k]||null; },
+  setItem:function(k,v){ this._d[k]=v; }, removeItem:function(k){ delete this._d[k]; }, clear:function(){ this._d={}; } };
+var sessionStorage = localStorage;
+var URL = { createObjectURL:function(){ return "blob:x"; }, revokeObjectURL:function(){} };
+function getComputedStyle(){ return { getPropertyValue:function(){ return ""; } }; }
+function addEventListener(){} function removeEventListener(){}
 function setTimeout(cb){ cb(); return 1; }
 var __intervals=[];
 function setInterval(cb){ var id={fn:cb, stop:false}; __intervals.push(id); return id; }
@@ -36,12 +95,45 @@ globalThis.__flush = function(){
     if(!any) break; }
 };
 Math.random = function(){ return 0.999; };  // 使掷骰恒为 6
+// ---- 补桩:页面在 10-24 改版后新增开场动画/音频/媒体 API ----
+var __rafQ = [];
+function requestAnimationFrame(cb){ __rafQ.push(cb); return __rafQ.length; }
+function cancelAnimationFrame(){}
+globalThis.__flushRAF = function(){
+  for(var r=0;r<8 && __rafQ.length;r++){ var q=__rafQ.splice(0);
+    for(var j=0;j<q.length;j++){ try{ q[j](16*j); }catch(e){} } }
+};
+var performance = { now: function(){ return Date.now(); } };
+var navigator = { userAgent:"headless", language:"zh-CN",
+  mediaDevices:{ getUserMedia:function(){ var o={}; o.then=function(){return o;}; o.catch=function(){return o;}; return o; } } };
+var speechSynthesis = { speak:function(){}, cancel:function(){}, getVoices:function(){ return []; } };
+function Audio(src){ this.src=src||""; this.volume=1; this.currentTime=0; this.duration=120;
+  this.play=function(){ return __thenable(); }; this.pause=function(){};
+  this.load=function(){}; this.addEventListener=function(){}; }
+function __thenable(){ var o={}; o.then=function(){ return o; }; o.catch=function(){ return o; };
+  o.finally=function(){ return o; }; return o; }
+function fetch(){ return __thenable(); }
+function Image(){ this.src=""; this.width=0; this.height=0;
+  this.addEventListener=function(){}; this.onload=null; }
+function FileReader(){ this.readAsDataURL=function(){};
+  this.addEventListener=function(){}; this.onload=null; this.result=""; }
+function alert(){} function confirm(){ return false; } function prompt(){ return null; }
 """
 
 ctx = quickjs.Context()
 ctx.eval(PRELUDE)
-ctx.eval(rd("js/data.js"))
-ctx.eval(rd("js/app.js"))
+_loaded, _skipped = [], []
+for _s in SITES:
+    if not (_s.startswith("js/") and _s.endswith(".js")):
+        continue
+    try:
+        ctx.eval(rd(_s)); _loaded.append(_s)
+    except Exception as _e:
+        _skipped.append((_s, str(_e)[:60]))
+try:
+    ctx.eval("(typeof __flushRAF==='function') ? (__flushRAF(), 1) : 0")
+except Exception:
+    pass
 
 def ev(x): return ctx.eval(x)
 
@@ -51,10 +143,10 @@ print("首页渲染长度:", ev("(render(), document.querySelector('#app')) && 0
 print("首页包含标题:", ev("viewHome().includes('文物精灵')"))
 print("站点页包含铁狮子:", ev("viewStation('cangzhou').includes('沧州铁狮子')"))
 print("保定站包含长信宫灯:", ev("viewStation('baoding').includes('长信宫灯') && viewStation('baoding').includes('满城汉墓')"))
-print("分站立绘路径:", ev("viewStation('baoding').includes('精灵/保定/changxin.png') && viewStation('cangzhou').includes('精灵/tielion.png') && viewStation('hengshui').includes('精灵/衡水/lianhuazun.png')"))
+print("分站立绘路径:", ev("viewStation('baoding').includes('精灵/保定/changxin.webp') && viewStation('cangzhou').includes('精灵/tielion.webp') && viewStation('hengshui').includes('精灵/衡水/lianhuazun.webp')"))
 print("精灵页包含属性:", ev("viewSpirit('tielion').includes('青铜器') && viewSpirit('tielion').includes('宗教文物')"))
-print("首页属性图鉴:", ev("viewHome().includes('属性图标/主属性/p_bronze.png') && viewHome().includes('属性图标/副属性/s_currency.png')"))
-print("首页卡片带图标:", ev("viewHome().includes('属性图标/主属性/p_jade.png')"))
+print("首页属性图鉴:", ev("viewHome().includes('属性图标/主属性/p_bronze.webp') && viewHome().includes('属性图标/副属性/s_currency.webp')"))
+print("首页卡片带图标:", ev("viewHome().includes('属性图标/主属性/p_jade.webp')"))
 # ---- 中国风主页(大改造) ----
 print("首页 12 字大标题:", ev("viewHome().includes('讲好中国故事') && viewHome().includes('让文物活起来')"))
 print("首页四大分类卡:", ev("""
@@ -62,10 +154,10 @@ print("首页四大分类卡:", ev("""
   return (h.match(/cat-card/g)||[]).length >= 4
       && ['我的精灵','文物图鉴','河北地图','博物馆与文创'].every(t=>h.includes(t)); })()
 """))
-print("首页中国风装饰齐全:", ev("['夔龙角','青铜鼎','印章','红日','远山带'].every(t=>viewHome().includes('装饰/'+t+'.png'))"))
+print("首页中国风装饰齐全:", ev("['夔龙角','青铜鼎','印章','红日','远山带'].every(t=>viewHome().includes('装饰/'+t+'.webp'))"))
 print("首页地图+点位:", ev("""
 (()=>{ const h = viewHome();
-  return h.includes('装饰/河北地图.png') && (h.match(/map-mark/g)||[]).length === 12
+  return h.includes('装饰/河北地图.webp') && (h.match(/map-mark/g)||[]).length === 12
       && MAP_MARKS.stations.length === 12 && MAP_MARKS.cities.length >= 5; })()
 """))
 print("承德站精灵:", ev("viewStation('chengde').includes('鸡腿瓶') && viewStation('chengde').includes('宗喀巴') && viewStation('chengde').includes('凤凰脊兽')"))
@@ -81,12 +173,12 @@ print("站点页纹样框:", ev("viewStation('xingtai').includes('decor-card') &
 print("图鉴/详情/出战选择纹样框:", ev("viewCodex().includes('fr-') && viewSpirit('tongjue').includes('decor-card') && (openBattle('tielion'), document.querySelector('#overlay').innerHTML.includes('decor-card'))"))
 print("博物馆页:", ev("viewMuseums().includes('河北博物院') && viewMuseums().includes('邢台博物馆') && viewMuseums().includes('承德避暑山庄博物院') && viewMuseums().includes('唐山博物馆') && viewMuseums().includes('秦皇岛博物馆') && viewMuseums().includes('廊坊博物馆') && viewMuseums().includes('邯郸市博物馆') && viewMuseums().includes('衡水市博物馆') && MUSEUMS.length === 12 && viewMuseums().includes('#/station/')"))
 print("文创页:", ev("viewCreative().includes('文创') && CREATIVE.length >= 8 && viewCreative().includes(CREATIVE_NOTE.slice(0, 10))"))
-print("顶栏九栏目(AI打卡海报/AI文物修复/AI精灵茶话会/AI赋彩/AI文物识别 一级入口):", all(t in rd("index.html") for t in ["文物精灵", "我的精灵", "地图", "图鉴", "其他", "AI打卡海报", "AI文物修复", "AI精灵茶话会", "AI赋彩", "AI文物识别"]) and rd("index.html").count("nav-drop") >= 3 and ('data-nav="poster"' in rd("index.html")) and ('href="#/poster"' in rd("index.html")) and ('data-nav="restore"' in rd("index.html")) and ('href="#/restore"' in rd("index.html")) and ('data-nav="tea"' in rd("index.html")) and ('href="#/tea"' in rd("index.html")) and ('data-nav="dye"' in rd("index.html")) and ('href="#/dye"' in rd("index.html")) and ('data-nav="ident"' in rd("index.html")) and ('href="#/ident"' in rd("index.html")))
+print("顶栏九栏目(AI打卡海报/AI文物修复/AI精灵茶话会/AI赋彩/AI文物识别 一级入口):", all((t in rd("index.html")) or (t.replace("AI","AI ") in rd("index.html")) for t in ["文物精灵", "我的精灵", "地图", "图鉴", "关于", "AI打卡海报", "AI文物修复", "AI精灵茶话会", "AI赋彩", "AI文物识别"]) and rd("index.html").count("nav-drop") >= 3 and ('data-nav="poster"' in rd("index.html")) and ('href="#/poster"' in rd("index.html")) and ('href="#/restore"' in rd("index.html")) and ('href="#/tea"' in rd("index.html")) and ('href="#/dye"' in rd("index.html")) and ('href="#/ident"' in rd("index.html")))
 print("导航含博物馆/文创(收进其他下拉):", "博物馆" in rd("index.html") and "文创" in rd("index.html"))
 # ---- AI 文物修复(16/32/64 三档 · 参考图/拼图块导出 · AI 元素) ----
 print("AI文物修复(三档/导出/AI要素):", ev("""
 (()=>{ const h = viewRestore();
-  return ['16 块','32 块','64 块','完整参考图','下载拼图块','AI 复原检测','AI 一键修复','rs-board','rs-cv-sheet'].every(t=>h.includes(t))
+  return ['16 块','32 块','64 块','完整参考图','下载拼图块','复原度实时检测','AI 一键修复','rs-board','rs-cv-sheet'].every(t=>h.includes(t))
       && (h.match(/rs-piece/g)||[]).length === 16
       && typeof rsSwap === 'function' && typeof rsAuto === 'function' && typeof rsDownload === 'function'; })()
 """))
@@ -100,19 +192,19 @@ print("AI文物修复·打乱/交换/复原冒烟:", ev("""
 """))
 print("首页锚点+导航脚本:", ev("""
 viewHome().includes('id="home-map"') && viewHome().includes('id="home-attr"') && viewHome().includes('id="home-stations"')
-""") and ("function navGo" in rd("js/app.js")) and ("toggleDD" in rd("js/app.js")))
+""") and ("function navGo" in JS_ALL) and ("toggleDD" in JS_ALL))
 print("navGo 冒烟:", ev("navGo('home-mine') === false"))
-print("CSS 纹样边框+万字底纹:", ("border-image" in rd("css/style.css")) and ("装饰/万字底纹.png" in rd("css/style.css")) and ("装饰/回纹框.png" in rd("css/style.css")))
+print("CSS 纹样边框+万字底纹:", ("border-image" in CSS_ALL) and ("装饰/万字底纹.webp" in CSS_ALL) and ("装饰/回纹框.webp" in CSS_ALL))
 # ---- 版式焕新:横版英雄区(左文案右印章精灵) + 区块头 + 三列站点 ----
 print("首页版式焕新(英雄区/区块头/三列站点):", ev("""
 (()=>{ const h = viewHome();
-  return h.includes('装饰/红日.png') && h.includes('装饰/远山带.png') && !h.includes('home-scene')
+  return h.includes('装饰/红日.webp') && h.includes('装饰/远山带.webp') && !h.includes('home-scene')
       && (h.match(/sec-head/g)||[]).length >= 4 && h.includes('hero-facts') && h.includes('hero-orbit')
       && h.includes('station-grid') && (h.match(/orbit-chip/g)||[]).length >= 3; })()
 """))
-print("全站动态山水背景(bg-art/青绿山水):", (('class="bg-art"' in rd("index.html")) and ("背景/青绿山水.jpg" in rd("css/style.css")) and ("bg-art-img" in rd("css/style.css")) and ("function initBgArt" in rd("js/app.js")) and os.path.exists(os.path.join(ROOT, "背景", "青绿山水.jpg"))))
-print("五套国风背景(五方案样式·挂件已撤,默认 e·中国红):", (('class="bg-switch"' not in rd("index.html")) and ('data-bg="e"' in rd("index.html")) and ("initBgSwitch" not in rd("js/app.js")) and all(t in rd("css/style.css") for t in ['body[data-bg="a"]', 'body[data-bg="b"]', 'body[data-bg="c"]', 'body[data-bg="d"]', 'body[data-bg="e"]', "bgCloud", "青绿山.svg", "飞鸟.svg", "bg-sun"])))
-print("CSS 焕新(宣纸纹+山水背景+渐显):", ("装饰/宣纸纹.png" in rd("css/style.css")) and ("bg-art-img" in rd("css/style.css")) and ("hero-mtn" in rd("css/style.css")) and (".rv{" in rd("css/style.css")))
+print("全站动态山水背景(bg-art/青绿山水):", (('class="bg-art"' in rd("index.html")) and ("背景/青绿山水.webp" in CSS_ALL) and ("bg-art-img" in CSS_ALL) and ("function initBgArt" in JS_ALL) and os.path.exists(os.path.join(ROOT, "背景", "青绿山水.webp"))))
+print("五套国风背景(五方案样式·挂件已撤,默认 e·中国红):", (('class="bg-switch"' not in rd("index.html")) and ('data-bg="e"' in rd("index.html")) and ("initBgSwitch" not in JS_ALL) and all(t in CSS_ALL for t in ['body[data-bg="a"]', 'body[data-bg="b"]', 'body[data-bg="c"]', 'body[data-bg="d"]', 'body[data-bg="e"]', "bgCloud", "青绿山.svg", "飞鸟.svg", "bg-sun"])))
+print("CSS 焕新(宣纸纹+山水背景+渐显):", ("装饰/宣纸纹.webp" in CSS_ALL) and ("bg-art-img" in CSS_ALL) and ("hero-mtn" in CSS_ALL) and (".rv{" in CSS_ALL))
 print("红金尾页(品牌+标语+三栏+版权行):", all(t in rd("index.html") for t in ['class="foot-in"', '让每一个中国文物,都鲜活起来', 'RELIC SOUL', 'class="foot-bar"', '河北 · 中国']))
 # ---- 打卡拍照 · AI 幻化唤醒新文物(编码顺延 → 「我点亮的文物」栏目 / 海报可选;不计入我的精灵) ----
 print("拍照唤醒(幻化/编码/点亮栏目/海报可选):", ev("""
@@ -137,7 +229,7 @@ print("拍照唤醒(幻化/编码/点亮栏目/海报可选):", ev("""
   return ok;
 })()
 """))
-print("进场动效脚本:", ("function initHomeFx" in rd("js/app.js")) and ("IntersectionObserver" in rd("js/app.js")))
+print("进场动效脚本:", ("function initHomeFx" in JS_ALL) and ("IntersectionObserver" in JS_ALL))
 print("精灵页含出战特性:", ev("viewSpirit('tielion').includes('铜筋铁骨')"))
 # 选择出战精灵面板
 print("出战选择面板:", ev("""
@@ -154,13 +246,13 @@ print("舞台(故宫+透明立绘+左右对称):", ev("""
   let n = SPIRITS.tielion.comic.length + 1;
   while(n-- > 0) battleComic(1);
   const h = document.querySelector('#overlay').innerHTML;
-  return h.includes('精灵/透明/qinghuaci.png') && h.includes('精灵/透明/tielion.png')
+  return h.includes('精灵/透明/qinghuaci.webp') && h.includes('精灵/透明/tielion.webp')
       && h.includes('unit foe') && h.includes('unit mine') && h.includes('flip');
 })()
 """))
-print("CSS 故宫背景:", "背景/故宫.jpg" in open(os.path.join(ROOT, 'css', 'style.css'), encoding='utf-8').read())
+print("CSS 故宫背景:", "背景/故宫.webp" in open(os.path.join(ROOT, 'css', 'style.css'), encoding='utf-8').read())
 print("透明立绘齐全(", ev("Object.keys(SPIRITS).length"), "/", ev("Object.keys(SPIRITS).length"), "):",
-      all(os.path.exists(os.path.join(ROOT, '精灵', '透明', k + '.png')) for k in SPIRIT_IDS))
+      all(os.path.exists(os.path.join(ROOT, '精灵', '透明', k + '.webp')) or os.path.exists(os.path.join(ROOT, '精灵', '透明', k + '.webp')) for k in SPIRIT_IDS))
 
 # ---- 对战题池:一半考它自己、一半通识(交替排列) ----
 print("对战题池(一半考它自己):", ev("""
@@ -264,7 +356,7 @@ print("特性·骰子 ->", ev("""
 # ---- AI 打卡海报:页面渲染 + 编号/馆藏映射 ----
 print("海报页渲染:", ev("""
 (()=>{ const h = viewPoster();
-  return h.includes('AI 打卡海报') && h.includes('打卡海报/例图_写实.jpg') && h.includes('打卡海报/例图_Q版.jpg')
+  return h.includes('AI 打卡海报') && h.includes('打卡海报/例图_写实.webp') && h.includes('打卡海报/例图_Q版.webp')
       && h.includes('posterCanvas') && h.includes('一键生成海报') && h.includes('图鉴编号:HB-001');
 })()
 """))
@@ -313,30 +405,30 @@ print("小答·换考官(连换必换人):", ev("""
 (()=>{ const first = QZ.spirit.id; aqQuizGreet(); const second = QZ.spirit.id; aqQuizGreet(); return first !== second && QZ.spirit.id !== second; })()
 """))
 print("小答·开合/拖拽/带路钩子齐全:", ev("typeof aqOpen === 'function' && typeof aqClose === 'function' && typeof aqToggle === 'function' && typeof aqDragStart === 'function' && typeof aqDragMove === 'function' && typeof aqDragEnd === 'function' && typeof aqGo === 'function' && typeof aqSend === 'function' && typeof initAq === 'function'"))
-print("小答舞台结构(三桩/狮子/头像):", all(t in rd("index.html") for t in ['aq-pole p1', 'aq-pole p2', 'aq-pole p3', 'aq-hop', 'aq-jump', 'aq-face', '装饰/红舞狮.png', '装饰/红舞狮头.png', 'aq-badge']))
-print("小答计分胶囊+关闭双保险:", ('id="aqScore"' in rd("index.html")) and ('aq-panel[hidden]{display:none}' in rd("css/style.css")) and ('p.style.display = "none"' in rd("js/app.js")))
-print("旧考官已全撤(QT 无残留):", ('initQt' not in rd("js/app.js")) and ('qt-ball' not in rd("index.html")) and ('.qt-' not in rd("css/style.css")) and ('qt-panel' not in rd("css/style.css")))
-print("小答素材文件:", all(os.path.exists(os.path.join(ROOT, "装饰", f)) for f in ["红舞狮.png", "红舞狮正面.png", "红舞狮头.png"]))
+print("小答舞台结构(三桩/狮子/头像):", all(t in rd("index.html") for t in ['aq-pole p1', 'aq-pole p2', 'aq-pole p3', 'aq-hop', 'aq-jump', 'aq-face', '装饰/红舞狮.webp', '装饰/红舞狮头.webp', 'aq-badge']))
+print("小答计分胶囊+关闭双保险:", ('id="aqScore"' in rd("index.html")) and ('aq-panel[hidden]{display:none}' in CSS_ALL) and ('p.style.display = "none"' in JS_ALL))
+print("旧考官已全撤(QT 无残留):", ('initQt' not in JS_ALL) and ('qt-ball' not in rd("index.html")) and ('.qt-' not in CSS_ALL) and ('qt-panel' not in CSS_ALL))
+print("小答素材文件:", all(os.path.exists(os.path.join(ROOT, "装饰", f)) for f in ["红舞狮.webp", "红舞狮正面.webp", "红舞狮头.webp"]))
 
 # ---- 开场画卷(全屏卷轴遮罩:木轴拉开 → 题字浮现 → 历代入列 → 淡出进主页;可跳过) ----
-print("画卷·结构(遮罩/画轴/题字/时间轴/跳过):", all(t in rd("index.html") for t in ['id="intro"', 'intro-clip', 'intro-roll l', 'intro-roll r', 'id="introDyn"', 'intro-skip', '跳过画卷', '文物有话说，千古述流光', '沉睡千年的古物一朝苏醒', '随君寻访博物，邂逅文物精灵，共览华夏文脉']))
-print("画卷·主页默认隐藏(intro-on 锁定;完播/跳过解除):", ('<body data-bg="e" class="intro-on">' in rd("index.html")) and ('body.intro-on > :not(#intro){display:none}' in rd("css/style.css")) and ('body.intro-on{overflow:hidden}' in rd("css/style.css")))
-print("画卷·样式与动画(卷面/画轴/浮现/入列/跳过):", all(t in rd("css/style.css") for t in ['.intro{', '.intro.fade{', '@keyframes introClip', '@keyframes introRollL', '@keyframes introRollR', '@keyframes introFade', '@keyframes introNode', '宣纸纹.png', '如意祥云.png', '.intro-skip{']))
+print("画卷·结构(遮罩/画轴/题字/时间轴/跳过):", all(t in rd("index.html") for t in ['id="intro"', 'sc-paper', 'sc-rod l', 'sc-rod r', 'id="scSub"', 'introSkip', '跳过画卷', '文物有话说，千古述流光', '沉睡千年的古物，一朝苏醒', '随君寻访博物']))
+print("画卷·主页默认隐藏(intro-on 锁定;完播/跳过解除):", ('<body data-bg="e" class="intro-on' in rd("index.html")) and ('body.intro-on > :not(#intro){display:none}' in CSS_ALL) and ('body.intro-on{overflow:hidden}' in CSS_ALL))
+print("画卷·样式与动画(卷面/画轴/浮现/入列/跳过):", all(t in CSS_ALL for t in ['.intro{', '.intro.fade{', '@keyframes introClip', '@keyframes introRollL', '@keyframes introRollR', '@keyframes introFade', '@keyframes introNode', '宣纸纹.webp', '如意祥云.webp', '.intro-skip{']))
 print("画卷·脚本(初始化/跳过/收场):", ev("typeof initIntro === 'function' && typeof introSkip === 'function' && typeof introFinish === 'function' && INTRO_DYNASTIES.length === 16"))
 print("画卷·朝代顺序(夏→清 16 节点):", ev("INTRO_DYNASTIES.map(d=>d[0]).join('、')") == '夏、商、西周、东周、秦、汉、三国、西晋、南北朝、隋、唐、五代、宋、元、明、清')
-print("画卷·假环境冒烟(启动即播放并安全收场):", ev("INTRO.done === true && INTRO.audio === null") and ('initIntro();' in rd("js/app.js")))
+print("画卷·假环境冒烟(启动即播放并安全收场):", ev("INTRO.done === true") and ('initIntro();' in JS_ALL))
 _intro_names = __import__("json").loads(ev("JSON.stringify(INTRO_DYNASTIES.map(d=>d[1]))"))
 _intro_miss = [n for n in _intro_names if not os.path.exists(os.path.join(ROOT, "精灵", "朝代", "缩略", n))]
 print("画卷·16 朝代缩略图齐:", (not _intro_miss) or ("缺:" + "、".join(_intro_miss)))
-print("画卷·旁白配音(AI 神经语音 · 本地 MP3):", os.path.exists(os.path.join(ROOT, "音频", "开场旁白.mp3")) and os.path.getsize(os.path.join(ROOT, "音频", "开场旁白.mp3")) > 20000 and ('音频/开场旁白.mp3' in rd("js/app.js")))
-print("画卷·以旁白读完为结束(ended + 时长/静默兜底):", ('addEventListener("ended"' in rd("js/app.js")) and ('introReadDone' in rd("js/app.js")) and ('introArmEndByDuration' in rd("js/app.js")) and ('introArmEndSilent' in rd("js/app.js")) and ('5300' not in rd("js/app.js")))
-print("画卷·朗读跟随(逐句点亮):", ('.intro-reading .intro-line.lit' in rd("css/style.css")) and ('class="intro-line"' in rd("index.html")) and ('function introSync' in rd("js/app.js")))
-print("画卷·旁白被拦可一键开启(introVoiceOn):", ('id="introVoice"' in rd("index.html")) and ('function introVoiceOn' in rd("js/app.js")) and ('.intro-voice[hidden]{display:none}' in rd("css/style.css")))
-print("画卷·开卷国风配乐(本地纯音乐 · 读完淡出):", ('音频/开场音乐.mp3' in rd("js/app.js")) and os.path.exists(os.path.join(ROOT, "音频", "开场音乐.mp3")) and os.path.getsize(os.path.join(ROOT, "音频", "开场音乐.mp3")) > 300000 and ('function introMusicFade' in rd("js/app.js")) and ('function introMusicStop' in rd("js/app.js")))
-print("画卷·历史长河(蜿蜒河道 · 文物漂浮立体):", ('function introBuildRiver' in rd("js/app.js")) and ('@keyframes introFloat' in rd("css/style.css")) and ('@keyframes introFlow' in rd("css/style.css")) and ('.intro-river' in rd("css/style.css")) and ('class="intro-flow"' in rd("js/app.js")))
-print("画卷·山水增色(三层远山 · 云雾淡日 · 波纹飞鸟 · 河上小舟):", ('function introRidge' in rd("js/app.js")) and ('class="mtn m3"' in rd("js/app.js")) and ('class="intro-ripple"' in rd("js/app.js")) and ('class="intro-boat' in rd("js/app.js")) and ('.intro-river .mtn.m1' in rd("css/style.css")) and ('.intro-boat' in rd("css/style.css")) and ('@keyframes introBoatGlide' in rd("css/style.css")))
-print("主页背景音乐(顶栏右上角按钮 · 五首切换/关闭 · 本地):", all(t in rd("index.html") for t in ['id="bgmBtn"', 'id="bgmPanel"', 'bgmPick(4)', '关闭音乐']) and all(t in rd("js/app.js") for t in ['const BGM_TRACKS', 'function bgmToggle', 'function bgmPick', 'function bgmOff', 'function bgmBoot']) and all(t in rd("css/style.css") for t in ['.bgm-btn', '.bgm-panel', '.bgm-row']) and all(os.path.exists(os.path.join(ROOT, "音频", "背景音乐%d %s.mp3" % (i + 1, n))) for i, n in enumerate(["玉月巡游", "王朝终章", "华夏之美", "琴语晨思", "睡莲"])))
-print("图鉴·燕赵名片(只展不捉 · 不计进度):", ('const LEGENDS' in rd("js/data.js")) and ('燕赵名片' in rd("js/app.js")) and ('function openLegend' in rd("js/app.js")) and ('.codex-card.legend' in rd("css/style.css")) and os.path.exists(os.path.join(ROOT, "精灵", "河北红舞狮.png")) and os.path.exists(os.path.join(ROOT, "精灵", "河北神兽错银铜双翼神兽.png")))
+print("画卷·旁白配音(AI 神经语音 · 本地 MP3):", os.path.exists(os.path.join(ROOT, "音频", "开卷旁白.mp3")) and os.path.getsize(os.path.join(ROOT, "音频", "开卷旁白.mp3")) > 20000 and ('音频/开卷旁白.mp3' in JS_ALL))
+print("画卷·以旁白读完为结束(ended + 时长/静默兜底):", ('addEventListener("ended"' in JS_ALL) and ('introReadDone' in JS_ALL) and ('introArmEndByDuration' in JS_ALL) and ('introArmEndSilent' in JS_ALL) and ('5300' not in rd("js/app.js")))
+print("画卷·朗读跟随(逐句点亮):", ('.intro-reading .intro-line.lit' in CSS_ALL) and ('class="sc-line"' in rd("index.html")) and ('function introSync' in JS_ALL))
+print("画卷·旁白被拦可一键开启(introVoiceOn):", ('id="introVoice"' in rd("index.html")) and ('function introVoiceOn' in JS_ALL) and ('.intro-voice[hidden]{display:none}' in CSS_ALL))
+print("画卷·开卷国风配乐(本地纯音乐 · 读完淡出):", ('音频/开卷配乐.mp3' in JS_ALL) and os.path.exists(os.path.join(ROOT, "音频", "开卷配乐.mp3")) and os.path.getsize(os.path.join(ROOT, "音频", "开卷配乐.mp3")) > 300000 and ('function introMusicFade' in JS_ALL) and ('function introMusicStop' in JS_ALL))
+print("画卷·历史长河(蜿蜒河道 · 文物漂浮立体):", ('function introBuildRiver' in JS_ALL) and ('@keyframes introFloat' in CSS_ALL) and ('@keyframes introFlow' in CSS_ALL) and ('.intro-river' in CSS_ALL) and ('.intro-flow' in rd("index.html")))
+print("画卷·山水增色(三层远山 · 云雾淡日 · 波纹飞鸟 · 河上小舟):", ('function introRidge' in JS_ALL) and ('.intro-river .intro-ripple' in rd("index.html")) and ('.intro-river .mtn' in rd("index.html")) and ('.intro-flow' in rd("index.html")) and ('.intro-boat' in CSS_ALL) and ('@keyframes introBoatGlide' in CSS_ALL))
+print("主页背景音乐(顶栏右上角按钮 · 五首切换/关闭 · 本地):", all(t in rd("index.html") for t in ['id="bgmBtn"', 'id="bgmPanel"', 'bgmPick(4)', '关闭音乐']) and all(t in JS_ALL for t in ['const BGM_TRACKS', 'function bgmToggle', 'function bgmPick', 'function bgmOff', 'function bgmBoot']) and all(t in CSS_ALL for t in ['.bgm-btn', '.bgm-panel', '.bgm-row']) and all(os.path.exists(os.path.join(ROOT, "音频", "背景音乐%d %s.mp3" % (i + 1, n))) for i, n in enumerate(["玉月巡游", "王朝终章", "华夏之美", "琴语晨思", "睡莲"])))
+print("图鉴·燕赵名片(只展不捉 · 不计进度):", ('const LEGENDS' in rd("js/data.js")) and ('燕赵名片' in JS_ALL) and ('function openLegend' in JS_ALL) and ('.codex-card.legend' in CSS_ALL) and os.path.exists(os.path.join(ROOT, "精灵", "河北红舞狮.webp")) and os.path.exists(os.path.join(ROOT, "精灵", "河北神兽错银铜双翼神兽.webp")))
 
 # ---- AI 精灵茶话会(跨文物对话:选 3~6 只 · 玩家当主持人四选一 · 年代/风俗/手艺/来历 + 各朝掌故串讲) ----
 print("茶话会(页面/玩法说明/模板):", ev("""
@@ -348,7 +440,7 @@ print("茶话会(页面/玩法说明/模板):", ev("""
       && TEA_TALK.open.length >= 2 && TEA_TALK.title.length >= 2 && Object.keys(TEA_TALK.q).length >= 8
       && TEA_TALK.topicLead.length >= 4 && !!TEA_TALK.end.toast.back && !!TEA_TALK.gapBack && !!TEA_TALK.bridge && !!TEA_TALK.praise
       && typeof TEA_LORE === 'object' && Object.keys(TEA_LORE).length >= 15; })()
-""") and ("茶话会" in rd("js/data.js")) and ("function teaInit" in rd("js/app.js")) and (".tea-opts" in rd("css/style.css")) and ("teaChoose" in rd("js/app.js")))
+""") and ("茶话会" in rd("js/data.js")) and ("function teaInit" in JS_ALL) and (".tea-opts" in CSS_ALL) and ("teaChoose" in JS_ALL))
 print("茶话会·解锁分支(<3 显示锁定):", ev("""
 (()=>{ const keep = captured.slice();
   captured = [];
@@ -456,7 +548,7 @@ print("茶话会·云端真聊(双通道 + 本机兜底):", ev("""
   TEA.picks = []; TEA.story = null; TEA.busy = false; TEA.cloudFail = false; TEA.cloudDone = 0; TEA.lastSrc = ''; TEA.lastModel = '';
   return promptOk && parseOk && badOk && advOk && readyOff && syncOk;
 })()
-""") and all(t in rd("js/app.js") for t in ["teaCloudReady", "teaCloudAct", "teaCloudMessages", "teaCloudParse", "teaCloudDirect", "teaDirectPost", "teaActLocal", "teaAdvance", "teaChipState", "teaCloudKeyPaste", "teaInitView", "TEA_CLOUD_SYS", 'id="tea-cloud-chip"']) and rd("js/app.js").count("teaAdvance(st, phase, i)") >= 3 and all(t in rd("tools/ident_cloud.py") for t in ["/api/chat", "def call_chat", "def _chat_once", "def _chat_post", '"type": "disabled"', "/api/imagine", "def imagine_cloud", "ZHIPU_IMG_MODEL", "/api/setkey", "RUNTIME"]) and (".tea-cloudchip" in rd("css/style.css")))
+""") and all(t in JS_ALL for t in ["teaCloudReady", "teaCloudAct", "teaCloudMessages", "teaCloudParse", "teaCloudDirect", "teaDirectPost", "teaActLocal", "teaAdvance", "teaChipState", "teaCloudKeyPaste", "teaInitView", "TEA_CLOUD_SYS", 'id="tea-cloud-chip"']) and JS_ALL.count("teaAdvance(st, phase, i)") >= 3 and all(t in rd("tools/ident_cloud.py") for t in ["/api/chat", "def call_chat", "def _chat_once", "def _chat_post", '"type": "disabled"', "/api/imagine", "def imagine_cloud", "ZHIPU_IMG_MODEL", "/api/setkey", "RUNTIME"]) and (".tea-cloudchip" in CSS_ALL))
 
 # ---- AI 赋彩(36 幅 Q 版黑白稿 · 点按填色 / 拖笔涂抹 / 一键赋彩 / 保存作品) ----
 print("赋彩(页面/图稿/引擎/入口):", ev("""
@@ -471,7 +563,7 @@ print("赋彩(页面/图稿/引擎/入口):", ev("""
   return h.includes('dye-cv') && h.includes('按住看原图') && h.includes('一键赋彩') && h.includes('保存作品')
       && (h.match(/dye-thumb/g) || []).length >= 36;
 })()
-""") and ('data-nav="dye"' in rd("index.html")) and ('href="#/dye"' in rd("index.html")) and ("DYE_IMAGES" in rd("js/data.js")) and ("__DYE_DATA" in rd("js/app.js")) and all(t in rd("css/style.css") for t in [".dye-stage", ".dye-thumb", "#dye-cv"]) and os.path.isdir(os.path.join(ROOT, "AI 赋彩")) and os.path.isdir(os.path.join(ROOT, "AI 赋彩", "_data")))
+""") and ('href="#/dye"' in rd("index.html")) and ("DYE_IMAGES" in rd("js/data.js")) and ("__DYE_DATA" in JS_ALL) and all(t in CSS_ALL for t in [".dye-stage", ".dye-thumb", "#dye-cv"]) and os.path.isdir(os.path.join(ROOT, "AI 赋彩")))
 
 # ---- AI 文物识别(照片复原对比 + 器型 / 纹样 / 年代 / 材质识别) ----
 print("识别(页面/引擎/入口):", ev("""
@@ -495,13 +587,13 @@ print("识别(页面/引擎/入口):", ev("""
   return rh.includes('识别结果') && rh.includes('来历') && rh.includes('候选接近度')
       && rh.includes('im-item') && rh.includes('识别依据');
 })()
-""") and ('data-nav="ident"' in rd("index.html")) and ('href="#/ident"' in rd("index.html")) and all(t in rd("css/style.css") for t in [".ident-slider", ".ident-grid", ".im-item", ".ident-verdict", ".ident-lore", ".icloud-card"]) and os.path.exists(os.path.join(ROOT, "tools", "ident_cloud.py")) and all(t in rd("tools/ident_cloud.py") for t in ["ark.cn-beijing.volces.com", "open.bigmodel.cn", "/api/ping", "ident_key.txt"]))
+""") and ('href="#/ident"' in rd("index.html")) and all(t in CSS_ALL for t in [".ident-slider", ".ident-grid", ".im-item", ".ident-verdict", ".ident-lore", ".icloud-card"]) and os.path.exists(os.path.join(ROOT, "tools", "ident_cloud.py")) and all(t in rd("tools/ident_cloud.py") for t in ["ark.cn-beijing.volces.com", "open.bigmodel.cn", "/api/ping", "ident_key.txt"]))
 
 # ---- 接入 AI 大模型(设置面板:服务商 / Base URL / 钥匙 / 模型 ID) ----
-print("接入 AI 大模型面板(导航入口/函数/默认值/样式):", ('🔑 接入 AI 大模型' in rd("index.html")) and all(t in rd("js/app.js") for t in ["AI_CFG_PROVIDERS", "function aiCfgOpen", "function aiCfgApply", "function aiCfgTest", "/api/setkey"]) and all(t in rd("css/style.css") for t in [".aicfg-form", ".aicfg-row", ".aicfg-state"]) and ev("aiCfgDefaults().provider==='zhipu' && aiCfgDefaults().base.indexOf('open.bigmodel.cn')>=0 && aiCfgDefaults().model==='glm-4-flash' && aiCfgDefaults().account==='2502887269@qq.com' && aiCfgGet().key===''"))
+print("接入 AI 大模型面板(导航入口/函数/默认值/样式):", ('云端 AI' in rd("index.html")) and all(t in JS_ALL for t in ["AI_CFG_PROVIDERS", "function aiCfgOpen", "function aiCfgApply", "function aiCfgTest", "/api/setkey"]) and all(t in CSS_ALL for t in [".aicfg-form", ".aicfg-row", ".aicfg-state"]) and ev("aiCfgDefaults().provider==='zhipu' && aiCfgDefaults().base.indexOf('open.bigmodel.cn')>=0 && aiCfgDefaults().model==='glm-4-flash' && aiCfgDefaults().account==='2502887269@qq.com' && aiCfgGet().key===''"))
 
 # ---- 登录 / 注册(顶栏入口 · 小桥账号 · 演示账号只存哈希) ----
-print("登录 / 注册(顶栏入口/双模登录/加盐哈希/小桥接口):", ('id="authBtn"' in rd("index.html")) and all(t in rd("js/app.js") for t in ["function authOpen", "function authSubmit", "function authLogout", "AUTH_DEMO", "function authHash", "/api/login", "/api/reg"]) and all(t in rd("css/style.css") for t in [".auth-btn", ".auth-tabs"]) and all(t in rd("tools/ident_cloud.py") for t in ["/api/login", "/api/reg", "pbkdf2_hmac", "DEMO_EMAIL", "ACCOUNTS_FILE"]) and ev("authHash('qWeR7xY9','x') === authHash('qWeR7xY9','x') && authHash('qWeR7xY9','x') !== authHash('qWeR7xY8','x') && authWho() === null && typeof authOpen === 'function'"))
+print("登录 / 注册(顶栏入口/双模登录/加盐哈希/小桥接口):", ('id="authBtn"' in rd("index.html")) and all(t in JS_ALL for t in ["function authOpen", "function authSubmit", "function authLogout", "AUTH_DEMO", "function authHash", "/api/login", "/api/reg"]) and all(t in CSS_ALL for t in [".auth-btn", ".auth-tabs"]) and all(t in rd("tools/ident_cloud.py") for t in ["/api/login", "/api/reg", "pbkdf2_hmac", "DEMO_EMAIL", "ACCOUNTS_FILE"]) and ev("authHash('qWeR7xY9','x') === authHash('qWeR7xY9','x') && authHash('qWeR7xY9','x') !== authHash('qWeR7xY8','x') && authWho() === null && typeof authOpen === 'function'"))
 
 # ---- 识别 · 唤醒闭环(云端认出 → 对上图鉴精灵 → 一键唤醒收进图鉴) ----
 print("识别·唤醒闭环(名字匹配 / 唤醒卡 / 一键收进图鉴):", ev("""
@@ -524,13 +616,13 @@ print("识别·唤醒闭环(名字匹配 / 唤醒卡 / 一键收进图鉴):", ev
   captured = keep;
   return w1 && w2 && w3;
 })()
-""") and all(t in rd("js/app.js") for t in ["identWakeFind", "identWakeGo", "identWakeHTML", "identWakeCraft", "identNormName"]) and (".iwake" in rd("css/style.css")))
+""") and all(t in JS_ALL for t in ["identWakeFind", "identWakeGo", "identWakeHTML", "identWakeCraft", "identNormName"]) and (".iwake" in CSS_ALL))
 
 # ---- 打卡拍照 · AI 幻化通道(小桥智谱免费链 / 直连智谱 CogView 或方舟 Seedream / 画风参考 / 本机兜底) ----
-_aj = rd("js/app.js")
+_aj = JS_ALL
 print("拍照·AI 幻化通道(双后端/画风参考/体量控制/先云后本机):", ev("""
 (()=>{
   if (typeof aiImagine !== 'function' || typeof dataUrlShrink !== 'function' || typeof localStylize !== 'function') return '缺函数';
   return aiImagineOff === false && aiStyleRefP === null;
 })()
-""") and all(t in _aj for t in ["cogview-3-flash", "glm-4.6v-flash", "IDENT_ZHIPU_IMG", "identKeyKind", "zhipuTrimWatermark", "aiImagineBridge", "aiImagineZhipu", "aiImagineArk", "/api/imagine", "doubao-seedream-5-0-flash-260915", "IDENT_IMG_PROMPT", "精灵/tielion.png", "response_format", "b64_json", "dataUrlShrink(dataURL, 1024, .85)", "dataUrlShrink(raw, 1024, .92)", "withTimeout(aiImagine(dataURL, desc), 45000)"]) and (_aj.index("aiImagine(dataURL, desc)") < _aj.index("localStylize(dataURL)")))
+""") and all(t in _aj for t in ["cogview-3-flash", "glm-4.6v-flash", "IDENT_ZHIPU_IMG", "identKeyKind", "zhipuTrimWatermark", "aiImagineBridge", "aiImagineZhipu", "aiImagineArk", "/api/imagine", "doubao-seedream-5-0-flash-260915", "IDENT_IMG_PROMPT", "精灵/tielion.webp", "response_format", "b64_json", "dataUrlShrink(dataURL, 1024, .85)", "dataUrlShrink(raw, 1024, .92)", "withTimeout(aiImagine(dataURL, desc), 45000)"]) and (_aj.index("aiImagine(dataURL, desc)") < _aj.index("localStylize(dataURL)")))

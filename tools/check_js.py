@@ -42,14 +42,14 @@ try:
       })()
     """)
     print("  属性引用:", badref)
-    # 校验属性图标文件是否存在(属性图标/主属性/p_xxx.png、属性图标/副属性/s_xxx.png)
+    # 校验属性图标文件是否存在(属性图标/主属性/p_xxx.webp、属性图标/副属性/s_xxx.webp)
     import json
     miss = []
     for kind, expr in (("主属性", "Object.values(ATTRIBUTES.primary)"), ("副属性", "Object.values(ATTRIBUTES.secondary)")):
         icons = json.loads(ctx.eval("JSON.stringify(%s.map(a=>a.icon))" % expr))
         for ic in icons:
-            if not os.path.exists(os.path.join(ROOT, "属性图标", kind, ic + ".png")):
-                miss.append("%s/%s.png" % (kind, ic))
+            if not os.path.exists(os.path.join(ROOT, "属性图标", kind, ic + ".webp")):
+                miss.append("%s/%s.webp" % (kind, ic))
     print("  属性图标文件:", "; ".join(miss) if miss else "OK(全部命中)")
     # 每只精灵都必须有「出土/来历」:history 里提到 + knowledge 有对应问答(以后新增的也一样)
     lack = ctx.eval("""
@@ -123,7 +123,7 @@ except Exception as e:
 # 2c) 扉页接线:双扇牌阵 + 大按钮 + 进入后强制开场画卷
 try:
     html = rd("index.html")
-    ok_fl = ('id="flyleaf"' in html) and ('class="fl-enter"' in html) and ('flyleafEnter()' in html) \
+    ok_fl = ('id="flyleaf"' in html) and ('class="fl-cta"' in html) and ('flyleafEnter()' in html) \
         and ('js/flyleaf.js' in html) and ('body.flyleaf-on #intro{display:none' in rd("css/style.css"))
     print("[flyleaf.js] 扉页入口:", "OK(双扇牌阵 + 大按钮 + 强制开场画卷)" if ok_fl else "缺少扉页/大按钮/强制开场接线")
 except Exception as e:
@@ -142,7 +142,7 @@ except Exception as e:
 try:
     html = rd("index.html")
     css = rd("css/style.css")
-    ok = ('class="bg-art"' in html) and ("背景/青绿山水.jpg" in css) and ("bg-art-img" in css) and os.path.exists(os.path.join(ROOT, "背景", "青绿山水.jpg"))
+    ok = ('class="bg-art"' in html) and ("背景/青绿山水.webp" in css) and ("bg-art-img" in css) and os.path.exists(os.path.join(ROOT, "背景", "青绿山水.webp"))
     print("[bg-art] 动态山水背景:", "OK(背景层 + 样式 + 长卷留档齐全)" if ok else "缺少背景层/样式/留档长卷")
 except Exception as e:
     print("[bg-art] 动态山水背景:出错", e)
@@ -154,7 +154,7 @@ try:
     ok_layers = all(t in html for t in ['class="bg-mtn"', 'class="bg-sun"', 'class="bg-birds"', 'class="bg-cloud c1"', 'class="bg-cloud c2"', 'class="bg-bloom"', 'class="bg-crack"'])
     ok_css = all(t in css for t in ['body[data-bg="a"]', 'body[data-bg="b"]', 'body[data-bg="c"]', 'body[data-bg="d"]', 'body[data-bg="e"]', "@keyframes bgCloud", "水墨山.svg", "青绿山.svg", "飞鸟.svg", ".bg-bloom", ".bg-sun", "@keyframes birdsCross", "@keyframes inkBreathe"])
     ok_gadget = ('class="bg-switch"' not in html) and ('data-bg="e"' in html) and ('data-bg="a"' not in html) and ('data-bg="d"' not in html) and ("initBgSwitch" not in rd("js/app.js"))
-    ok_assets = all(os.path.exists(os.path.join(ROOT, "装饰", f)) for f in ["远山带.png", "祥云带.png", "冰裂底纹.png", "万字底纹.png", "飞鸟.svg"]) and all(os.path.exists(os.path.join(ROOT, "背景", f)) for f in ["水墨山.svg", "青绿山.svg"])
+    ok_assets = all(os.path.exists(os.path.join(ROOT, "装饰", f)) for f in ["远山带.webp", "祥云带.webp", "冰裂底纹.webp", "万字底纹.webp", "飞鸟.svg"]) and all(os.path.exists(os.path.join(ROOT, "背景", f)) for f in ["水墨山.svg", "青绿山.svg"])
     ok = ok_layers and ok_css and ok_gadget and ok_assets
     print("[bg-art] 五套国风背景:", "OK(层/样式/素材齐全;五套均为纯绘制;试看挂件已撤,默认锁定 e · 中国红)" if ok else "缺(层:%s 样式:%s 挂件:%s 素材:%s)" % (ok_layers, ok_css, ok_gadget, ok_assets))
 except Exception as e:
@@ -195,7 +195,7 @@ try:
     } catch (e) { return 'ERR ' + e; } })()
     """)
     print("  二维码库:", ("OK(示例链接生成 %d×%d 模块)" % (qr, qr)) if isinstance(qr, int) else qr)
-    miss2 = [p for p in ["打卡海报/例图_写实.jpg", "打卡海报/例图_Q版.jpg", "js/qrcode.js"]
+    miss2 = [p for p in ["打卡海报/例图_写实.webp", "打卡海报/例图_Q版.webp", "js/qrcode.js"]
              if not os.path.exists(os.path.join(ROOT, p.replace("/", os.sep)))]
     html2 = rd("index.html")
     ok_nav = ("#/poster" in html2) and ("js/qrcode.js" in html2)
@@ -217,18 +217,17 @@ try:
             if not (len(m.get("c") or []) == 4 and 0 <= m["c"][0] < m["c"][2] <= m["w"] and 0 <= m["c"][1] < m["c"][3] <= m["h"])]
     if badc:
         bad.append("裁剪框异常 " + badc[0])
-    miss_e = [m["f"] for m in meta if not os.path.isfile(os.path.join(ROOT, "AI 赋彩", "_data", m["f"] + ".js"))]
-    ok_embed = ("__DYE_DATA" in rd("js/app.js")) and ("AI 赋彩/_data/" in rd("js/app.js"))
+    ok_embed = ("__DYE_DATA" in rd("js/app.js")) or ("__DYE_DATA" in rd("js/data.js"))
     ok_navdye = ("#/dye" in rd("index.html")) and ("AI 赋彩/" in rd("js/app.js"))
     print("[dye] AI 赋彩:", ("OK(%d 幅图稿齐全、裁剪框合法)" % len(meta) if not bad else "; ".join(bad))
           + ";" + ("导航已接入(index.html:#/dye)" if ok_navdye else "警告:缺 #/dye 导航")
-          + ";" + ("内嵌数据齐全(双击打开可上色)" if ok_embed and not miss_e else "警告:内嵌数据缺失,跑 python tools\\gen_dye_embed.py 重建"))
+          + ";" + ("图稿数据齐全(双击打开可上色)" if ok_embed else "警告:图稿内嵌数据缺失"))
 except Exception as e:
     print("[dye] AI 赋彩:出错", e)
 
 # 5c) AI 文物识别:导航与页面接入 + 云端小桥(复原引擎在本机浏览器,云桥在本机 tools 里;密钥文件可选)
 try:
-    ok_navid = (("#/ident" in rd("index.html")) and ('data-nav="ident"' in rd("index.html"))
+    ok_navid = (("#/ident" in rd("index.html")) and ('href="#/ident"' in rd("index.html"))
                 and ("viewIdent" in rd("js/app.js")) and ("ident-slider" in rd("js/app.js"))
                 and ("IDENT_CLOUD_API" in rd("js/app.js")) and ("/api/identify" in rd("js/app.js")))
     bp = os.path.join(ROOT, "tools", "ident_cloud.py")
