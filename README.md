@@ -119,6 +119,10 @@ http://127.0.0.1:8000/
 
 > 需要 Python 3.8+。若要使用 `tools/` 里的部署与素材脚本，再安装依赖：
 > `python -m pip install -r requirements.txt`
+>
+> 装好后可以跑仓库自带的两条自检（无需浏览器、无需联网）：
+> `python tools/check_js.py` —— 题库数据、语法、资源引用、各功能入口
+> `python tools/check_runtime.py` —— quickjs + 假 DOM 跑「对战 → 捕捉」全流程
 
 ### 方式三：部署到自己的服务器
 
