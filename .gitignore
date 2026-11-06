@@ -20,6 +20,8 @@ _debug/
 __pycache__/
 存档/
 *.py[cod]
+# LSA 向量缓存：删掉后首次启动会按 kb_index.json 自动重建，不必入库（约 3.5 MB）
+mcp/.vectors.npz
 *.egg-info/
 
 # ---------- 3. 原始素材存档（2GB+，单独归档，不随代码走） ----------
@@ -39,6 +41,11 @@ node_modules/
 
 # 注意：js/ident-direct.js 是页面依赖的正式脚本（index.html 会加载它），
 #      经检查不含任何密钥，因此不再忽略，否则克隆后会出现 404。
+
+# ---------- 6. 语音音频（生成产物，约 26 MB，不入库） ----------
+# 292 段 mp3 由 tools/gen_voice.py 按 audio/index.json 批量生成；
+# 服务端 /api/tts 也会按同一份索引现场合成，故仓库只保留 audio/index.json。
+audio/*/
 
 # ---------- 备份/临时 ----------
 *.bak

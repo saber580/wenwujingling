@@ -16,7 +16,16 @@
 对外接口:
     GET  /                    静态页面
     POST /api/llm             OpenAI 格式的聊天请求 → 转发云端，SSE 流式回传
+    POST /api/tts             现场语音合成 → audio/mpeg（与预生成音频同一声线）
+    POST /api/rag             双路召回（BM25 + LSA）→ 带 [n] 角标的证据与出处
+    GET  /api/prompt          提示词版本库 / 消融实验配置
     GET  /api/ping            健康检查
+    ─── MCP（Model Context Protocol）───
+    POST /mcp                 JSON-RPC 2.0（Streamable HTTP，2025-03-26）
+    GET  /mcp                 服务端 → 客户端 SSE 监听流
+    GET  /mcp/sse             HTTP+SSE 传输（2024-11-05），首帧给 endpoint
+    POST /mcp/messages        旧版 SSE 传输的客户端消息入口
+    DELETE /mcp               关闭会话
 """
 import json
 import mimetypes
@@ -32,6 +41,12 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ENTRY = "index.html"
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
+from mcp import transport as mcp_transport          # noqa: E402
+from mcp import tools_impl as mcp_tools              # noqa: E402
+from mcp.hybrid_rag import get as rag_get            # noqa: E402
 
 # 云端大模型网关：鉴权只靠这个可公开的 publishableKey，真正的门槛是 Origin
 BASE = "https://relic-spirit.app.workbuddy.host/.cloud/llm"
@@ -71,8 +86,18 @@ class Handler(SimpleHTTPRequestHandler):
 
     def end_headers(self):
         # 接口不缓存；静态资源交给浏览器按 Last-Modified 协商，避免每次刷新重下几十兆素材
-        if self.path.split("?")[0].startswith("/api/"):
+        path = self.path.split("?")[0]
+        if path.startswith("/api/"):
             self.send_header("Cache-Control", "no-store, must-revalidate")
+            # 双击 html（file://）或别的端口预览时，Origin 是 null / 带端口，
+            # 放行同源回显，让 RAG 与 MCP 客户端也能连本机服务。
+            origin = self.headers.get("Origin")
+            if origin:
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Access-Control-Allow-Headers",
+                                 "Content-Type, Accept, Mcp-Session-Id, MCP-Protocol-Version")
+                self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+                self.send_header("Access-Control-Expose-Headers", "Mcp-Session-Id")
         if getattr(self, "_range_ok", False):
             self.send_header("Accept-Ranges", "bytes")
         super().end_headers()
@@ -82,15 +107,51 @@ class Handler(SimpleHTTPRequestHandler):
         return super().send_head()
 
     # ---------- 路由 ----------
+    def do_OPTIONS(self):
+        path = self.path.split("?")[0]
+        if mcp_transport.handle_options(self, path):
+            return
+        if path.startswith("/api/"):
+            self.send_response(204)
+            self.send_header("Access-Control-Allow-Origin",
+                             self.headers.get("Origin") or "*")
+            self.send_header("Access-Control-Allow-Headers",
+                             "Content-Type, Accept, Mcp-Session-Id, MCP-Protocol-Version")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Max-Age", "86400")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        self.send_response(204)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def do_GET(self):
         path = self.path.split("?")[0]
+        if path.startswith("/mcp"):
+            if mcp_transport.handle_get(self, path, self.path):
+                return
+            return self._json(404, {"ok": False, "error": "没有这个 MCP 端点"})
         if path == "/api/ping":
-            return self._json(200, {"ok": True, "provider": "cloud-proxy", "model": "云端大模型"})
+            return self._json(200, {"ok": True, "provider": "cloud-proxy",
+                                    "model": "云端大模型",
+                                    "mcp": True, "rag": "bm25+lsa"})
         if path == "/api/models":
             return self._proxy_models()
+        if path == "/api/prompt":
+            return self._prompt()
+        if path == "/api/rag":
+            return self._rag({})
         if self._serve_range():
             return
         return super().do_GET()
+
+    def do_DELETE(self):
+        path = self.path.split("?")[0]
+        if path.startswith("/mcp"):
+            if mcp_transport.handle_delete(self, path):
+                return
+        return self._json(404, {"ok": False, "error": "没有这个接口"})
 
     # ---------- 分段传输：让视频/大图边下边用，不必等整个文件 ----------
     def _serve_range(self):
@@ -152,9 +213,79 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = self.path.split("?")[0]
+        if path.startswith("/mcp"):
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                n = 0
+            raw = self.rfile.read(n) if n else b""
+            if mcp_transport.handle_post(self, path, self.path, raw):
+                return
+            return self._json(404, {"ok": False, "error": "没有这个 MCP 端点"})
         if path == "/api/llm":
             return self._proxy_llm()
+        if path == "/api/tts":
+            return self._tts()
+        if path == "/api/rag":
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                req = json.loads(self.rfile.read(n).decode("utf-8")) if n else {}
+            except Exception:
+                return self._json(400, {"ok": False, "error": "请求体不是 JSON"})
+            return self._rag(req)
         return self._json(404, {"ok": False, "error": "没有这个接口"})
+
+    # ---------- 双路召回：给前端与 Agent 用的直连接口 ----------
+    def _rag(self, req):
+        q = str(req.get("query") or req.get("q") or "").strip()
+        if not q:
+            return self._json(400, {"ok": False, "error": "查询为空"})
+        try:
+            k = max(1, min(10, int(req.get("k") or req.get("top_k") or 5)))
+            r = rag_get().search(q, k=k, sid=(req.get("sid") or None))
+            r["ok"] = True
+            r["stats"] = rag_get().stats
+            return self._json(200, r)
+        except Exception as e:
+            return self._json(500, {"ok": False, "error": "召回失败：%s" % str(e)[:120]})
+
+    # ---------- 提示词版本库：前端与消融实验读同一份配置 ----------
+    def _prompt(self):
+        try:
+            with open(os.path.join(ROOT, "prompts", "registry.json"), encoding="utf-8") as f:
+                return self._json(200, json.load(f))
+        except Exception as e:
+            return self._json(500, {"ok": False, "error": str(e)})
+
+    # ---------- 现场语音：AI 现说的话也要用文物自己的嗓子 ----------
+    def _tts(self):
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+            req = json.loads(self.rfile.read(n).decode("utf-8"))
+        except Exception:
+            return self._json(400, {"ok": False, "error": "请求体不是 JSON"})
+        text = str(req.get("text") or "").strip()[:800]
+        rid = str(req.get("id") or "").strip()
+        primary = str(req.get("primary") or "").strip()
+        if not text:
+            return self._json(400, {"ok": False, "error": "文本为空"})
+        try:
+            import tts_service
+            data = tts_service.tts_bytes(rid, text, primary)
+        except Exception as e:
+            sys.stderr.write("  [tts] %s\n" % str(e)[:160])
+            data = None
+        if not data:
+            # 回落信号：前端收到 503 会改用浏览器自带语音，不会哑掉
+            return self._json(503, {"ok": False, "error": "语音合成不可用"})
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type", "audio/mpeg")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     # ---------- 工具 ----------
     def _json(self, code, obj):
@@ -307,6 +438,15 @@ def main():
     print("  账号: %s" % os.environ.get("DEMO_EMAIL", "见 .env.example（DEMO_EMAIL）"))
     print("  密码: %s" % ("*" * 8 + "（已由 DEMO_PASS 设置）"
                           if os.environ.get("DEMO_PASS") else "见 部署到服务器.md / .env.example"))
+    # edge-tts 首次建连要十几秒。启动时后台预热一次，别让第一个提问的人干等。
+    def _warm_tts():
+        try:
+            import tts_service
+            tts_service.tts_bytes("", "文物精灵", "")
+        except Exception as e:
+            sys.stderr.write("  [tts] 预热失败（不影响其它功能）: %s\n" % str(e)[:120])
+    threading.Thread(target=_warm_tts, daemon=True).start()
+
     print("  AI 走 /api/llm 转发到云端，任何域名/IP 下都能用")
     print("=" * 60)
 
