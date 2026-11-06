@@ -3489,3 +3489,14 @@ const POSTER_HALL_EX = {
   longfenglu:    { hall: "中国国家博物馆", city: "北京市" },
   yanshidi:      { hall: "故宫博物院", city: "北京市" }
 };
+
+/* ---------------------------------------------------------
+   显式导出到 window。
+   这些在文件里是顶层 const，浏览器里跨 script 直接可用，
+   但在沙箱 / 无头自检环境里读不到。
+   工具层（js/tools.js）要按名称找文物，靠这里挂出去才稳。
+   --------------------------------------------------------- */
+if (typeof window !== "undefined") {
+  window.SPIRITS = SPIRITS;
+  window.ATTRIBUTES = ATTRIBUTES;
+}

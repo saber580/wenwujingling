@@ -175,6 +175,44 @@
     return orderBy(pool, needImage ? PREF_VIS : PREF_TEXT);
   }
 
+  /* ---------- 工具调用（Function Calling）增量拼装 ----------
+     流式响应里 tool_calls 是按 index 分片到达的：
+       {index:0, id:"call_xx", function:{name:"search_relic", arguments:""}}
+       {index:0, function:{arguments:"{\"keyw"}}
+       {index:0, function:{arguments:"ord\":\"长信宫灯\"}"}}
+     必须按 index 归到同一个槽位，把 arguments 一段段接起来，
+     否则拿到的永远是半截 JSON。 */
+  function absorbToolCalls(delta, state) {
+    var tcs = delta && delta.tool_calls;
+    if (!tcs || !tcs.length) return;
+    for (var i = 0; i < tcs.length; i++) {
+      var tc = tcs[i] || {};
+      var idx = (tc.index != null) ? tc.index : 0;
+      var slot = state.tcMap[idx];
+      if (!slot) {
+        slot = state.tcMap[idx] = { id: "", type: "function", function: { name: "", arguments: "" } };
+        state.toolCalls.push(slot);
+      }
+      if (tc.id) slot.id = tc.id;
+      var fn = tc.function;
+      if (fn) {
+        if (fn.name) slot.function.name = fn.name;
+        if (typeof fn.arguments === "string" && fn.arguments) slot.function.arguments += fn.arguments;
+      }
+    }
+  }
+
+  /* 把拼好的 arguments 字符串解析成对象；模型偶尔吐坏 JSON，兜住不抛 */
+  function parseArgs(s) {
+    var t = String(s || "").trim();
+    if (!t) return {};
+    try { return JSON.parse(t); } catch (e) {}
+    /* 常见毛病：结尾多一个 } 或少了 }，截到最后一个能闭合的位置再试 */
+    var m = t.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch (e2) {} }
+    return { __raw: t };
+  }
+
   /* 走转发时自己读 SSE（不能用 SDK，SDK 只会直接打云端） */
   async function streamViaProxy(body, state, ctrl) {
     var resp = await fetch("/api/llm", {
@@ -208,7 +246,7 @@
       if (got) text = got;
     }
     if (buf) parseSSE(buf, state);
-    return state.text;
+    return state;
   }
 
   /* 解析 SSE 文本，把增量累加到 state，返回累计文本 */
@@ -227,6 +265,7 @@
           if (!state.started) { state.started = true; if (state.mark) state.mark(); }
           state.text += d.content;
         }
+        if (d) absorbToolCalls(d, state);
       } catch (e) { /* 半截 JSON，跳过 */ }
     }
     return state.text;
@@ -241,8 +280,14 @@
   function once(model, messages, opt) {
     var body = { model: model.id, messages: messages, stream: true };
     if (opt.temperature != null) body.temperature = opt.temperature;
+    /* 带工具：云端网关已实测支持 tools（4 个模型都能回流式 tool_calls）。
+       注意云端只认流式，stream:false 会被判参数无效。 */
+    if (opt.tools && opt.tools.length) {
+      body.tools = opt.tools;
+      body.tool_choice = opt.toolChoice || "auto";
+    }
 
-    var state = { started: false, text: "", mark: null };
+    var state = { started: false, text: "", mark: null, toolCalls: [], tcMap: {} };
     var ctrl = null, run;
 
     if (useProxy()) {
@@ -256,8 +301,9 @@
             if (!state.started) { state.started = true; if (state.mark) state.mark(); }
             state.text += d.content;
           }
+          if (d) absorbToolCalls(d, state);
         }
-        return state.text;
+        return state;
       })();
     }
     run.catch(function () {});          /* 下面自己接管成败，避免未捕获告警 */
@@ -275,12 +321,12 @@
         ok ? resolve(val) : reject(val);
       }
       var t1 = setTimeout(function () {
-        if (state.started) return;                   /* 已经吐字了，只是慢，继续等 */
+        if (state.started || state.toolCalls.length) return;   /* 已经吐字/已在调工具，只是慢，继续等 */
         finish(false, new Error("模型没响应"));
       }, firstMs);
       state.mark = function () { clearTimeout(t1); };
       var t2 = setTimeout(function () {
-        if (state.text) finish(true, state.text);    /* 有半截就先给半截 */
+        if (state.text || state.toolCalls.length) finish(true, state);
         else finish(false, new Error("云端超时了,请重试"));
       }, totalMs);
       run.then(function (t) { finish(true, t); }, function (e) { finish(false, e); });
@@ -308,8 +354,13 @@
     var last = null;
     for (var k = 0; k < cands.length; k++) {
       try {
-        var text = await once(cands[k], messages, opt);
-        if (String(text || "").trim()) return { text: text, model: cands[k].name || cands[k].id };
+        var st = await once(cands[k], messages, opt);
+        var txt = String((st && st.text) || "");
+        var tcs = (st && st.toolCalls) || [];
+        /* 有正文，或者模型决定调工具（此时正文可能是空的），都算这一轮成功 */
+        if (txt.trim() || tcs.length) {
+          return { text: txt, toolCalls: tcs, model: cands[k].name || cands[k].id };
+        }
         last = new Error("模型没返回内容");
         markDead(cands[k].id);                       /* 空回：本轮先别再找它 */
       } catch (e) {
@@ -367,8 +418,35 @@
     return { ok: true, data: JSON.parse(m[0]), model: r.model };
   }
 
+  /* ---------- Agent 单步：带工具跑一轮 ----------
+     循环（决策 → 执行工具 → 把结果回填 → 再决策）由 agent.js 负责，
+     这里只做一次「带 tools 的请求」，把正文和模型的工具意图原样交回去。
+     拆成单步是因为每一轮都要先把工具真正执行完，才能决定下一轮问什么。 */
+  async function doAgentStep(body) {
+    var msgs = Array.isArray(body.messages) ? body.messages.slice() : [];
+    if (!msgs.length) return { ok: false, error: "没有对话内容" };
+    if (!(msgs[0] && msgs[0].role === "system")) msgs = [{ role: "system", content: SYS }].concat(msgs);
+    var r = await collect(msgs, {
+      tools: body.tools || null,
+      toolChoice: body.tool_choice || "auto",
+      temperature: body.temperature,
+      model: body.model,
+      firstMs: 12000,
+      ms: Math.min(Number(body.ms) || 32000, 40000),
+      tries: 3
+    });
+    var calls = (r.toolCalls || []).map(function (c) {
+      return {
+        id: c.id || ("call_" + Math.random().toString(36).slice(2, 10)),
+        name: (c.function && c.function.name) || "",
+        args: parseArgs(c.function && c.function.arguments)
+      };
+    }).filter(function (c) { return c.name; });
+    return { ok: true, text: r.text || "", tool_calls: calls, model: r.model };
+  }
+
   /* ---------- 接管 identFetchCloud：所有 /api/* 都走云端 ---------- */
-  var NEED_NET = { "/api/chat": 1, "/api/identify": 1 };
+  var NEED_NET = { "/api/chat": 1, "/api/identify": 1, "/api/agent": 1 };
 
   window.identFetchCloud = function (url, body, ms, authKey) {
     var path = String(url || "").replace(/^https?:\/\/[^/]+/i, "").split("?")[0] || "/";
@@ -392,6 +470,9 @@
         break;
       case "/api/chat":
         run = function () { return doChat(body || {}, ms); };
+        break;
+      case "/api/agent":
+        run = function () { return doAgentStep(body || {}); };
         break;
       case "/api/identify":
         run = function () { return doIdentify(body || {}); };

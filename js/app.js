@@ -5037,7 +5037,95 @@ function aqCmpHTML(rec) {
   </div>`;
 }
 
+/* ---------------- Agent 通道：把「查什么」交给模型自己决定 ----------------
+   原来的管线是代码写死顺序：先检索、再生成、再自检、再互审。
+   接入工具层之后，模型能看到 6 个站内工具（检索/档案/对比/工艺/误认/馆藏），
+   自己决定调哪个、参数给什么、结果不够要不要再调一次。
+   这里只做三件事：给它一次机会、把过程显示出来、失败就退回老路。 */
+
+/* 开关：默认开。出问题时可在地球控制台执行
+   localStorage.setItem("wj.agent","0") 一键退回固定管线。 */
+function aqAgentEnabled() {
+  try { return localStorage.getItem("wj.agent") !== "0"; } catch (e) { return true; }
+}
+
+/* 工具名的中文说法，给用户看的过程条用 */
+const AQ_TOOL_CN = {
+  search_relic: "检索档案",
+  get_relic: "调取文物档案",
+  compare_relics: "比对两件文物",
+  lookup_craft: "查工艺词条",
+  check_misconception: "辨析易混淆",
+  list_collection: "浏览馆藏"
+};
+
+async function aqAgentRun(q) {
+  if (!window.WJAgent || !window.WJTools) return null;
+  const t0 = Date.now();
+  let r = null;
+  try {
+    r = await window.WJAgent.ask(q, {
+      history: (typeof AQ_HIST !== "undefined" ? AQ_HIST.slice(-4) : []),
+      temperature: 0.6,
+      maxRounds: 3,
+      ms: 26000,
+      onStep: (s) => {
+        /* 每执行完一个工具，就把正在「翻书」的那颗气泡换成当前进度 */
+        try {
+          const tid = AQ.pendingTid;
+          if (!tid) return;
+          const cn = AQ_TOOL_CN[s.name] || s.name;
+          aqFillin(tid, '<span class="aq-dots"><i></i><i></i><i></i></span> 正在' + aqEsc(cn) + "…");
+        } catch (e) {}
+      }
+    });
+  } catch (e) { return null; }
+
+  if (!r || !r.ok || !String(r.text || "").trim()) return null;
+
+  const used = (r.toolsUsed || []).slice();
+  const steps = (r.trace || []).map(t => ({
+    name: t.name,
+    cn: AQ_TOOL_CN[t.name] || t.name,
+    arg: Object.keys(t.args || {}).map(k => String(t.args[k])).join(" · "),
+    ok: t.ok,
+    note: t.note || ""
+  }));
+
+  /* 把这一轮问答写回短期记忆，后面几轮还认得上下文 */
+  try {
+    AQ_HIST.push({ role: "user", content: q }, { role: "assistant", content: String(r.text).slice(0, 500) });
+    if (AQ_HIST.length > 8) AQ_HIST.splice(0, AQ_HIST.length - 8);
+  } catch (e) {}
+
+  return {
+    text: r.text,
+    model: r.model || "云端",
+    kb: null,
+    agent: { rounds: r.rounds || 0, tools: used, steps: steps, ms: Date.now() - t0, capped: !!r.capped }
+  };
+}
+
+/* 过程条：回答了用了哪些工具、各查到了什么。可解释性就落在这行小字上。 */
+function aqAgentTraceHTML(ag) {
+  if (!ag || !ag.steps || !ag.steps.length) return "";
+  const chips = ag.steps.map(s =>
+    '<span class="aq-tool' + (s.ok ? "" : " miss") + '" title="' + aqEsc(s.note) + '">' +
+    aqEsc(s.cn) + (s.arg ? "：" + aqEsc(s.arg).slice(0, 24) : "") + "</span>"
+  ).join("");
+  return '<div class="aq-trace"><span class="aq-trace-lead">🤖 自己查了 ' + ag.steps.length + " 次 · " +
+    (ag.ms / 1000).toFixed(1) + 's</span>' + chips + "</div>";
+}
+
 async function aqCloudAsk(q, done) {
+  /* ── 先走 Agent ──
+     模型自己决定查什么，拿到的是一手档案而不是「一段预检索的文本」。
+     任何异常（工具层没加载、超时、轮次用尽仍无正文）都静默回落到下面的固定管线，
+     用户感知不到差别，只会发现回答更准了。 */
+  if (aqAgentEnabled()) {
+    const ar = await aqAgentRun(q);
+    if (ar) { done(ar); return; }
+  }
   /* 0) 先看是不是「拿两件比一比」——这类问题单文档检索答不好，走对比卡 */
   let cmp = null;
   try { if (window.KB && KB.compare) cmp = KB.compare(q); } catch (e) { cmp = null; }
@@ -5469,7 +5557,9 @@ function aqSend(text) {
   /* 本地答不上来 / 问题带知识点:请云端 AI 现场作答(小桥优先);连不上再回退本机话术 */
   if (r.miss || r.tryCloud) {
     aqPush("ai", "<span class=\"aq-dots\"><i></i><i></i><i></i></span> 小答去云端翻书…", tid);
+    AQ.pendingTid = tid;                 /* Agent 执行工具时靠它找到这颗气泡，边查边报进度 */
     aqCloudAsk(text, (cloud) => {
+      AQ.pendingTid = "";
       let html;
       if (cloud && (cloud.text || cloud.cmp)) {
         const lt = aqLight(cloud.kb);
@@ -5477,6 +5567,7 @@ function aqSend(text) {
         html += cloud.text ? aqCloudFmt(cloud.text) : "这两件我帮你摆在一起了，结论写在下面的卡片里。";
         if (cloud.cmp) html += aqCmpHTML(cloud.cmp);
         html += "<br><small class=\"aq-tally\">☁️ 云端 AI 现场作答(" + aqEsc(cloud.model || "云端") + ")</small>";
+        if (cloud.agent) html += aqAgentTraceHTML(cloud.agent);
         if (cloud.cas && cloud.cas.upgraded) {
           html += "<br><small class=\"aq-tally\">↗ 首轮答案有数据对不上档案，已升级重答（" +
             aqEsc(cloud.cas.first.model || "快模型") + " → " + aqEsc(cloud.model || "强模型") + "）</small>";
