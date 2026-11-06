@@ -1,0 +1,594 @@
+{
+ "baiyulion": {
+  "bytes": 143364,
+  "material": "jade",
+  "n": 3,
+  "pitch": "+3Hz",
+  "rate": "-7%",
+  "voice": "Xiaoyi"
+ },
+ "baohuadeng": {
+  "bytes": 439472,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "-2Hz",
+  "rate": "+2%",
+  "voice": "Xiaoyi"
+ },
+ "baozhen": {
+  "bytes": 159876,
+  "material": "bronze",
+  "n": 3,
+  "pitch": "-3Hz",
+  "rate": "-9%",
+  "voice": "Yunyang"
+ },
+ "bingmayong": {
+  "bytes": 346544,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "-1Hz",
+  "rate": "-1%",
+  "voice": "Xiaoyi"
+ },
+ "boshanlu": {
+  "bytes": 239792,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-9Hz",
+  "rate": "-6%",
+  "voice": "Yunjian"
+ },
+ "caihuiluotuo": {
+  "bytes": 376688,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+1Hz",
+  "rate": "+2%",
+  "voice": "Xiaoyi"
+ },
+ "caitaohu": {
+  "bytes": 415280,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+7Hz",
+  "rate": "+1%",
+  "voice": "Xiaoyi"
+ },
+ "changmingdenglou": {
+  "bytes": 428912,
+  "material": "stone",
+  "n": 4,
+  "pitch": "-14Hz",
+  "rate": "-12%",
+  "voice": "Yunjian"
+ },
+ "changxin": {
+  "bytes": 286832,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-6Hz",
+  "rate": "-12%",
+  "voice": "Yunjian"
+ },
+ "chishou": {
+  "bytes": 305264,
+  "material": "stone",
+  "n": 4,
+  "pitch": "+0Hz",
+  "rate": "-9%",
+  "voice": "Yunyang"
+ },
+ "cuojinhu": {
+  "bytes": 379376,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-7Hz",
+  "rate": "-4%",
+  "voice": "Yunxi"
+ },
+ "daoliuhu": {
+  "bytes": 362864,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+11Hz",
+  "rate": "+0%",
+  "voice": "Xiaoyi"
+ },
+ "dengxizun": {
+  "bytes": 406256,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-12Hz",
+  "rate": "-7%",
+  "voice": "Yunjian"
+ },
+ "duoguxinyin": {
+  "bytes": 456944,
+  "material": "stone",
+  "n": 4,
+  "pitch": "-9Hz",
+  "rate": "-16%",
+  "voice": "Yunjian"
+ },
+ "fuxiaozun": {
+  "bytes": 381488,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-5Hz",
+  "rate": "-10%",
+  "voice": "Yunjian"
+ },
+ "houmuwuding": {
+  "bytes": 556784,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-13Hz",
+  "rate": "-11%",
+  "voice": "Yunjian"
+ },
+ "hushilu": {
+  "bytes": 260720,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-14Hz",
+  "rate": "-5%",
+  "voice": "Yunxi"
+ },
+ "jinhouniaozun": {
+  "bytes": 314864,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-7Hz",
+  "rate": "-3%",
+  "voice": "Yunxi"
+ },
+ "jinpaishi": {
+  "bytes": 365360,
+  "material": "gold",
+  "n": 4,
+  "pitch": "+5Hz",
+  "rate": "+1%",
+  "voice": "Yunxia"
+ },
+ "jinqi": {
+  "bytes": 211952,
+  "material": "gold",
+  "n": 4,
+  "pitch": "-1Hz",
+  "rate": "+4%",
+  "voice": "Yunxi"
+ },
+ "jinyuyi": {
+  "bytes": 228272,
+  "material": "jade",
+  "n": 4,
+  "pitch": "-8Hz",
+  "rate": "-5%",
+  "voice": "Xiaoyi"
+ },
+ "jishou": {
+  "bytes": 552944,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-1Hz",
+  "rate": "-12%",
+  "voice": "Yunjian"
+ },
+ "jituiping": {
+  "bytes": 318896,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+5Hz",
+  "rate": "+4%",
+  "voice": "Xiaoyi"
+ },
+ "jixiangtianmu": {
+  "bytes": 431600,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-9Hz",
+  "rate": "-10%",
+  "voice": "Yunjian"
+ },
+ "lianhuazun": {
+  "bytes": 498032,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+6Hz",
+  "rate": "+1%",
+  "voice": "Xiaoxiao"
+ },
+ "lianzhandeng": {
+  "bytes": 280304,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-13Hz",
+  "rate": "-3%",
+  "voice": "Yunxi"
+ },
+ "liujinlu": {
+  "bytes": 372464,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-8Hz",
+  "rate": "-12%",
+  "voice": "Yunjian"
+ },
+ "liujinpusa": {
+  "bytes": 352304,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-8Hz",
+  "rate": "-8%",
+  "voice": "Yunyang"
+ },
+ "longfengfan": {
+  "bytes": 279920,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-3Hz",
+  "rate": "-8%",
+  "voice": "Yunyang"
+ },
+ "longfenglu": {
+  "bytes": 344816,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+0Hz",
+  "rate": "+1%",
+  "voice": "Xiaoxiao"
+ },
+ "longfengpei": {
+  "bytes": 310448,
+  "material": "jade",
+  "n": 4,
+  "pitch": "+2Hz",
+  "rate": "-4%",
+  "voice": "Xiaoxiao"
+ },
+ "longhu": {
+  "bytes": 119556,
+  "material": "ceramic",
+  "n": 3,
+  "pitch": "+5Hz",
+  "rate": "+0%",
+  "voice": "Xiaoxiao"
+ },
+ "lvyoutaolou": {
+  "bytes": 436592,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+10Hz",
+  "rate": "-2%",
+  "voice": "Xiaoyi"
+ },
+ "lvyoutaozhu": {
+  "bytes": 398768,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+9Hz",
+  "rate": "-2%",
+  "voice": "Xiaoxiao"
+ },
+ "mudanguan": {
+  "bytes": 380720,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+7Hz",
+  "rate": "-1%",
+  "voice": "Xiaoyi"
+ },
+ "pianjiangjunyin": {
+  "bytes": 359984,
+  "material": "gold",
+  "n": 4,
+  "pitch": "+4Hz",
+  "rate": "+0%",
+  "voice": "Yunxia"
+ },
+ "qinghuaci": {
+  "bytes": 201584,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+5Hz",
+  "rate": "+1%",
+  "voice": "Xiaoxiao"
+ },
+ "sancailuotuo": {
+  "bytes": 455216,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+3Hz",
+  "rate": "-5%",
+  "voice": "Xiaoxiao"
+ },
+ "shidizhen": {
+  "bytes": 320624,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+9Hz",
+  "rate": "-1%",
+  "voice": "Xiaoyi"
+ },
+ "shimiaozhen": {
+  "bytes": 385904,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+7Hz",
+  "rate": "+3%",
+  "voice": "Xiaoyi"
+ },
+ "shuangchibei": {
+  "bytes": 331952,
+  "material": "jade",
+  "n": 4,
+  "pitch": "+5Hz",
+  "rate": "-4%",
+  "voice": "Xiaoyi"
+ },
+ "shuanglongbi": {
+  "bytes": 350384,
+  "material": "jade",
+  "n": 4,
+  "pitch": "-8Hz",
+  "rate": "-9%",
+  "voice": "Xiaoxiao"
+ },
+ "shuangyangzun": {
+  "bytes": 320624,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-5Hz",
+  "rate": "-7%",
+  "voice": "Yunxi"
+ },
+ "shuochangyong": {
+  "bytes": 466928,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+4Hz",
+  "rate": "+0%",
+  "voice": "Xiaoxiao"
+ },
+ "siyangfangzun": {
+  "bytes": 505520,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-2Hz",
+  "rate": "-6%",
+  "voice": "Yunjian"
+ },
+ "taihezaoxiang": {
+  "bytes": 508208,
+  "material": "stone",
+  "n": 4,
+  "pitch": "-9Hz",
+  "rate": "-16%",
+  "voice": "Yunjian"
+ },
+ "taolou": {
+  "bytes": 451184,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "-4Hz",
+  "rate": "-3%",
+  "voice": "Xiaoxiao"
+ },
+ "tianluyundou": {
+  "bytes": 426416,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "+5Hz",
+  "rate": "-7%",
+  "voice": "Yunyang"
+ },
+ "tielion": {
+  "bytes": 203120,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-12Hz",
+  "rate": "-1%",
+  "voice": "Yunxi"
+ },
+ "tiezuding": {
+  "bytes": 268976,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-16Hz",
+  "rate": "-2%",
+  "voice": "Yunxi"
+ },
+ "tongge": {
+  "bytes": 568496,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-9Hz",
+  "rate": "-11%",
+  "voice": "Yunjian"
+ },
+ "tonggui": {
+  "bytes": 426224,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-1Hz",
+  "rate": "-4%",
+  "voice": "Yunyang"
+ },
+ "tongjue": {
+  "bytes": 355760,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-8Hz",
+  "rate": "-9%",
+  "voice": "Yunyang"
+ },
+ "tongxiangxun": {
+  "bytes": 341552,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-16Hz",
+  "rate": "-1%",
+  "voice": "Yunxi"
+ },
+ "tongzi": {
+  "bytes": 364592,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+2Hz",
+  "rate": "+0%",
+  "voice": "Xiaoxiao"
+ },
+ "tongzuolong": {
+  "bytes": 337712,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-11Hz",
+  "rate": "-7%",
+  "voice": "Yunxi"
+ },
+ "wadang": {
+  "bytes": 479408,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "+9Hz",
+  "rate": "-2%",
+  "voice": "Xiaoxiao"
+ },
+ "wenlu": {
+  "bytes": 415088,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-8Hz",
+  "rate": "-9%",
+  "voice": "Yunyang"
+ },
+ "wuzhuqian": {
+  "bytes": 259760,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-2Hz",
+  "rate": "-10%",
+  "voice": "Yunjian"
+ },
+ "xiangdou": {
+  "bytes": 436016,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "+0Hz",
+  "rate": "-7%",
+  "voice": "Yunyang"
+ },
+ "xiangqi": {
+  "bytes": 232496,
+  "material": "wood",
+  "n": 4,
+  "pitch": "-3Hz",
+  "rate": "-6%",
+  "voice": "Yunxi"
+ },
+ "xiapaishi": {
+  "bytes": 311024,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-17Hz",
+  "rate": "-3%",
+  "voice": "Yunxi"
+ },
+ "xizun": {
+  "bytes": 428912,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-4Hz",
+  "rate": "-7%",
+  "voice": "Yunyang"
+ },
+ "xuanzhi": {
+  "bytes": 221552,
+  "material": "painting",
+  "n": 4,
+  "pitch": "-6Hz",
+  "rate": "-7%",
+  "voice": "Yunyang"
+ },
+ "yanshidi": {
+  "bytes": 356720,
+  "material": "jade",
+  "n": 4,
+  "pitch": "-4Hz",
+  "rate": "-4%",
+  "voice": "Xiaoxiao"
+ },
+ "yanyudeng": {
+  "bytes": 296432,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "-4Hz",
+  "rate": "-4%",
+  "voice": "Yunxi"
+ },
+ "yinqi": {
+  "bytes": 197744,
+  "material": "gold",
+  "n": 4,
+  "pitch": "+13Hz",
+  "rate": "+4%",
+  "voice": "Yunxia"
+ },
+ "yubi": {
+  "bytes": 207536,
+  "material": "jade",
+  "n": 4,
+  "pitch": "+2Hz",
+  "rate": "-4%",
+  "voice": "Xiaoxiao"
+ },
+ "yunlongpei": {
+  "bytes": 314096,
+  "material": "jade",
+  "n": 4,
+  "pitch": "-2Hz",
+  "rate": "-4%",
+  "voice": "Xiaoyi"
+ },
+ "yuzhui": {
+  "bytes": 155844,
+  "material": "jade",
+  "n": 3,
+  "pitch": "+3Hz",
+  "rate": "-7%",
+  "voice": "Xiaoyi"
+ },
+ "yuzhulong": {
+  "bytes": 325040,
+  "material": "jade",
+  "n": 4,
+  "pitch": "-8Hz",
+  "rate": "-7%",
+  "voice": "Xiaoxiao"
+ },
+ "zhenmushou": {
+  "bytes": 468272,
+  "material": "ceramic",
+  "n": 4,
+  "pitch": "-4Hz",
+  "rate": "-1%",
+  "voice": "Xiaoxiao"
+ },
+ "zongkaba": {
+  "bytes": 484976,
+  "material": "bronze",
+  "n": 4,
+  "pitch": "+3Hz",
+  "rate": "-8%",
+  "voice": "Yunyang"
+ },
+ "zoulong": {
+  "bytes": 306224,
+  "material": "gold",
+  "n": 4,
+  "pitch": "-2Hz",
+  "rate": "+4%",
+  "voice": "Yunxi"
+ }
+}

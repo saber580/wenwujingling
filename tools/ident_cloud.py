@@ -30,13 +30,19 @@
 提示:智谱免费模型(glm-4.6v-flash / glm-4.7-flash / cogview-3-flash)无需充值;
 方舟账号没开通视觉模型时会回 404 InvalidEndpointOrModel,去控制台「开通管理」开通后重试即可。
 """
-import base64, hashlib, json, os, re, secrets, socket, sys, time, urllib.error, urllib.request
+import base64, hashlib, json, os, re, secrets, socket, sys, tempfile, threading, time, urllib.error, urllib.request
 from urllib.parse import urlparse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT = os.path.dirname(ROOT)
 KEY_FILE = os.path.join(ROOT, "ident_key.txt")
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8898
+if PROJECT not in sys.path:
+    sys.path.insert(0, PROJECT)
+# 小桥也挂同一套 MCP 服务：双击 html（file://）打开页面时，8898 就是唯一后端
+from mcp import transport as mcp_transport          # noqa: E402
+from mcp.hybrid_rag import get as rag_get            # noqa: E402
 
 # 开机自启用的是 pythonw(无窗口),没有控制台:print 会直接崩。
 # 这时把日志写进 tools/bridge.log —— 也给「怎么又掉线」留下排查证据。
@@ -405,6 +411,112 @@ IMAGINE_ASK = ("照片里是一件中国文物。忽略照片中的人物、版�
 IMAGINE_TAIL = ("。画成 Q 版游戏精灵立绘:圆润夸张的大头可爱比例,大眼睛与拟人小表情,厚涂国风插画质感,"
                 "清晰描边,米白纯色背景,居中全身,画面里只有它一个角色,没有人物、没有文字、没有水印")
 
+# ---------- 现场合成：AI 现说的话，也要用故事那条嗓子 ----------
+# 「听它讲讲自己」的音频是离线批量生成的，audio/index.json 里记着每件文物
+# 当时用的 voice / rate / pitch。实时合成照抄这三个值，音色才是同一个人，
+# 而不是跳成浏览器自带的那一两个系统音。
+VOICE_FULL = {
+    "Xiaoxiao": "zh-CN-XiaoxiaoNeural",
+    "Xiaoyi":   "zh-CN-XiaoyiNeural",
+    "Yunjian":  "zh-CN-YunjianNeural",
+    "Yunyang":  "zh-CN-YunyangNeural",
+    "Yunxi":    "zh-CN-YunxiNeural",
+    "Yunxia":   "zh-CN-YunxiaNeural",
+}
+# 和 tools/gen_voice.py 的 PALETTE 首项对齐：index.json 缺失时的兜底
+MAT_VOICE = {
+    "bronze":   ("Yunjian",  "-9%",  "-6Hz"),
+    "stone":    ("Yunjian",  "-15%", "-9Hz"),
+    "ceramic":  ("Xiaoxiao", "-2%",  "+2Hz"),
+    "jade":     ("Xiaoyi",   "-5%",  "-2Hz"),
+    "gold":     ("Yunxi",    "+3%",  "+4Hz"),
+    "painting": ("Yunyang",  "-9%",  "+1Hz"),
+    "wood":     ("Yunjian",  "-7%",  "-3Hz"),
+}
+
+_VC_INDEX = None          # audio/index.json 缓存
+_VC_CACHE = {}            # 合成结果：同一个人同一句话只合一次
+_VC_ORDER = []
+_VC_MAX = 240
+_VC_SEM = threading.Semaphore(3)   # 并发上限，别把 edge-tts 打崩
+
+
+def _voice_catalog():
+    global _VC_INDEX
+    if _VC_INDEX is None:
+        _VC_INDEX = {}
+        # ROOT 是 tools/；站点根在上一层。线上桥可能被单独拷走，两处都试。
+        for base in (ROOT, os.path.dirname(ROOT)):
+            p = os.path.join(base, "audio", "index.json")
+            try:
+                with open(p, encoding="utf-8") as f:
+                    _VC_INDEX = json.load(f)
+                break
+            except Exception:
+                continue
+    return _VC_INDEX
+
+
+def voice_of(rid, primary=""):
+    """这件文物的声线。优先用离线生成时记下的那一份，保证前后是同一个人。"""
+    it = _voice_catalog().get(rid) or {}
+    fb = MAT_VOICE.get(primary or "", MAT_VOICE["ceramic"])
+    name = it.get("voice") or fb[0]
+    return {
+        "voice": VOICE_FULL.get(name, "zh-CN-XiaoxiaoNeural"),
+        "rate": it.get("rate") or fb[1],
+        "pitch": it.get("pitch") or fb[2],
+    }
+
+
+def synth_edge(text, v):
+    """edge-tts 合成一段，返回 mp3 字节；不可用或失败返回 None。"""
+    try:
+        import asyncio
+        import edge_tts
+    except Exception:
+        return None
+    tmp = None
+    try:
+        fd, tmp = tempfile.mkstemp(suffix=".mp3")
+        os.close(fd)
+
+        async def go():
+            await edge_tts.Communicate(text, v["voice"], rate=v["rate"], pitch=v["pitch"]).save(tmp)
+
+        with _VC_SEM:
+            asyncio.run(go())
+        if os.path.getsize(tmp) < 600:
+            return None
+        with open(tmp, "rb") as f:
+            return f.read()
+    except Exception:
+        return None
+    finally:
+        if tmp:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+
+
+def tts_bytes(rid, text, primary=""):
+    """合成并缓存。同一 (声线, 文本) 组合命中缓存，重复提问不会再等一次。"""
+    v = voice_of(rid, primary)
+    key = hashlib.md5((v["voice"] + v["rate"] + v["pitch"] + "|" + text).encode("utf-8")).hexdigest()
+    hit = _VC_CACHE.get(key)
+    if hit is not None:
+        return hit
+    data = synth_edge(text, v)
+    if not data:
+        return None
+    _VC_CACHE[key] = data
+    _VC_ORDER.append(key)
+    while len(_VC_ORDER) > _VC_MAX:
+        _VC_CACHE.pop(_VC_ORDER.pop(0), None)
+    return data
+
+
 def imagine_cloud(image, desc, key, provider):
     """拍照幻化(智谱免费链):GLM-4V 看图写词 → CogView-3-Flash 出图 → 下载转 base64。
     返回 (dataURL, 模型名);页面负责裁掉右下角「AI生成」角标并压缩。"""
@@ -475,6 +587,10 @@ class Handler(BaseHTTPRequestHandler):
     def _origin_ok(self, origin):
         if not origin:
             return True                      # 无 Origin：命令行 / 本地直连，放行
+        # file:// 双击打开的页面 Origin 恒为 "null"。只放行本机回环来源，
+        # 外网伪造的 Origin: null 到不了这里（_guard 还会查客户端地址）。
+        if origin == "null" and self.client_address[0] in ("127.0.0.1", "::1"):
+            return True
         try:
             host = urlparse(origin).hostname or ""
         except Exception:
@@ -495,8 +611,10 @@ class Handler(BaseHTTPRequestHandler):
         if self._origin_ok(origin):
             self.send_header("Access-Control-Allow-Origin", origin or "*")
             self.send_header("Vary", "Origin")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers",
+                         "Content-Type, Accept, Mcp-Session-Id, MCP-Protocol-Version")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+        self.send_header("Access-Control-Expose-Headers", "Mcp-Session-Id")
 
     def _guard(self):
         """非本机来源直接 403，避免小桥被外部网页当免费大模型代理"""
@@ -514,18 +632,41 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(obj, ensure_ascii=False).encode("utf-8"))
 
     def do_OPTIONS(self):
+        if mcp_transport.handle_options(self, self.path.split("?")[0]):
+            return
         self.send_response(204)
         self._cors()
         self.end_headers()
 
+    def do_DELETE(self):
+        if not self._guard():
+            return
+        path = self.path.split("?")[0]
+        if path.startswith("/mcp"):
+            if mcp_transport.handle_delete(self, path):
+                return
+        self._json({"ok": False, "error": "404"}, 404)
+
     def do_GET(self):
         if not self._guard():
             return
-        if self.path.split("?")[0] == "/api/ping":
+        path = self.path.split("?")[0]
+        if path.startswith("/mcp"):
+            if mcp_transport.handle_get(self, path, self.path):
+                return
+            return self._json({"ok": False, "error": "没有这个 MCP 端点"}, 404)
+        if path == "/api/ping":
             key, model, provider = load_cfg()
             shown = GOOD_VIS["model"] or model or (
                 ("自动候选 %d 个" % len(ARK_MODELS)) if provider == "ark" else ZHIPU_VIS_MODELS[0])
-            self._json({"ok": True, "hasKey": bool(key), "provider": provider or "未配置", "model": shown})
+            self._json({"ok": True, "hasKey": bool(key), "provider": provider or "未配置", "model": shown,
+                        "mcp": True, "rag": "bm25+lsa"})
+        elif path == "/api/prompt":
+            try:
+                with open(os.path.join(PROJECT, "prompts", "registry.json"), encoding="utf-8") as f:
+                    self._json(json.load(f))
+            except Exception as e:
+                self._json({"ok": False, "error": str(e)}, 500)
         else:
             self._json({"ok": False, "error": "404"}, 404)
 
@@ -533,6 +674,26 @@ class Handler(BaseHTTPRequestHandler):
         if not self._guard():
             return
         path = self.path.split("?")[0]
+        if path.startswith("/mcp"):
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                n = 0
+            raw = self.rfile.read(n) if n else b""
+            if mcp_transport.handle_post(self, path, self.path, raw):
+                return
+            return self._json({"ok": False, "error": "没有这个 MCP 端点"}, 404)
+        if path == "/api/rag":
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                req = json.loads(self.rfile.read(n).decode("utf-8")) if n else {}
+                q = str(req.get("query") or req.get("q") or "").strip()
+                k = max(1, min(10, int(req.get("k") or 5)))
+                r = rag_get().search(q, k=k, sid=(req.get("sid") or None))
+                r["ok"] = True
+                return self._json(r)
+            except Exception as e:
+                return self._json({"ok": False, "error": str(e)}, 500)
         if path == "/api/login":
             self._auth(_auth_login)
             return
@@ -544,6 +705,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/imagine":
             self._imagine()
+            return
+        if path == "/api/tts":
+            self._tts()
             return
         if path == "/api/setkey":
             self._setkey()
@@ -573,6 +737,38 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"ok": False, "error": "云端接口报错 %s:%s" % (e.code, detail)})
         except Exception as e:
             self._json({"ok": False, "error": "%s" % e})
+
+    def _tts(self):
+        """POST /api/tts {id, text, primary} → audio/mpeg
+
+        AI 现场生成的话没有预生成音频，用同一套 edge-tts 声线现补一段，
+        免得跳成浏览器自带的那一两个系统音。合成不可用时回 503，
+        页面自己回落 speechSynthesis，不会哑掉。"""
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+            req = json.loads(self.rfile.read(n).decode("utf-8"))
+        except Exception:
+            self._json({"ok": False, "error": "请求体不是 JSON"}, 400)
+            return
+        text = str(req.get("text") or "").strip()
+        rid = str(req.get("id") or "").strip()
+        primary = str(req.get("primary") or "").strip()
+        if not text:
+            self._json({"ok": False, "error": "文本为空"}, 400)
+            return
+        if len(text) > 800:
+            text = text[:800]
+        data = tts_bytes(rid, text, primary)
+        if not data:
+            self._json({"ok": False, "error": "语音合成不可用"}, 503)
+            return
+        self.send_response(200)
+        self._cors()
+        self.send_header("Content-Type", "audio/mpeg")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.end_headers()
+        self.wfile.write(data)
 
     def _setkey(self):
         """页面「粘贴密钥」推来的钥匙:只存内存(重启小桥即忘)、不进任何文件。

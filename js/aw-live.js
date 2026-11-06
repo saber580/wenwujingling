@@ -152,6 +152,39 @@
     ".aw-m.me{align-self:flex-end;background:#A5181C;color:#fff}",
     ".aw-m.sys{align-self:center;font-size:11px;color:#8a6a44;background:rgba(200,154,82,.14);border-radius:6px;padding:4px 9px;text-align:center}",
     ".aw-typing{align-self:flex-start;color:#8a6a44;font-size:12px;padding:4px 8px}",
+    "/* ---- 文物之声：让它开口 ---- */",
+    ".aw-voice{display:flex;align-items:center;gap:7px;padding:9px 12px 0;flex:none}",
+    ".aw-voice button{font-family:inherit;font-size:11.5px;letter-spacing:.04em;padding:5px 11px;border-radius:6px;",
+    "  cursor:pointer;background:linear-gradient(180deg,#FFF8EC,#F3E3C6);color:#7C2A12;",
+    "  border:1px solid rgba(200,154,82,.7);display:inline-flex;align-items:center;gap:5px}",
+    ".aw-voice button:hover{background:#A5181C;color:#FFF3D6;border-color:#A5181C}",
+    ".aw-voice button[disabled]{opacity:.45;cursor:not-allowed}",
+    ".aw-voice .aw-spk{margin-left:auto;font-size:11px}",
+    ".aw-voice .aw-spk[aria-pressed=\"false\"]{color:#9a8262;background:#F6EEDA;border-style:dashed}",
+    /* 抽屉里的「听它讲讲自己」：和精灵图上那枚 💬 红圈同一套视觉，
+       点一下开讲、再点停下；讲完自动复位，可反复重播。 */
+    ".aw-voice .aw-orb{width:40px;height:40px;padding:0;flex:none;justify-content:center;position:relative;",
+    "  border-radius:50%;border:1px solid rgba(255,214,150,.85);",
+    "  background:linear-gradient(180deg,#C0392F,#A5181C);color:#FFE9B8;",
+    "  box-shadow:0 3px 10px rgba(60,14,6,.35);font-size:19px;line-height:1;",
+    "  transition:transform .2s,box-shadow .2s}",
+    ".aw-voice .aw-orb:hover{transform:scale(1.08);",
+    "  background:linear-gradient(180deg,#C0392F,#A5181C);color:#FFE9B8;border-color:rgba(255,214,150,.85)}",
+    ".aw-voice .aw-orb .aw-orb-face{font-size:19px;line-height:1;filter:drop-shadow(0 1px 1px rgba(60,14,6,.35))}",
+    ".aw-voice .aw-orb.playing{background:linear-gradient(180deg,#8E1418,#6B0D10);",
+    "  box-shadow:0 0 0 4px rgba(193,57,47,.18),0 3px 10px rgba(60,14,6,.35)}",
+    ".aw-voice .aw-orb.playing::after{content:\"\";position:absolute;inset:-6px;border-radius:50%;",
+    "  border:1px solid rgba(193,57,47,.45);animation:awOrbPulse 1.4s ease-out infinite}",
+    "@keyframes awOrbPulse{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.35);opacity:0}}",
+    ".aw-orb-label{font-size:11.5px;color:#8a6a44;letter-spacing:.04em;white-space:nowrap}",
+    ".aw-orb-label.playing{color:#A5181C}",
+    "@media (max-width:760px){.aw-voice .aw-orb{width:34px;height:34px}",
+    "  .aw-voice .aw-orb .aw-orb-face{font-size:16px}}",
+    "@media (prefers-reduced-motion:reduce){.aw-voice .aw-orb.playing::after{animation:none}}",
+    ".aw-top img.aw-talking{animation:awTalk .62s ease-in-out infinite;box-shadow:0 0 0 3px rgba(255,214,150,.55)}",
+    "@keyframes awTalk{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}",
+    "@media (prefers-reduced-motion:reduce){.aw-top img.aw-talking{animation:none}}",
+    ".aw-m.them.aw-now{border-color:#A5181C;background:#FFF6E2}",
     ".aw-chips{padding:0 12px 8px;display:flex;gap:6px;flex-wrap:wrap;flex:none}",
     ".aw-chips button{font-family:inherit;font-size:11px;padding:4px 9px;border-radius:5px;cursor:pointer;",
     "  background:#FFF8EC;color:#7C2A12;border:1px solid rgba(200,154,82,.6)}",
@@ -332,6 +365,13 @@
       '<span class="aw-x" id="awX">✕</span>' +
     '</div>' +
     '<div class="aw-log" id="awLog"></div>' +
+    '<div class="aw-voice">' +
+      '<button type="button" class="aw-orb" id="awPlay" aria-label="听它讲讲自己" title="听它讲讲自己">' +
+        '<span class="aw-orb-face">💬</span>' +
+      '</button>' +
+      '<span class="aw-orb-label" id="awPlayLabel">听它讲讲自己</span>' +
+      '<button type="button" class="aw-spk" id="awSpk" aria-pressed="true">有声</button>' +
+    '</div>' +
     '<div class="aw-chips" id="awChips"></div>' +
     '<div class="aw-in"><input id="awInp" placeholder="和它说点什么…"><button id="awGo">发送</button></div>';
   document.body.appendChild(box);
@@ -339,14 +379,108 @@
   var $ = function (id) { return document.getElementById(id); };
   var logEl = $("awLog"), CUR = null, HIST = [], BUSY = false;
 
-  $("awX").onclick = function () { box.classList.remove("show"); };
+  /* 关抽屉必须真的闭嘴：停预生成音频 / 浏览器合成，并作废还在路上的
+     /api/tts 结果。只隐藏面板的话，声音会一直播到段落结束。 */
+  function closeChat() {
+    if (window.Voice) window.Voice.stop();
+    resetVoiceUI(); syncSpk();
+    box.classList.remove("show");
+  }
+  $("awX").onclick = closeChat;
   $("awGo").onclick = send;
   $("awInp").onkeydown = function (e) { if (e.key === "Enter") send(); };
 
-  function put(who, txt) {
+  /* ---- 文物之声：让它开口讲自己的故事 ----
+     音频由 tools/gen_voice.py 预生成到 audio/{id}/seg{n}.mp3，
+     按材质配音色；拿不到音频时 js/voice.js 会退到浏览器合成。 */
+  var STORY = false;
+
+  function syncSpk() {
+    var b = $("awSpk");
+    if (!b) return;
+    var on = !(window.Voice && !window.Voice.enabled());
+    b.textContent = on ? "有声" : "静音";
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+
+  /* 把红圈复位成「可播放」状态：💬 图标 + 说明文字，讲完/被打断/换人都会走到这里 */
+  function resetVoiceUI() {
+    STORY = false;
+    var b = $("awPlay");
+    if (b) {
+      b.classList.remove("playing");
+      b.disabled = false;
+      b.setAttribute("aria-label", "听它讲讲自己");
+      b.title = "听它讲讲自己（再点一次可重播）";
+      var face = b.querySelector(".aw-orb-face");
+      if (face) face.textContent = "💬";
+    }
+    var lab = $("awPlayLabel");
+    if (lab) { lab.textContent = "听它讲讲自己"; lab.classList.remove("playing"); }
+    var img = $("awImg");
+    if (img) img.classList.remove("aw-talking");
+    var cur = logEl.querySelector(".aw-m.aw-now");
+    if (cur) cur.classList.remove("aw-now");
+  }
+
+  function playStory() {
+    if (!CUR || !window.Voice) return;
+    if (!window.Voice.enabled()) { sys("声音关着，点右侧「静音」打开再试"); return; }
+    if (STORY) { window.Voice.stop(); return; }    /* stop 会走事件复位界面 */
+    window.Voice.stop();                           /* 先把别处正在播的清掉 */
+    STORY = true;
+    var btn = $("awPlay"), lab = $("awPlayLabel"), img = $("awImg");
+    if (btn) {
+      btn.classList.add("playing");
+      btn.setAttribute("aria-label", "停下");
+      btn.title = "停下";
+      var face = btn.querySelector(".aw-orb-face");
+      if (face) face.textContent = "■";
+    }
+    if (lab) { lab.textContent = "正在讲自己的故事…"; lab.classList.add("playing"); }
+    if (img) img.classList.add("aw-talking");
+    if (!(CUR.comic && CUR.comic.length) && !CUR.intro) {
+      sys("这只精灵还没留下自述，先问它点别的吧");
+      resetVoiceUI();
+      return;
+    }
+    window.Voice.tell(CUR, {
+      onSeg: function (i, t) {
+        var old = logEl.querySelector(".aw-m.aw-now");
+        if (old) old.classList.remove("aw-now");
+        var d = put("them", t, true);
+        if (d) d.classList.add("aw-now");
+      },
+      onEnd: resetVoiceUI
+    });
+  }
+
+  $("awPlay").onclick = playStory;
+  $("awSpk").onclick = function () {
+    if (!window.Voice) return;
+    var on = !window.Voice.enabled();
+    window.Voice.setEnabled(on);
+    syncSpk();
+    if (!on) resetVoiceUI();
+  };
+  window.addEventListener("voice:stop", function () {
+    var img = $("awImg");
+    if (img) img.classList.remove("aw-talking");
+    if (STORY) resetVoiceUI();
+  });
+  window.addEventListener("voice:change", syncSpk);
+
+  function put(who, txt, quiet) {
     var d = document.createElement("div");
     d.className = "aw-m " + who; d.textContent = txt;
     logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight;
+    /* 它说的话，顺带用嗓子讲出来。quiet 用于"讲自己的故事"——
+       那种情况文字是按段铺开的，边讲边高亮，不该再读一遍 */
+    if (who === "them" && !quiet && box.classList.contains("show") &&
+        CUR && window.Voice && window.Voice.enabled()) {
+      window.Voice.say(txt, { primary: CUR.primary, id: CUR.id });
+    }
+    return d;
   }
   function sys(txt) { put("sys", txt); }
   function setVia(v) {
@@ -359,6 +493,8 @@
     var s = S(id);
     if (!s) return;
     CUR = s; HIST = []; BUSY = false;
+    if (window.Voice) window.Voice.stop();       /* 换了一只会说话的，先让上一只闭嘴 */
+    resetVoiceUI(); syncSpk();
     $("awImg").src = "精灵/透明/" + id + ".webp";
     $("awName").textContent = s.name;
     $("awEra").textContent = s.era || "";
