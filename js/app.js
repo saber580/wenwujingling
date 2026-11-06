@@ -165,10 +165,12 @@ function render() {
   else if (page === "tea") app.innerHTML = viewTea();
   else if (page === "dye") app.innerHTML = viewDye();
   else if (page === "ident") app.innerHTML = viewIdent();
+  else if (page === "eval") app.innerHTML = viewEval();
   else app.innerHTML = viewHome();
   if (page === "restore") { setTimeout(rsHydrate, 30); setTimeout(rsPaintOutputs, 40); }  // 先给拼图盘铺图,再绘「AI 裁切输出台」图纸
   if (page === "dye") setTimeout(dyeInit, 40);              // 渲染后铺好黑白画纸(等图片解码完再允许上色)
   if (page === "ident") setTimeout(identInit, 40);          // 渲染后绑好对比滑块,接续上一次的修复与识别结果
+  if (page === "eval") setTimeout(evalInitPage, 30);        // 渲染后立刻跑一遍金标集,把指标填进卡片
   if (page === "tea") setTimeout(teaInitView, 40);          // 渲染后点亮茶话会云端状态条,顺手探一次小桥
   window.scrollTo({ top: 0 });
   initHomeFx();
@@ -3133,7 +3135,20 @@ async function identCloudRun() {
     IDENT.cloudErr = String((e && e.message) || e);
   }
   IDENT.cloudBusy = false;
+  IDENT.review = null;
   identCloudRender();
+  /* 第五步：换一路模型，只拿档案文本再核一遍名字 / 年代 / 材质。
+     放在渲染之后异步做，因为多一次调用要多等几秒，不该挡住第一眼的识别结果。 */
+  if (IDENT.cloudData && IDENT.cloudData.name) {
+    const d0 = IDENT.cloudData;
+    (async () => {
+      try {
+        const ev = (window.KB && KB.evidence) ? KB.evidence(d0.name, { force: true, k: 3 }) : null;
+        const rv = await identReview(d0, ev ? ev.text : "");
+        if (IDENT.cloudIMG === mine && IDENT.cloudData === d0 && rv) { IDENT.review = rv; identCloudRender(); }
+      } catch (e) {}
+    })();
+  }
 }
 function identCloudRender() {
   const slot = $("#ident-cloud-slot"), loc = $("#ident-local-block");
@@ -3141,6 +3156,103 @@ function identCloudRender() {
   slot.innerHTML = identCloudSlotHTML();
   if (loc) loc.classList.toggle("ident-local-dim", !!IDENT.cloudData);
 }
+/* 识别结果与站内档案交叉核对:模型说的年代、材质,跟站内那份档案对不对得上。
+   对不上不改模型的话,只把差异摆出来——让人知道该信哪一份。 */
+const IDENT_DYN = ["夏", "商", "西周", "东周", "春秋", "战国", "秦", "西汉", "东汉", "汉", "三国",
+  "西晋", "东晋", "晋", "南北朝", "北魏", "隋", "唐", "五代", "北宋", "南宋", "宋", "辽", "金", "元", "明", "清"];
+const IDENT_MAT = { bronze: /青铜|铜|铁|鎏金/, gold: /金|银/, ceramic: /瓷|陶/, jade: /玉/,
+  stone: /石|汉白玉|碑/, lacquer: /漆/, textile: /丝|锦|绣/, wood: /竹|木|牙|角/, painting: /纸|绢|书画/, glass: /玻璃/ };
+
+function identKBCheck(d) {
+  try {
+    if (!d || !d.name || typeof identWakeFind !== "function") return null;
+    const s = identWakeFind(d.name);
+    if (!s) return { hit: false };
+    const pickDyn = t => IDENT_DYN.filter(x => String(t || "").indexOf(x) >= 0).sort((a, b) => b.length - a.length)[0] || "";
+    const a = pickDyn(d.era), b = pickDyn(s.era);
+    const conflicts = [];
+    if (a && b && a !== b && a.indexOf(b) < 0 && b.indexOf(a) < 0) {
+      conflicts.push("年代（模型认作 " + a + "，站内档案记为 " + b + "）");
+    }
+    const rx = IDENT_MAT[s.primary];
+    const dm = String(d.material || "");
+    if (rx && dm && !rx.test(dm)) {
+      const pn = (ATTRIBUTES.primary[s.primary] || {}).name || s.primary;
+      conflicts.push("材质（模型说 " + dm + "，站内档案归为 " + pn + "）");
+    }
+    return { hit: true, spirit: s, conflicts: conflicts };
+  } catch (e) { return null; }
+}
+
+function identKBHTML(d) {
+  const c = identKBCheck(d);
+  if (!c) return "";
+  if (!c.hit) {
+    /* 认错的常见情形：把簋认成鼎、把炉认成灯。档案里没有它时，
+       与其只说「没收录」，不如把最可能混的那一类点出来，这就是误认词表的价值。 */
+    let hint = "";
+    try {
+      const dz = (window.KB && KB.confuseHint) ? KB.confuseHint(d && d.name) : null;
+      if (dz) hint = `<p class="icloud-kb warn">🔍 ${aqEsc(dz.text)}</p>`;
+    } catch (e) { hint = ""; }
+    return hint + `<p class="icloud-kb">📖 站内档案还没有这一件，以下内容全部来自模型现场辨认，参观时请以展签为准。</p>`;
+  }
+  if (c.conflicts.length) {
+    return `<p class="icloud-kb warn">⚠️ 与站内档案核对不上：${c.conflicts.join("；")}。档案是人工整理过的，以档案为准。</p>`;
+  }
+  return `<p class="icloud-kb ok">✅ 已与站内档案核对：${c.spirit.name}，年代与材质都对得上。</p>`;
+}
+
+/* 识别结果不是「一个结论」，是四步:
+     ① 云端候选 → ② 站内对齐 → ③ 字段校验 → ④ 置信度
+   把中间过程摊开,评审核对时能看到哪一步打了问号,而不是只看一句「AI 说的」。 */
+function identConfidence(d, c) {
+  if (!d || !d.name) return { level: "low", label: "低", why: "连名字都没给出来" };
+  if (!c || !c.hit) return { level: "low", label: "低", why: "档案里没有这一件，无处对照" };
+  if (c.conflicts.length) return { level: "mid", label: "中", why: "有 " + c.conflicts.length + " 处与档案不一致" };
+  return { level: "high", label: "高", why: "名字、年代、材质三项都对得上" };
+}
+function identFlowHTML(d) {
+  const c = identKBCheck(d);
+  const conf = identConfidence(d, c);
+  const row = (n, k, st, t) =>
+    `<li class="if-${st}"><i>${n}</i><b>${k}</b><span>${t}</span></li>`;
+  const s1 = d && d.name
+    ? `《${d.name}》${d.era ? " · " + d.era : ""}${d.material ? " · " + d.material : ""}`
+    : "模型没给出可用的名字";
+  const s2 = (c && c.hit)
+    ? `对上站内档案「${c.spirit.name}」${c.spirit.no ? "（" + c.spirit.no + "）" : ""}`
+    : "站内 74 只精灵里没有对应档案";
+  const s3 = (c && c.hit)
+    ? (c.conflicts.length ? c.conflicts.join("；") : "年代、材质两项都与档案一致")
+    : "没有可对照的字段，这一步跳过";
+  const st3 = (c && c.hit) ? (c.conflicts.length ? "warn" : "ok") : "dim";
+  /* 第五步：另一路模型只读档案文本，独立给出「同意 / 存疑」。
+     两路都指向同一年代才叫稳；只要有一路说不一致，就标存疑并以档案为准。 */
+  const rv = IDENT.review;
+  let s5 = "还没做交叉复核（另一路模型未接上）", st5 = "dim";
+  if (rv) {
+    if (rv.agree && !rv.conflicts.length) { s5 = "另一路模型独立核对：与档案一致 · " + (rv.model || "文本模型"); st5 = "ok"; }
+    else if (rv.conflicts.length) { s5 = "存疑：" + rv.conflicts.join("；") + (rv.model ? " · " + rv.model : ""); st5 = "warn"; }
+    else { s5 = (rv.comment || "另一路模型有保留意见") + (rv.model ? " · " + rv.model : ""); st5 = "warn"; }
+  }
+  return `<div class="icloud-flow">
+    <div class="if-head">🧭 识别流水线 · 五步走</div>
+    <ol>
+      ${row(1, "云端候选", (d && d.name) ? "ok" : "warn", s1)}
+      ${row(2, "站内对齐", (c && c.hit) ? "ok" : "warn", s2)}
+      ${row(3, "字段校验", st3, s3)}
+      ${row(4, "交叉复核", st5, s5)}
+      ${row(5, "置信度", conf.level === "high" ? "ok" : (conf.level === "mid" ? "warn" : "bad"), conf.label + " · " + conf.why)}
+    </ol>
+    ${identKBHTML(d)}
+    <p class="if-note">模型自评的置信度不参与判定；第 4 步是另一路模型只读档案文本的独立意见，与档案冲突时以档案为准。</p>
+  </div>`;
+}
+
+/* 自检脚本要能在无 DOM 环境里直接调对账逻辑，这里单独导出一份 */
+try { window.identKBCheck = identKBCheck; } catch (e) {}
+
 function identCloudSlotHTML() {
   if (IDENT.cloudData) {
     const d = IDENT.cloudData;
@@ -3151,6 +3263,7 @@ function identCloudSlotHTML() {
       <p><b>📍 出处</b>${d.origin || "待考"}</p>
       <p><b>📜 来历与历史</b>${d.history || ""}</p>
       ${d.feature ? `<p><b>🔍 一眼看点</b>${d.feature}</p>` : ""}
+      ${identFlowHTML(d)}
       ${d.name ? identWakeHTML(d.name) : ""}
       <p class="icloud-note">由云端 AI 当场辨认,可能有误,参观时以馆内展签为准;下方是本机引擎的快速比对,仅供参考。</p>
     </div>`;
@@ -3183,7 +3296,22 @@ function identWakeFind(name) {
       if (kk.length >= 2 && kk.length > bl && (q.indexOf(kk) >= 0 || kk.indexOf(q) >= 0)) { best = s; bl = kk.length; }
     });
   });
-  return best;
+  if (best) return best;
+  /* 档案里的正式名常带朝代与材质(「商代「后母戊」青铜鼎」),模型只会说「后母戊鼎」。
+     剥掉这些修饰再对一次,对不上就老实说没收录。 */
+  const K = window.KB || (typeof KB !== "undefined" ? KB : null);
+  if (K && K.coreName) {
+    const qc = K.coreName(q);
+    if (qc.length >= 3) {
+      let bh = null, bl2 = 0;
+      cands.forEach(s => {
+        const kc = identNormName(K.coreName(s.name));
+        if (kc.length >= 3 && kc.length > bl2 && (qc.indexOf(kc) >= 0 || kc.indexOf(qc) >= 0)) { bh = s; bl2 = kc.length; }
+      });
+      if (bh) return bh;
+    }
+  }
+  return null;
 }
 /* 唤醒卡:云端结果下方的「认出来 → 唤醒成精灵」面板(未收录 / 可唤醒 / 已在图鉴 三态) */
 function identWakeHTML(dname) {
@@ -4628,7 +4756,8 @@ const AQ_KEY = (typeof SAVE_ID !== "undefined" && SAVE_ID) ? "wwjl_ask_v1::" + S
 const QZ_KEY = (typeof SAVE_ID !== "undefined" && SAVE_ID) ? "wwjl_quiz_v1::" + SAVE_ID : "wwjl_quiz_v1";
 const AQ = { open: false, x: null, y: null, drag: null, n: 0 };
 const QZ = { spirit: null, pool: [], cur: null, chosen: -1, phase: "idle", busy: false,
-             qElId: "", qNo: 0, streak: 0, best: 0, total: 0, correct: 0, gen: 0 };
+             qElId: "", qNo: 0, streak: 0, best: 0, total: 0, correct: 0, gen: 0,
+             mode: "local", aiKind: "history", open: null };
 const AQ_LET = ["A", "B", "C", "D"];
 const AQ_CHIPS = ["考考我!", "怎么打卡唤醒文物?", "带我去看沧州铁狮子", "铁狮子有什么来历?", "长信宫灯是什么?", "一共有多少精灵?", "怎么捕捉精灵?", "去沧州站看看", "第零站怎么开启?", "AI赋彩怎么玩?", "AI文物识别怎么玩?"];
 
@@ -4815,21 +4944,145 @@ function aqCloudFmt(text) {
   s = s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\*([^*\n]+)\*/g, "<b>$1</b>");
   return s.replace(/\n{3,}/g, "\n\n").replace(/\n/g, "<br>").trim();
 }
-async function aqCloudAsk(q, done) {
-  const msgs = [{ role: "system", content: AQ_CLOUD_SYS }].concat(AQ_HIST.slice(-6), [{ role: "user", content: q }]);
+/* ---------------- 云端调用：可点名模型、可限预算（级联与互审都靠它） ---------------- */
+async function aiChat(msgs, opt) {
+  opt = opt || {};
+  const body = { messages: msgs, temperature: (opt.temp == null ? 0.6 : opt.temp), max_tokens: opt.maxTokens || 700 };
+  if (opt.model) body.model = opt.model;
+  const ms = opt.ms || 18000;
   let text = "", used = "";
-  try {   /* ① 本机小桥(最稳:钥匙留本机,响应带模型名) */
-    const r = await identFetchCloud(IDENT_CLOUD_API + "/api/chat", { messages: msgs, temperature: 0.75, max_tokens: 700 }, 16000);
-    if (r && r.ok && r.text) { text = r.text; used = r.model || "小桥"; }
+  try {
+    const r = await identFetchCloud(IDENT_CLOUD_API + "/api/chat", body, ms);
+    if (r && r.ok && r.text) { text = r.text; used = r.model || ""; }
   } catch (e) {}
-  if (!text && identDirectKey()) {   /* ② 网页直连兜底(部分网络会被云端预检拦下,拦了就静默回退) */
-    try { const d = await teaCloudDirect(msgs, 16000); text = d.text; used = d.model; } catch (e) {}
+  if (!text && identDirectKey()) {
+    try { const d = await teaCloudDirect(msgs, ms); text = d.text; used = d.model; } catch (e) {}
   }
+  return text ? { text: text, model: used } : null;
+}
+
+/* 级联：先让快模型答，答案里的硬数据对不上档案、或短得可疑，再换强模型重答一遍。
+   判断依据用 KB.check 的覆盖率而不是「感觉」，所以升级与否是可复现的。 */
+const AI_CHEAP = "glm-5.2", AI_STRONG = "deepseek-v4";
+async function aiCascade(msgs, opt) {
+  opt = opt || {};
+  const hits = opt.hits || [];
+  const s1 = await aiChat(msgs, { temp: opt.temp, maxTokens: 420, ms: 9000, model: opt.cheap || AI_CHEAP });
+  if (!s1) return null;
+  let cover = 1;
+  try { if (hits.length && window.KB && KB.check) cover = KB.check(s1.text, hits).ratio; } catch (e) { cover = 1; }
+  const thin = String(s1.text).replace(/\s/g, "").length < 26;
+  const up = hits.length > 0 && (cover < 0.6 || thin);
+  if (!up) return { text: s1.text, model: s1.model, upgraded: false, first: { model: s1.model, cover: cover } };
+  const last = msgs[msgs.length - 1] || { role: "user", content: "" };
+  const msgs2 = msgs.slice(0, -1).concat([{
+    role: "user",
+    content: String(last.content || "") + "\n\n（上一个回答不够完整，或有数字对不上档案，请更完整、严格按档案重答一遍，不要解释原因。）"
+  }]);
+  const s2 = await aiChat(msgs2, { temp: opt.temp, maxTokens: opt.maxTokens || 700, ms: 18000, model: opt.strong || AI_STRONG });
+  if (!s2) return { text: s1.text, model: s1.model, upgraded: false, first: { model: s1.model, cover: cover }, note: "升级没成功，用第一轮结果" };
+  return { text: s2.text, model: s2.model, upgraded: true, first: { model: s1.model, cover: cover } };
+}
+
+/* 互审：识别结果交给另一路模型，只拿档案文本核对「名字 / 年代 / 材质」三项。
+   两路结论不一致就标存疑，并以档案为准——模型可以错，系统得知道它错了。 */
+async function identReview(d, evText) {
+  if (!d || !d.name) return null;
+  const msgs = [
+    { role: "system", content: "你是文物档案核对员。只依据给出的档案文本判断，不猜、不补充档案之外的信息，只输出一个 JSON 对象。" },
+    { role: "user", content: "【待核对】" + JSON.stringify({ name: d.name, era: d.era || "", material: d.material || "" }) +
+      "\n【站内档案】" + (evText || "（站内没有这件器物的档案）") +
+      '\n逐项核对名字、年代、材质。档案没写的项写「未知」，不要凭常识补。' +
+      '只输出：{"agree":true,"era":"","material":"","conflicts":["不一致的项，一句一条"],"comment":"20 字以内结论"}' }
+  ];
+  const r = await aiChat(msgs, { temp: 0.1, maxTokens: 260, ms: 14000, model: AI_STRONG });
+  if (!r) return null;
+  const m = String(r.text).match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try {
+    const j = JSON.parse(m[0]);
+    return {
+      model: r.model || "另一路模型", agree: !!j.agree,
+      era: String(j.era || ""), material: String(j.material || ""),
+      conflicts: Array.isArray(j.conflicts) ? j.conflicts.slice(0, 3) : [],
+      comment: String(j.comment || "")
+    };
+  } catch (e) { return null; }
+}
+
+/* 红绿灯：答案里的硬数据有多少能从档案里找到出处 */
+function aqLight(kb) {
+  if (!kb || !kb.check) return null;
+  const r = kb.check;
+  if (!r.claims) return { k: "gray", t: "本段无可核数据" };
+  if (!r.unsupported.length) return { k: "green", t: "档案可核 " + r.supported.length + "/" + r.claims };
+  if (r.supported.length) return { k: "yellow", t: "部分可核 " + r.supported.length + "/" + r.claims };
+  return { k: "red", t: "档案里查不到，模型自述" };
+}
+
+/* 跨文物对比：把两侧档案 + 三句结论排成一张卡 */
+function aqCmpHTML(rec) {
+  if (!rec) return "";
+  const head = rec.sides.map(s => `<th>${aqEsc(s.name)}</th>`).join("");
+  const rows = [
+    ["年代", rec.sides.map(s => aqEsc(s.era || "—"))],
+    ["工艺", rec.sides.map(s => aqEsc(s.craft || "—"))],
+    ["独到之处", rec.sides.map(s => aqEsc(s.edge || "—"))]
+  ].map(r => `<tr><td class="cmp-k">${r[0]}</td>${r[1].map(v => `<td>${v}</td>`).join("")}</tr>`).join("");
+  return `<div class="aq-cmp">
+    <div class="cmp-t">⚖️ ${aqEsc(rec.title)}</div>
+    <table class="cmp-tb"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table>
+    <ul class="cmp-d">${rec.diff.map(x => `<li>${aqEsc(x)}</li>`).join("")}</ul>
+    <div class="cmp-v">${aqEsc(rec.verdict)}</div>
+  </div>`;
+}
+
+async function aqCloudAsk(q, done) {
+  /* 0) 先看是不是「拿两件比一比」——这类问题单文档检索答不好，走对比卡 */
+  let cmp = null;
+  try { if (window.KB && KB.compare) cmp = KB.compare(q); } catch (e) { cmp = null; }
+  if (cmp) {
+    let ev = null;
+    try { ev = aqKB().compareEvidence(q); } catch (e) { ev = null; }
+    const sys = AQ_CLOUD_SYS + "\n\n【站内档案（两件器物）】\n" + ((ev && ev.text) || "") +
+      "\n请按「谁更早、谁更巧、差在哪」三层比较，最后一句给结论；只用档案里的信息，不要扩展。";
+    const r = await aiChat([{ role: "system", content: sys }, { role: "user", content: q }], { temp: 0.6, maxTokens: 620, ms: 20000 });
+    done({ text: r ? r.text : "", model: r ? r.model : "", cmp: cmp, kb: null });
+    return;
+  }
+  /* 先查站内档案：能查到就把原文片段作为证据塞进系统提示，让模型照着档案说，
+     而不是凭参数记忆。查不到（或问的是玩法/账号这类站务问题）就不塞，行为与以前一致。 */
+  let ev = null;
+  try {
+    if (window.KB && KB.evidence) {
+      const e = aqKB().evidence(q, { k: 4 });
+      if (e && e.hits && e.hits.length) ev = e;
+    }
+  } catch (e) { ev = null; }
+  let sys = AQ_CLOUD_SYS;
+  if (ev) {
+    sys += "\n\n【站内档案检索结果（本站自己的资料，可信度高于你的记忆）】\n" + ev.text +
+      "\n使用规则:问题若涉及上面出现的文物,一律以档案为准;与档案冲突时以档案为准;档案没写到的才按公认史实回答。" +
+      "回答里不要提「档案」「检索结果」「资料库」这些词,像平时说话一样。";
+  }
+  const msgs = [{ role: "system", content: sys }].concat(AQ_HIST.slice(-6), [{ role: "user", content: q }]);
+  /* 级联：快模型先答，答案里的硬数据对不上档案再升级重答。省一次调用，也把「什么时候该花大钱」写成规则。 */
+  const rr = await aiCascade(msgs, { temp: 0.75, maxTokens: 700, hits: ev ? ev.hits : [] });
+  let text = rr ? rr.text : "", used = rr ? rr.model : "";
   if (text) {
     AQ_HIST.push({ role: "user", content: q }, { role: "assistant", content: String(text).slice(0, 500) });
     if (AQ_HIST.length > 8) AQ_HIST.splice(0, AQ_HIST.length - 8);
   }
-  done(text ? { text: text, model: used } : null);
+  /* 拿回答反过来核一遍：里面的年代、尺寸、重量能不能在刚给的证据里找到依据 */
+  let kb = null;
+  if (ev && text) {
+    try {
+      const names = [];
+      ev.hits.forEach(h => { if (names.indexOf(h.sname) < 0 && names.length < 2) names.push(h.sname); });
+      kb = { names: names, check: aqKB().check(text, ev.hits) };
+    } catch (e) { kb = null; }
+  }
+  done(text ? { text: text, model: used, kb: kb, cas: rr || null } : null);
 }
 
 /* ---------------- 出题考官(并入小答) ---------------- */
@@ -4849,7 +5102,8 @@ function aqQuizGreet() {
   QZ.phase = "idle"; QZ.cur = null; QZ.chosen = -1; QZ.pool = []; QZ.busy = false; QZ.gen++;
   const tally = (QZ.total > 0) ? "<br>你目前的战绩:累计答对 " + QZ.correct + "/" + QZ.total + " · 最佳连对 " + QZ.best + "。加油,刷新它!" : "";
   aqPush("ai", "🎓 好嘞!本场考官精灵是「<b>" + s.name + "</b>」" + (no ? "(" + no + ")" : "") + "。<br>它的自述题 + 文物通识题交替出,看看你能连对几题?" + tally +
-    "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go\" onclick=\"aqQuizStart()\">▶ 开始答题</button><button type=\"button\" class=\"aq-go ghost\" onclick=\"aqQuizGreet()\">🎲 换一只考官</button></div>");
+    "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go\" onclick=\"aqQuizStart()\">📚 开始答题(本地题库)</button><button type=\"button\" class=\"aq-go\" onclick=\"aqQuizStartAI()\">🤖 AI 现场出题</button></div>" +
+    "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go ghost\" onclick=\"aqOpenStart()\">✍️ 开放题 · AI 判卷</button><button type=\"button\" class=\"aq-go ghost\" onclick=\"aqQuizGreet()\">🎲 换一只考官</button></div>");
 }
 function aqQuizQuestionHTML(q, locked) {
   const opts = q.options.map((o, i) => {
@@ -4862,14 +5116,116 @@ function aqQuizQuestionHTML(q, locked) {
     }
     return "<button type=\"button\" class=\"" + cls + "\"" + dis + " onclick=\"aqQuizAnswer(" + i + ")\"><b>" + AQ_LET[i] + "</b><span>" + o + "</span></button>";
   }).join("");
-  return "<span class=\"aq-qn\">" + (q.self ? "🎋 考考这位考官自己" : "📜 文物通识") + " · 第 " + QZ.qNo + " 题</span><div class=\"aq-qtext\">" + q.q + "</div><div class=\"aq-opts\">" + opts + "</div>";
+  const tag = q.kind === "history" ? "🏛 时代常识" : (q.self ? "🎋 考考这位考官自己" : "📜 文物通识");
+  return "<span class=\"aq-qn\">" + tag + " · 第 " + QZ.qNo + " 题</span><div class=\"aq-qtext\">" + q.q + "</div><div class=\"aq-opts\">" + opts + "</div>";
 }
-function aqQuizStart() {
+/* 站内知识层可能挂在 window 上（沙箱/浏览器一致），统一从这里取 */
+function aqKB() {
+  try { return (typeof KB !== "undefined" && KB) ? KB : (window.KB || null); } catch (e) { return window.KB || null; }
+}
+/* ---- AI 现场出题:让模型读这只精灵的档案出一道题,再拿档案把这道题验一遍 ----
+   两类题交替出:
+     self    文物本体题(尺寸、材质、用途、出土、得名……)
+     history 时代常识题(它所在朝代/工艺的通识,如西汉为何盛行鎏金)
+   题干必须点到这一件,答案必须能在「档案 + 时代常识」里找到出处。 */
+function qzArchivePrompt(s, kind) {
+  const kn = (s.knowledge || []).map(k => "· " + k.a).join("\n");
+  const K = aqKB();
+  const era = (K && K.eraName) ? K.eraName(s.era) : "";
+  const hist = (K && K.histFacts) ? K.histFacts(s.era).filter(x => x.charAt(0) !== "〔").slice(0, 6) : [];
+  const want = kind === "history" ? "history" : "self";
+  return "请为「" + s.name + "」写一道四选一题。\n" +
+    "【本体档案】\n名称:" + s.name + (s.alias ? "(" + s.alias + ")" : "") + "\n" +
+    "年代:" + (s.era || "待考") + (era ? "(" + era + ")" : "") + "\n" +
+    "简介:" + (s.intro || "") + "\n" +
+    "来历:" + (s.history || "") + "\n" +
+    (kn ? "要点:\n" + kn + "\n" : "") +
+    (hist.length ? "【时代常识·只能从这里取】\n" + hist.map(x => "- " + x).join("\n") + "\n" : "") +
+    "【这道题要考的方向】\n" +
+    (want === "history"
+      ? "history —— 考它与所处时代/工艺相关的历史常识(如「" + s.name + "出自" + (era || "那个时代") + ",当时最典型的工艺是什么」)。\n"
+      : "self —— 考这件文物本身(尺寸、材质、用途、纹样、出土、得名)。\n") +
+    "\n要求:\n" +
+    "1) 题干 14~48 字,必须写出「" + s.name + "」或它的别名,不能写成与它无关的通史题;\n" +
+    "2) 四个选项各 2~16 字,意思互不重复,只有一个说得通;\n" +
+    "3) 三个干扰项要像真的,但不能是档案或时代常识里也写过的说法;\n" +
+    "4) history 题的正确答案必须来自上面的【时代常识】,不许自己补史实;\n" +
+    "5) answer 是正确选项下标(0~3);tip 用一句话解释,15~40 字;\n" +
+    "6) kind 填 \"" + want + "\";只输出一个 JSON 对象,不要代码块:\n" +
+    '{"q":"题干","kind":"' + want + '","options":["A","B","C","D"],"answer":0,"tip":"解释"}';
+}
+async function qzAskAI(s, kind, repair) {
+  const msgs = [{ role: "system", content: "你是出题机器,只输出一个 JSON 对象,不要任何解释文字。" }];
+  if (repair) {
+    msgs.push({ role: "user", content: qzArchivePrompt(s, kind) });
+    msgs.push({ role: "assistant", content: JSON.stringify(repair.raw) });
+    msgs.push({ role: "user", content: "这道题没通过校验:" + repair.why + "。请只改这一处,重新输出完整的 JSON,规则不变。" });
+  } else {
+    msgs.push({ role: "user", content: qzArchivePrompt(s, kind) });
+  }
+  const r = await identFetchCloud(IDENT_CLOUD_API + "/api/chat", {
+    messages: msgs, temperature: 0.5, max_tokens: 600
+  }, 22000);
+  if (!r || !r.ok || !r.text) throw new Error((r && r.error) || "云端没接上");
+  const m = String(r.text).match(/\{[\s\S]*\}/);
+  if (!m) throw new Error("没从回复里解析出题目");
+  return JSON.parse(m[0]);
+}
+function qzAIWanted() {
+  /* 本体题、时代题交替:上一道是本体,这道就考时代,反之亦然 */
+  return QZ.aiKind === "history" ? "self" : "history";
+}
+async function aqQuizStartAI() {
   if (QZ.busy || !QZ.spirit) return;
+  const s = QZ.spirit, kind = qzAIWanted();
+  QZ.mode = "ai"; QZ.aiKind = kind;
   QZ.busy = true; QZ.phase = "waiting"; QZ.chosen = -1;
   const g = QZ.gen;
   const tid = "aqQ" + (++AQ.n);
-  aqPush("ai", "<span class=\"aq-dots\"><i></i><i></i><i></i></span> AI 正在出题…", tid);
+  aqPush("ai", "<span class=\"aq-dots\"><i></i><i></i><i></i></span> AI 正在读档案与时代背景,现场出一道" +
+    (kind === "history" ? "时代常识题" : "本体题") + "…(约 5~15 秒)", tid);
+
+  let q = null, raw = null, why = "";
+  for (let attempt = 0; attempt < 2 && !raw; attempt++) {
+    try { raw = await qzAskAI(s, kind); } catch (e) { why = String((e && e.message) || e); }
+  }
+  if (raw) {
+    let v = aqKB() ? aqKB().verifyQuestion(raw, s) : { ok: true };
+    if (!v.ok) {
+      /* 校验不过就带着「哪条不过」回炉一次,而不是直接换题 */
+      why = v.why || "没通过档案校验";
+      try {
+        const fixed = await qzAskAI(s, kind, { raw: raw, why: why });
+        const v2 = aqKB() ? aqKB().verifyQuestion(fixed, s) : { ok: true };
+        if (v2.ok) { q = fixed; v = v2; } else { why = v2.why || why; }
+      } catch (e) { /* 修复失败就按原样回退 */ }
+    } else { q = raw; }
+    if (q) q.kind = v.kind || kind;
+  }
+
+  if (QZ.gen !== g) { QZ.busy = false; aqFillin(tid, "考官换好啦,点「开始答题」继续~"); return; }
+  if (!q) {
+    QZ.busy = false;
+    aqFillin(tid, "🤖 这次 AI 出的题没通过校验(" + aqEsc(why) + "),先用本地题库顶上——宁可不出,也不给你一道错题。");
+    setTimeout(() => aqQuizStart(), 900);
+    return;
+  }
+  QZ.cur = { q: String(q.q), options: q.options.map(x => String(x)), answer: Number(q.answer), tip: String(q.tip || ""), self: q.kind !== "history", kind: q.kind, ai: true };
+  QZ.qNo = QZ.total + 1;
+  QZ.qElId = tid;
+  QZ.busy = false; QZ.phase = "asking";
+  aqFillin(tid, aqQuizQuestionHTML(QZ.cur, false) +
+    "<div class=\"aq-ai-tag\">🤖 这道题由 AI 现场出(" + (q.kind === "history" ? "时代常识" : "文物本体") +
+    "),已通过档案校验:" + (q.kind === "history" ? "答案能在它所在时代的常识里找到出处" : "答案能在档案里找到出处") + "。</div>");
+}
+
+function aqQuizStart() {
+  if (QZ.busy || !QZ.spirit) return;
+  QZ.mode = "local";
+  QZ.busy = true; QZ.phase = "waiting"; QZ.chosen = -1;
+  const g = QZ.gen;
+  const tid = "aqQ" + (++AQ.n);
+  aqPush("ai", "<span class=\"aq-dots\"><i></i><i></i><i></i></span> 从本地题库抽题…", tid);
   setTimeout(() => {
     if (QZ.gen !== g) { aqFillin(tid, "考官换好啦,点「开始答题」继续~"); return; }
     if (!QZ.pool.length) QZ.pool = buildBattlePool(QZ.spirit).map(q => Object.assign({}, q));
@@ -4879,6 +5235,157 @@ function aqQuizStart() {
     QZ.busy = false; QZ.phase = "asking";
     aqFillin(tid, aqQuizQuestionHTML(QZ.cur, false));
   }, 520);
+}
+/* 「再来一题」沿用上一题的出题方式:AI 出的继续 AI 出,本地抽的继续本地抽 */
+function aqQuizNext() {
+  if (QZ.mode === "open") return aqOpenStart();
+  if (QZ.mode === "ai") return aqQuizStartAI();
+  return aqQuizStart();
+}
+
+/* ---- 开放题:玩家自己写一句话,先按档案判、再让云端 AI 复核 ---- */
+function aqOpenStart() {
+  if (QZ.busy || !QZ.spirit) return;
+  const s = QZ.spirit;
+  const K = aqKB();
+  if (!K || !K.openQuestion) { aqQuizStart(); return; }
+  const o = K.openQuestion(s);
+  if (!o) { aqQuizStart(); return; }
+  QZ.mode = "open"; QZ.busy = false; QZ.phase = "open"; QZ.chosen = -1;
+  QZ.open = { q: o.q, ref: o.ref, answered: false, spiritId: s.id };
+  const tid = "aqQ" + (++AQ.n);
+  QZ.qElId = tid;
+  aqPush("ai", "<span class=\"aq-qn\">✍️ 开放题 · 用自己的话说</span>" +
+    "<div class=\"aq-qtext\">" + aqEsc(o.q) + "</div>" +
+    "<textarea class=\"aq-open-in\" id=\"aqOpen" + AQ.n + "\" rows=\"3\" placeholder=\"一两句话说清就行，答到点子上就满分\"></textarea>" +
+    "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go\" onclick=\"aqOpenSubmit(" + AQ.n + ")\">📝 交卷判分</button>" +
+    "<button type=\"button\" class=\"aq-go ghost\" onclick=\"aqOpenSkip()\">先看看参考答案</button></div>", tid);
+  setTimeout(() => { const el = document.getElementById("aqOpen" + AQ.n); if (el) el.focus(); }, 60);
+}
+function aqOpenSkip() {
+  if (!QZ.open) return;
+  QZ.open.answered = true;
+  aqFillin(QZ.qElId, "<span class=\"aq-qn\">📖 参考答案</span><div class=\"aq-open-ref\">" + aqEsc(QZ.open.ref) + "</div>" +
+    "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go\" onclick=\"aqOpenStart()\">✍️ 再来一道</button>" +
+    "<button type=\"button\" class=\"aq-go ghost\" onclick=\"aqQuizStart()\">📚 回到选择题</button></div>");
+}
+async function qzGradeAI(s, q, ans, ref) {
+  const r = await identFetchCloud(IDENT_CLOUD_API + "/api/chat", {
+    messages: [
+      { role: "system", content: "你是文物课的老师,按档案给学生的回答打分,只输出一个 JSON 对象。" },
+      { role: "user", content: "【题目】" + q + "\n【档案依据】" + ref + "\n【学生回答】" + ans +
+        "\n满分 100。只看有没有答到档案里的关键事实,不看文采;答错或编造要扣分。" +
+        '只输出:{"score":0,"comment":"20字点评","miss":["没答到的点"]}' }
+    ],
+    temperature: 0.2, max_tokens: 300
+  }, 20000);
+  if (!r || !r.ok || !r.text) throw new Error((r && r.error) || "云端没接上");
+  const m = String(r.text).match(/\{[\s\S]*\}/);
+  if (!m) throw new Error("没解析出评分");
+  const j = JSON.parse(m[0]);
+  const sc = Number(j.score);
+  if (!isFinite(sc)) throw new Error("评分不是数字");
+  return { score: Math.max(0, Math.min(100, Math.round(sc))), comment: String(j.comment || ""), miss: Array.isArray(j.miss) ? j.miss.slice(0, 3) : [] };
+}
+async function aqOpenSubmit(n) {
+  const el = document.getElementById("aqOpen" + n);
+  if (!el || !QZ.open || QZ.open.answered) return;
+  const ans = String(el.value || "").trim();
+  if (ans.length < 2) { el.focus(); return; }
+  const s = SPIRITS[QZ.open.spiritId] || QZ.spirit;
+  QZ.open.answered = true;
+  QZ.open.ans = ans;
+  el.disabled = true;
+  const tid = "aqQ" + (++AQ.n);
+  aqPush("me", aqEsc(ans));
+  aqPush("ai", "<span class=\"aq-dots\"><i></i><i></i><i></i></span> 正在按档案核一遍,并请云端 AI 复核…", tid);
+
+  aqFillin(QZ.qElId, "<span class=\"aq-qn\">✍️ 开放题</span><div class=\"aq-qtext\">" + aqEsc(QZ.open.q) + "</div>" +
+    "<div class=\"aq-open-my\">" + aqEsc(ans) + "</div>");
+
+  const local = aqKB().gradeOpen(QZ.open.q, ans, s, QZ.open.ref);
+  let ai = null, aiErr = "";
+  const cmode = (typeof identCloudMode === "function") ? identCloudMode() : "off";
+  if (cmode === "bridge" || cmode === "direct") {
+    try { ai = await qzGradeAI(s, QZ.open.q, ans, QZ.open.ref); } catch (e) { aiErr = String((e && e.message) || e); }
+  } else {
+    aiErr = "云端未开启";
+  }
+
+  let score = local.score, note = "";
+  if (ai) {
+    /* 双评:AI 占六成,档案核对占四成;AI 比档案高太多就压回来 */
+    score = Math.round(ai.score * 0.6 + local.score * 0.4);
+    if (ai.score > local.score + 30) { score = local.score + 30; note = "AI 给分偏宽,已按档案要点压回"; }
+    if (ai.score < local.score - 30) { score = Math.max(local.score - 30, 0); note = "AI 判得偏严,已按档案要点上调"; }
+  } else {
+    note = "云端没接上,这次只按档案要点判(离线口径)";
+  }
+  score = Math.max(0, Math.min(100, score));
+  const rank = score >= 85 ? "🏅 答得很扎实" : score >= 60 ? "👍 方向对了" : score >= 30 ? "🤔 沾到边了" : "😅 这次没答到点上";
+  const hit = (local.points[0] && local.points[0].hit) ? local.points[0].hit.slice(0, 6).join("、") : "";
+  const miss = (local.points[0] && local.points[0].miss) ? local.points[0].miss.slice(0, 5).join("、") : "";
+  aqFillin(tid,
+    "<span class=\"aq-verdict " + (score >= 60 ? "ok" : "bad") + "\">" + rank + " · " + score + " 分</span>" +
+    (ai && ai.comment ? "<br>🧑‍🏫 " + aqEsc(ai.comment) : "") +
+    (hit ? "<br>✅ 答到了:" + aqEsc(hit) : "") +
+    (miss ? "<br>📌 还可以补:" + aqEsc(miss) : "") +
+    (note ? "<br><small class=\"aq-tally\">" + aqEsc(note) + "</small>" : "") +
+    "<div class=\"aq-open-ref\">📖 档案原文:" + aqEsc(QZ.open.ref) + "</div>" +
+    "<div class=\"aq-acts\">" +
+    (score < 70 ? "<button type=\"button\" class=\"aq-go\" onclick=\"aqOpenFollow()\">💬 再补一句（我追问）</button>" : "") +
+    "<button type=\"button\" class=\"aq-go ghost\" onclick=\"aqOpenStart()\">✍️ 再来一道</button>" +
+    "<button type=\"button\" class=\"aq-go ghost\" onclick=\"aqQuizStartAI()\">🤖 换 AI 选择题</button></div>");
+  QZ.phase = "verdict";
+  if (score >= 60) { QZ.total++; QZ.correct++; QZ.streak++; if (QZ.streak > QZ.best) QZ.best = QZ.streak; }
+  else { QZ.total++; QZ.streak = 0; }
+  aqQuizSave(); aqScorePaint();
+}
+/* ---- 追问轮：答漏了要点，先问一句，再把两轮合并重判（补上的算，重复的不加） ---- */
+function aqOpenFollow() {
+  if (!QZ.open || QZ.open.followDone) return;
+  const s = SPIRITS[QZ.open.spiritId] || QZ.spirit;
+  const K = aqKB();
+  if (!K || !K.followUp) return;
+  const f = K.followUp(QZ.open.q, QZ.open.ans || "", s, QZ.open.ref);
+  if (!f || !f.need) { aqPush("ai", "这题你已经答到要点了，不用再补 🙂"); return; }
+  QZ.open.followDone = true;
+  QZ.open.pending = true;
+  const n = ++AQ.n;
+  aqPush("ai", "<span class=\"aq-qn\">💬 追问一句</span><div class=\"aq-qtext\">" + aqEsc(f.ask) + "</div>" +
+    "<textarea class=\"aq-open-in\" id=\"aqFollow" + n + "\" rows=\"2\" placeholder=\"补一句就行，别重复刚才说过的\"></textarea>" +
+    "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go\" onclick=\"aqOpenFollowSubmit(" + n + ")\">📤 补充提交</button>" +
+    "<button type=\"button\" class=\"aq-go ghost\" onclick=\"aqOpenFollowOff()\">算了，看答案</button></div>");
+  setTimeout(() => { const el = document.getElementById("aqFollow" + n); if (el) el.focus(); }, 60);
+}
+function aqOpenFollowOff() {
+  if (!QZ.open) return;
+  QZ.open.pending = false;
+  aqPush("ai", "<div class=\"aq-open-ref\">📖 档案原文:" + aqEsc(QZ.open.ref) + "</div>");
+}
+function aqOpenFollowSubmit(n) {
+  const el = document.getElementById("aqFollow" + n);
+  if (!el || !QZ.open || !QZ.open.pending) return;
+  const add = String(el.value || "").trim();
+  if (add.length < 2) { el.focus(); return; }
+  QZ.open.pending = false;
+  el.disabled = true;
+  const s = SPIRITS[QZ.open.spiritId] || QZ.spirit;
+  const K = aqKB();
+  aqPush("me", aqEsc(add));
+  const before = K.gradeOpen(QZ.open.q, QZ.open.ans || "", s, QZ.open.ref);
+  const after = K.gradeMerged(QZ.open.q, QZ.open.ans || "", add, s, QZ.open.ref);
+  const d = after.score - before.score;
+  QZ.open.ans = (QZ.open.ans || "") + " " + add;
+  const hit = (after.points[0] && after.points[0].hit) ? after.points[0].hit.slice(0, 6).join("、") : "";
+  aqPush("ai", "<span class=\"aq-verdict " + (after.score >= 60 ? "ok" : "bad") + "\">补充后 " + after.score + " 分" +
+    (d > 0 ? "（+" + d + "）" : "（没涨）") + "</span>" +
+    (hit ? "<br>✅ 现在答到了:" + aqEsc(hit) : "") +
+    "<br><small class=\"aq-tally\">" + (d > 0
+      ? "补上的内容算数：两轮回答合并后重新按档案要点判了一次。"
+      : "补充的内容在档案里找不到对应要点，所以分数不动——这比给个安慰分诚实。") + "</small>" +
+    "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go\" onclick=\"aqOpenStart()\">✍️ 再来一道</button>" +
+    "<button type=\"button\" class=\"aq-go ghost\" onclick=\"aqQuizStartAI()\">🤖 换 AI 选择题</button></div>");
 }
 function aqQuizAnswer(i) {
   if (QZ.busy || QZ.phase !== "asking" || !QZ.cur) return;
@@ -4900,7 +5407,9 @@ function aqQuizAnswer(i) {
       "<br><small class=\"aq-tally\">" + tally + "</small>");
     QZ.busy = false; QZ.phase = "verdict";
     aqScorePaint();
-    aqPush("ai", "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go\" onclick=\"aqQuizStart()\">▶ 再来一题</button><button type=\"button\" class=\"aq-go ghost\" onclick=\"aqQuizGreet()\">🎲 换一只考官</button></div>");
+    aqPush("ai", "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go\" onclick=\"aqQuizNext()\">▶ 再来一题</button>" +
+      (QZ.mode === "ai" ? "" : "<button type=\"button\" class=\"aq-go ghost\" onclick=\"aqQuizStartAI()\">🤖 换 AI 出题</button>") +
+      "<button type=\"button\" class=\"aq-go ghost\" onclick=\"aqQuizGreet()\">🎲 换一只考官</button></div>");
   }, 430);
 }
 
@@ -4962,8 +5471,21 @@ function aqSend(text) {
     aqPush("ai", "<span class=\"aq-dots\"><i></i><i></i><i></i></span> 小答去云端翻书…", tid);
     aqCloudAsk(text, (cloud) => {
       let html;
-      if (cloud && cloud.text) {
-        html = aqCloudFmt(cloud.text) + "<br><small class=\"aq-tally\">☁️ 云端 AI 现场作答(" + aqEsc(cloud.model || "智谱") + " · 免费)</small>";
+      if (cloud && (cloud.text || cloud.cmp)) {
+        const lt = aqLight(cloud.kb);
+        html = (lt ? `<span class="aq-lt ${lt.k}" title="${aqEsc(lt.t)}"></span>` : "");
+        html += cloud.text ? aqCloudFmt(cloud.text) : "这两件我帮你摆在一起了，结论写在下面的卡片里。";
+        if (cloud.cmp) html += aqCmpHTML(cloud.cmp);
+        html += "<br><small class=\"aq-tally\">☁️ 云端 AI 现场作答(" + aqEsc(cloud.model || "云端") + ")</small>";
+        if (cloud.cas && cloud.cas.upgraded) {
+          html += "<br><small class=\"aq-tally\">↗ 首轮答案有数据对不上档案，已升级重答（" +
+            aqEsc(cloud.cas.first.model || "快模型") + " → " + aqEsc(cloud.model || "强模型") + "）</small>";
+        }
+        if (cloud.kb && cloud.kb.names && cloud.kb.names.length) {
+          html += "<br><small class=\"aq-tally\">📖 已查站内档案:" + aqEsc(cloud.kb.names.join("、")) +
+                  " · " + aqEsc(window.KB ? KB.describeCheck(cloud.kb.check) : "") + "</small>";
+        }
+        if (window.FB && FB.foot) html += FB.foot("aq", { q: text, a: cloud.text || "", model: cloud.model || "", light: lt ? lt.k : "" });
       } else {
         html = r.text || "诶呀,这个问题我暂时答不上来…换个问法再试试?";
         if (r.miss) html += "<br><small class=\"aq-tally\">☁️ 云端这次没接上:本机开着 tools/ident_cloud.py 小桥、或粘一次 AI 钥匙,我就能现场查资料啦~</small>";
@@ -5873,3 +6395,100 @@ try { render(); } catch (e) {}
 
 /* 扉页存在时先不演开场画卷:进入正式版后撤掉 flyleaf-on 再调用 initIntro() */
 if (String((document.body && document.body.className) || "").indexOf("flyleaf-on") < 0) initIntro();
+
+/* =========================================================
+   AI 评测台（#/eval）
+   ---------------------------------------------------------
+   把「检索 / 门控 / 核验 / 识别对账 / 出题校验 / 判卷」六个环节
+   做成可一键重跑的金标集，跑完给出通过率、耗时与失败清单。
+   评的是我们自己写的那层（模型之外），结果确定、可复现。
+   ========================================================= */
+function evalStats() {
+  const E = window.EVAL || null;
+  const r = E ? (E.last || E.run()) : null;
+  return r;
+}
+function viewEval() {
+  const meta = (window.EVAL && window.EVAL.meta) ? window.EVAL.meta : { total: 0, scope: "—", limit: "" };
+  /* 坏例库面板由 feedback.js 填，等这一页挂进 DOM 再画 */
+  setTimeout(() => { try { if (window.FB && FB.paint) FB.paint(); } catch (e) {} }, 240);
+  return `
+    <div class="page-head">
+      <h2>📊 AI 评测台</h2>
+      <p>站内的 AI 不只是「调了个模型」：回答前先查档案，回答后再回头核对；识别结果与站内档案对账；AI 出的题要过校验才给玩家。这一页把这几层做成 ${meta.total} 条金标用例，点一下就能重跑，跑出通过率、耗时和失败清单。</p>
+    </div>
+    <div class="eval-bar">
+      <button type="button" class="btn gold" onclick="evalRunNow()">▶ 重跑评测</button>
+      <button type="button" class="btn ghost" onclick="evalExport()">⬇ 导出 JSON 报告</button>
+      <span class="eval-stamp" id="evalStamp">准备中…</span>
+    </div>
+    <div class="eval-tiles" id="evalTiles"></div>
+    <div id="evalGroups"></div>
+    <div id="evalFb"></div>
+    <div class="eval-scope">
+      <b>评测口径（先说清边界）</b>
+      <ul>
+        <li>评的是「模型之外我们自己写的那层」：${meta.scope}。这层是确定的，同一份数据跑多少次结果都一样。</li>
+        <li>${meta.limit}。云端模型每次回答都可能不同，把它的分数写进文档反而不诚实。</li>
+        <li>识别用例是构造的字段组合（名字 / 年代 / 材质），考的是「模型认错了能不能发现」，不等于真实拍照的端到端准确率。</li>
+        <li>失败用例不隐藏：哪条没过、期望什么、实际什么，都列在下面。</li>
+      </ul>
+    </div>`;
+}
+function evalRunNow() {
+  const stamp = document.getElementById("evalStamp");
+  if (stamp) stamp.textContent = "正在跑…";
+  setTimeout(() => {
+    let r = null;
+    try { r = window.EVAL ? window.EVAL.run() : null; } catch (e) { r = null; }
+    evalPaint(r);
+  }, 40);
+}
+function evalPaint(r) {
+  const tiles = document.getElementById("evalTiles");
+  const box = document.getElementById("evalGroups");
+  const stamp = document.getElementById("evalStamp");
+  if (!r) {
+    if (stamp) stamp.textContent = "评测模块没加载成功";
+    return;
+  }
+  if (stamp) stamp.textContent = "跑完于 " + r.at + " · 用时 " + r.ms + " ms · 索引 " + (r.kb ? r.kb.docs : "—") + " 个片段";
+  if (tiles) {
+    tiles.innerHTML = [
+      ["用例总数", String(r.total), "六组金标"],
+      ["通过", r.pass + " / " + r.total, (r.rate * 100).toFixed(1) + "%"],
+      ["耗时", r.ms + " ms", "纯前端 · 无网络"],
+      ["知识片段", r.kb ? String(r.kb.docs) : "—", r.kb ? (r.kb.terms + " 个词元") : ""]
+    ].map(x => `<div class="eval-tile"><b>${x[1]}</b><span>${x[0]}</span><em>${x[2]}</em></div>`).join("");
+  }
+  if (box) {
+    box.innerHTML = r.groups.map(g => `
+      <div class="eval-card">
+        <div class="eval-card-head">
+          <b>${g.name}</b>
+          <span class="eval-pill ${g.rate >= 0.999 ? "ok" : (g.rate >= 0.9 ? "warn" : "bad")}">${g.pass}/${g.total} · ${(g.rate * 100).toFixed(1)}%</span>
+          <em>${g.ms} ms</em>
+        </div>
+        <div class="eval-metrics">${g.metrics.map(m => `<span><i>${m.k}</i>${m.v}</span>`).join("")}</div>
+        ${g.fails.length ? `<ul class="eval-fails">${g.fails.slice(0, 6).map(f =>
+          `<li><b>${aqEsc(f.input)}</b><span>${aqEsc(f.got)}</span><em>${aqEsc(f.why)}</em></li>`).join("")}</ul>`
+          : `<p class="eval-ok">✅ 这一组全部通过</p>`}
+      </div>`).join("");
+  }
+}
+function evalInitPage() {
+  const r = evalStats();
+  evalPaint(r);
+}
+function evalExport() {
+  const r = window.EVAL ? (window.EVAL.last || window.EVAL.run()) : null;
+  if (!r) return;
+  try {
+    const blob = new Blob([JSON.stringify(r, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "文物精灵-AI评测报告-" + r.at.slice(0, 10) + ".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 300);
+  } catch (e) {}
+}

@@ -626,3 +626,261 @@ print("拍照·AI 幻化通道(双后端/画风参考/体量控制/先云后本�
   return aiImagineOff === false && aiStyleRefP === null;
 })()
 """) and all(t in _aj for t in ["cogview-3-flash", "glm-4.6v-flash", "IDENT_ZHIPU_IMG", "identKeyKind", "zhipuTrimWatermark", "aiImagineBridge", "aiImagineZhipu", "aiImagineArk", "/api/imagine", "doubao-seedream-5-0-flash-260915", "IDENT_IMG_PROMPT", "精灵/tielion.webp", "response_format", "b64_json", "dataUrlShrink(dataURL, 1024, .85)", "dataUrlShrink(raw, 1024, .92)", "withTimeout(aiImagine(dataURL, desc), 45000)"]) and (_aj.index("aiImagine(dataURL, desc)") < _aj.index("localStylize(dataURL)")))
+
+# ---- 站内知识检索(2-gram 倒排 / BM25 / 门控 / 事实核验) ----
+print("知识检索·档案增强(索引规模/召回率/站务门控/事实核验):", ev("""
+(()=>{
+  const K = window.KB;
+  if (!K) return '缺 KB';
+  const st = K.stats();
+  if (!(st.docs >= 1200 && st.spirits === 74 && st.terms >= 15000)) return '索引规模异常:' + JSON.stringify(st);
+  const r = K.selfTest();
+  if (r.top3Rate < 0.9) return '召回不足 top3=' + r.top3Rate;
+  if (r.easy.top1Rate < 0.9) return '正名组 top1 不足=' + r.easy.top1Rate;
+  const e1 = K.evidence('长信宫灯为什么能防烟');
+  if (!e1.hits.length || e1.hits[0].sid !== 'changxin') return '证据未命中';
+  const e2 = K.evidence('一共有多少精灵');
+  if (e2.hits.length) return '站务问题被误注入档案';
+  const c = K.check('它通高约48厘米,重约15.85公斤,排烟靠右臂', e1.hits);
+  if (c.claims < 2) return '事实核验未抽出断言';
+  if (c.supported.length < 1) return '事实核验未匹配到任何依据';
+  return true;
+})()
+""") and os.path.exists(os.path.join(ROOT, "js", "kb-rag.js")) and ("kb-rag.js" in rd("index.html")) and ("KB.evidence" in rd("js/app.js")) and ("已查站内档案" in rd("js/app.js")))
+
+# ---- 识别 · 档案核对(年代/材质冲突检出 / 未收录不误判) ----
+print("识别·档案核对(一致不误报/冲突能检出/未收录不误判):", ev("""
+(()=>{
+  if (typeof identKBCheck !== 'function' || typeof identKBHTML !== 'function') return '缺函数';
+  const a = identKBCheck({name:'长信宫灯', era:'西汉', material:'青铜器'});
+  if (!a || !a.hit || a.conflicts.length) return '一致样本误报冲突:' + JSON.stringify(a && a.conflicts);
+  const b = identKBCheck({name:'长信宫灯', era:'唐代', material:'白瓷'});
+  if (!b || !b.hit || b.conflicts.length !== 2) return '冲突未检出:' + JSON.stringify(b && b.conflicts);
+  const c = identKBCheck({name:'一台冰箱'});
+  if (!c || c.hit) return '未收录样本误判为已收录';
+  if (!identKBHTML({name:'长信宫灯', era:'西汉', material:'青铜器'}).includes('✅')) return '一致态文案异常';
+  if (!identKBHTML({name:'长信宫灯', era:'唐代', material:'白瓷'}).includes('⚠️')) return '冲突态文案异常';
+  if (!identKBHTML({name:'一台冰箱'}).includes('还没有这一件')) return '未收录文案异常';
+  return true;
+})()
+""") and (".icloud-kb" in rd("css/style.css")) and ("identKBHTML(d)" in rd("js/app.js")))
+
+# ---- AI 现场出题 · 题目校验(结构 / 答案有据 / 干扰项不撞档案) ----
+print("AI 现场出题(结构校验/答案有据/歧义拦截/失败回退):", ev("""
+(()=>{
+  const K = window.KB, s = SPIRITS.changxin;
+  if (!K || typeof K.verifyQuestion !== 'function') return '缺 verifyQuestion';
+  const good = K.verifyQuestion({q:'长信宫灯点燃后,烟从哪里排出去?', options:['宫女的右臂','灯盘底部','灯罩缝隙','底座周围'], answer:0, tip:'右臂中空,烟顺手臂进入体腔'}, s);
+  if (!good.ok) return '好题被误拒:' + good.why;
+  const noBase = K.verifyQuestion({q:'长信宫灯是用什么材料做的?', options:['唐代白瓷','宋代青瓷','明代景泰蓝','清代珐琅'], answer:0, tip:'唐代白瓷'}, s);
+  if (noBase.ok) return '无依据的题被放行';
+  const dup = K.verifyQuestion({q:'长信宫灯出土于哪座墓?', options:['满城汉墓','满城汉墓','马王堆','海昏侯墓'], answer:0, tip:'满城汉墓'}, s);
+  if (dup.ok) return '重复选项被放行';
+  const ambigu = K.verifyQuestion({q:'长信宫灯是什么材质的?', options:['青铜铸造,通体鎏金','青铜铸造','木头','陶瓷'], answer:0, tip:'青铜铸造,通体鎏金'}, s);
+  if (ambigu.ok) return '歧义干扰项被放行';
+  if (typeof aqQuizStartAI !== 'function' || typeof qzAskAI !== 'function' || typeof qzArchivePrompt !== 'function') return '缺出题函数';
+  if (!qzArchivePrompt(s).includes('只输出一个 JSON')) return '出题提示词缺 JSON 约束';
+  return true;
+})()
+""") and ("AI 现场出题" in rd("js/app.js")) and (".aq-ai-tag" in rd("css/style.css")))
+
+# ---- 历史常识层(年代归一 / 常识命中 / 题干主体约束) ----
+print("出题·历史常识层(年代归一/常识命中/跑题拦截/时代题放行):", ev("""
+(()=>{
+  const K = window.KB, s = SPIRITS.changxin;
+  if (!K || typeof K.histFacts !== 'function') return '缺 histFacts';
+  const f = K.histFacts(s.era);
+  if (!f.length) return '西汉常识为空';
+  if (f.join('').indexOf('丝绸之路') < 0) return '常识里缺丝绸之路';
+  if (K.eraName('西汉 · 公元前2世纪') !== '西汉') return '公元前被误判:' + K.eraName('西汉 · 公元前2世纪');
+  if (K.eraName('南宋') !== '南宋') return '南宋归一错:' + K.eraName('南宋');
+  if (!K.subjectOk('长信宫灯所在的西汉,五铢钱从哪位皇帝开始铸?', s)) return '主体校验误杀';
+  if (K.subjectOk('唐三彩的主要釉色是什么?', s)) return '跑题没有被识别';
+  const h = K.verifyQuestion({q:'长信宫灯所在的西汉,五铢钱从哪位皇帝开始铸?', options:['汉武帝','唐太宗','宋徽宗','明太祖'], answer:0, tip:'元狩五年始铸'}, s);
+  if (!h.ok || h.kind !== 'history') return '时代题未通过:' + JSON.stringify(h);
+  if (typeof qzArchivePrompt !== 'function') return '缺 qzArchivePrompt';
+  const p = qzArchivePrompt(s, 'history');
+  if (p.indexOf('时代常识') < 0 || p.indexOf('必须写出') < 0) return '时代题提示词缺约束';
+  return true;
+})()
+""") and ("时代常识" in rd("js/app.js")) and ("eraName" in rd("js/kb-rag.js")))
+
+# ---- 开放题判卷(好/中/差三档要拉开) ----
+print("开放题·判卷梯度(高分/部分/离题三档拉开):", ev("""
+(()=>{
+  const K = window.KB, s = SPIRITS.changxin;
+  if (!K || typeof K.gradeOpen !== 'function') return '缺 gradeOpen';
+  const ref = '我的右臂和身体都是中空的。灯点燃后,烟顺着宫女的右臂进入体腔,落在里面的水里,屋子里就不会被熏黑。';
+  const q = '长信宫灯为什么能防烟';
+  const a = K.gradeOpen(q, '因为宫女的右臂和身体中空,烟顺着右臂进入体腔,落在里面的水里,所以屋子不会被熏黑。', s, ref);
+  const b = K.gradeOpen(q, '烟顺着右臂进入体腔。', s, ref);
+  const c = K.gradeOpen(q, '因为它很好看。', s, ref);
+  if (!(a.score >= 80)) return '好答案分数偏低:' + a.score;
+  if (!(b.score < a.score)) return '中等答案没有拉开:' + b.score + '/' + a.score;
+  if (!(c.score <= 30)) return '离题答案没压住:' + c.score;
+  const oq = K.openQuestion(s);
+  if (!oq || !oq.ref || oq.q.indexOf('用自己的话说说') !== 0) return '开放题生成异常';
+  return true;
+})()
+""") and ("gradeOpen" in rd("js/app.js")) and (".aq-open-in" in rd("css/style.css")))
+
+# ---- 识别四步流水线 ----
+print("识别·四步流水线(候选/对齐/校验/置信度 · 冲突降级):", ev("""
+(()=>{
+  if (typeof identFlowHTML !== 'function' || typeof identConfidence !== 'function') return '缺流水线函数';
+  const okHtml = identFlowHTML({name:'长信宫灯', era:'西汉', material:'青铜'});
+  ['云端候选','站内对齐','字段校验','置信度'].forEach(k => { if (okHtml.indexOf(k) < 0) throw new Error('缺步骤 ' + k); });
+  if (okHtml.indexOf('高 · 名字、年代、材质三项都对得上') < 0) return '一致样本置信度不是高';
+  const badHtml = identFlowHTML({name:'长信宫灯', era:'唐代', material:'白瓷'});
+  if (badHtml.indexOf('中 · ') < 0) return '冲突样本置信度没降级';
+  if (badHtml.indexOf('年代') < 0) return '冲突详情没展示';
+  const missHtml = identFlowHTML({name:'一台冰箱'});
+  if (missHtml.indexOf('低 · ') < 0) return '未收录样本置信度不是低';
+  return true;
+})()
+""") and ("identFlowHTML(d)" in rd("js/app.js")) and (".icloud-flow" in rd("css/style.css")))
+
+# ---- AI 评测台(六组金标全通过) ----
+print("AI 评测台(十组金标 " + "108 条全通过 / 指标可导出):", ev("""
+(()=>{
+  if (!window.EVAL || typeof window.EVAL.run !== 'function') return '缺评测模块';
+  const r = window.EVAL.run();
+  if (r.total < 100) return '用例太少:' + r.total;
+  if (r.pass !== r.total) {
+    const bad = r.groups.filter(g => g.fails.length).map(g => g.name + ':' + g.fails.length);
+    return '有未通过用例 ' + bad.join(',');
+  }
+  const keys = r.groups.map(g => g.key).join(',');
+  if (keys !== 'retrieval,gate,fact,ident,qverify,open,cmp,craft,confuse,follow') return '分组缺失:' + keys;
+  if (typeof evalExport !== 'function' || typeof viewEval !== 'function') return '缺页面函数';
+  const html = viewEval();
+  ['id="evalTiles"','id="evalGroups"','id="evalStamp"','评测口径','重跑评测'].forEach(k => {
+    if (html.indexOf(k) < 0) throw new Error('页面缺 ' + k);
+  });
+  return true;
+})()
+""") and ("eval-bench.js" in rd("index.html")) and ("viewEval" in rd("js/app.js")) and (".eval-tiles" in rd("css/style.css")) and ("AI评测台" in rd("index.html")))
+
+# ---- 内容包(四类内容: 对比 / 工艺 / 误认 / 语料) ----
+print("内容包(对比 8 / 工艺 30 / 误认 15 / 语料 100):", ev("""
+(()=>{
+  const C = window.CONTENT;
+  if (!C) return '缺内容包';
+  const st = C.stats();
+  if (st.cmp !== 8) return '对比组不是 8:' + st.cmp;
+  if (st.craft !== 30) return '工艺词条不是 30:' + st.craft;
+  if (st.confuse !== 15) return '误认对不是 15:' + st.confuse;
+  if (st.corpus !== 100) return '语料不是 100:' + st.corpus;
+  const miss = [];
+  C.cmp.forEach(r => r.items.forEach(it => { if (!SPIRITS[it.sid]) miss.push(it.sid); }));
+  if (miss.length) return '对比组引用了不存在的精灵:' + miss.join(',');
+  const bad = C.corpus.filter(c => c.sid && !SPIRITS[c.sid]).map(c => c.sid);
+  if (bad.length) return '语料引用了不存在的精灵:' + bad.join(',');
+  if (C.craft.some(c => !c.how || !c.rep || !c.vs)) return '工艺词条字段不全';
+  if (C.cmp.some(r => !r.diff || r.diff.length < 3)) return '对比组结论不足三条';
+  return true;
+})()
+""") and ("content-pack.js" in rd("index.html")))
+
+# ---- 跨文物对比(意图识别 / 不误判) ----
+print("跨文物对比(八组识别 / 单件提问不误判):", ev("""
+(()=>{
+  const K = window.KB;
+  if (!K || !K.compare) return '缺对比接口';
+  const yes = ['长信宫灯和雁鱼灯谁的排烟更巧','后母戊鼎和中山王铁足铜鼎哪个更早','两个博山炉有什么区别','兵马俑和击鼓说唱俑有什么不同'];
+  for (const q of yes) { if (!K.compare(q)) return '没判出对比:' + q; }
+  const no = ['长信宫灯为什么能防烟','后母戊鼎有多重','长信宫灯在哪个博物馆','青花瓷是什么时候成熟的'];
+  for (const q of no) { if (K.compare(q)) return '误判成对比:' + q; }
+  const r = K.compare('长信宫灯和雁鱼灯谁的排烟更巧');
+  if (r.sides.length < 2) return '对比只有一侧';
+  if (!r.diff.length || !r.verdict) return '缺结论';
+  const evi = K.compareEvidence('长信宫灯和雁鱼灯谁的排烟更巧');
+  if (!evi.text || evi.text.indexOf('对比结论') < 0) return '对比证据块没拼出来';
+  return true;
+})()
+""") and ("aqCmpHTML" in rd("js/app.js")) and (".aq-cmp" in rd("css/style.css")))
+
+# ---- 工艺词典 / 误认辨析 ----
+print("工艺词典与误认辨析(词条命中 / 辨析成对 / 掺进证据):", ev("""
+(()=>{
+  const K = window.KB;
+  const c = K.craftEvidence('错金是什么意思');
+  if (!c.hits.length || c.hits[0].n !== '错金银') return '工艺词条没命中';
+  if (c.text.indexOf('代表作') < 0) return '工艺证据缺代表作';
+  const c2 = K.craftEvidence('失蜡法和范铸法一样吗');
+  if (c2.hits.length < 2) return '一句话两条工艺只捞到一条';
+  const h = K.confuseHint('簋');
+  if (!h || (h.wrong !== '鼎' && h.right !== '鼎')) return '误认对没配对';
+  if (h.text.indexOf('最容易混') < 0) return '误认说明没生成';
+  const ev2 = K.evidence('错金是什么意思', {force:true});
+  if (ev2.text.indexOf('工艺·') < 0) return '工艺词条没掺进证据块';
+  return true;
+})()
+""") and ("confuseHint" in rd("js/app.js")))
+
+# ---- 追问式判卷(该问 / 不问 / 合并重判) ----
+print("追问式判卷(漏要点追问 / 答全不问 / 合并加分):", ev("""
+(()=>{
+  const K = window.KB, s = SPIRITS.changxin;
+  const ref = '我的右臂和身体都是中空的。灯点燃后,烟顺着宫女的右臂进入体腔,落在里面的水里,屋子里就不会被熏黑。';
+  const q = '长信宫灯为什么能防烟';
+  const bad = K.followUp(q, '因为烟会进到袖子里。', s, ref);
+  if (!bad.need || !bad.ask) return '答漏要点却没追问';
+  const good = K.followUp(q, ref, s, ref);
+  if (good.need) return '答案已到位还在追问';
+  const before = K.gradeOpen(q, '我把烟吸进袖子里。', s, ref);
+  const after = K.gradeMerged(q, '我把烟吸进袖子里。', ref, s, ref);
+  if (!(after.score > before.score)) return '补答后分数没涨:' + before.score + '→' + after.score;
+  if (!after.merged) return '没标记合并判卷';
+  return true;
+})()
+""") and ("aqOpenFollow" in rd("js/app.js")))
+
+# ---- 双模型互审 + 级联回答 ----
+print("双模型互审 / 级联回答(代码链路 + 可点名模型 + 五步流水线):", 
+      ("identReview" in rd("js/app.js")) and ("aiCascade" in rd("js/app.js")) and
+      ("model: body.model" in rd("js/cloud-ai.js")) and
+      ("五步走" in rd("js/app.js")) and ("交叉复核" in rd("js/app.js")) and
+      ("→ " in rd("js/app.js")) and
+      ev("""
+(()=>{
+  if (typeof identReview !== 'function') return '缺互审函数';
+  if (typeof aiCascade !== 'function') return '缺级联函数';
+  if (typeof aqLight !== 'function') return '缺红绿灯';
+  const h = identFlowHTML({name:'一台冰箱'});
+  if (h.indexOf('交叉复核') < 0) return '流水线没有复核步';
+  const L = aqLight({check:{claims:3, supported:[1,2,3], unsupported:[], ratio:1}});
+  if (!L || L.k !== 'green') return '红绿灯判色错';
+  const R = aqLight({check:{claims:3, supported:[1], unsupported:[1,1], ratio:0.33}});
+  if (R.k !== 'yellow') return '部分可核应为黄';
+  const X = aqLight({check:{claims:2, supported:[], unsupported:[1,1], ratio:0}});
+  if (X.k !== 'red') return '全不核应为红';
+  return true;
+})()
+"""))
+
+# ---- 反馈闭环(👍👎 → 坏例库 → 导出) ----
+print("反馈闭环(投票 / 坏例库 / 导出成用例 / 评测台入口):", ev("""
+(()=>{
+  const F = window.FB;
+  if (!F) return '缺反馈模块';
+  const html = F.foot('aq', {q:'测试问题', a:'测试回答', model:'m', light:'green'});
+  if (html.indexOf('fb-foot') < 0 || html.indexOf('👎') < 0) return '反馈条没渲染';
+  try { localStorage.removeItem('relic.fb.v1'); } catch(e) {}
+  const id = html.match(/id="([^"]+)"/)[1];
+  document.body.insertAdjacentHTML('beforeend', '<div id="' + id + '"></div>');
+  const box = document.getElementById(id);
+  box.dataset.kind = 'aq';
+  F.vote(id, -1);
+  if (box.innerHTML.indexOf('哪里不对') < 0) return '差评没追问原因';
+  F.voteWhy(id, '说得不对');
+  const list = F.list();
+  if (!list.length) return '差评没落盘';
+  if (list[list.length-1].why !== '说得不对') return '原因没记下';
+  const st = F.stats();
+  if (st.bad < 1) return '坏例统计不对';
+  try { localStorage.removeItem('relic.fb.v1'); } catch(e) {}
+  return true;
+})()
+""") and ("feedback.js" in rd("index.html")) and ("FB.foot" in rd("js/app.js")) and
+      ('id="evalFb"' in rd("js/app.js")) and (".fb-foot" in rd("css/style.css")))

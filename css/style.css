@@ -328,6 +328,29 @@ h1,h2,h3{margin:0}
 .icloud-card p{margin:6px 0;font-size:13.5px;line-height:1.85;color:#33475b}
 .icloud-card p b{color:#2f5b85;margin-right:6px}
 .icloud-card .icloud-note{font-size:12px;color:#8494a3;margin-top:10px}
+/* 云端识别结果与站内档案的核对结论:一致 / 有出入 / 档案未收录 */
+.icloud-card .icloud-kb{font-size:12.5px;line-height:1.75;margin:8px 0 0;padding:7px 10px;border-radius:9px;
+  background:#eef6ee;border:1px solid #cfe4cf;color:#2c6b34}
+.icloud-card .icloud-kb.warn{background:#fff6e8;border-color:#eed3a6;color:#8a5a12}
+.icloud-card .icloud-kb.ok{background:#eef6ee;border-color:#cfe4cf;color:#2c6b34}
+/* 识别流水线:候选 → 站内对齐 → 字段校验 → 置信度 */
+.icloud-flow{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#f7fbfd;border:1px solid #d8e6f0}
+.icloud-flow .if-head{font-size:12px;font-weight:800;color:#2f5b85;letter-spacing:.04em;margin-bottom:6px}
+.icloud-flow ol{list-style:none;margin:0;padding:0}
+.icloud-flow li{display:grid;grid-template-columns:20px 62px 1fr;gap:6px;align-items:start;
+  padding:5px 0;border-top:1px dashed #e2edf5;font-size:12px;line-height:1.65;color:#33475b}
+.icloud-flow li:first-child{border-top:0}
+.icloud-flow li i{font-style:normal;font-weight:800;font-size:10.5px;width:17px;height:17px;line-height:17px;
+  text-align:center;border-radius:50%;background:#dceaf4;color:#2f5b85}
+.icloud-flow li b{font-weight:700;color:#3c566e}
+.icloud-flow li span{color:#4c6274}
+.icloud-flow li.if-ok i{background:#dff0e2;color:#2c6b34}
+.icloud-flow li.if-warn i{background:#fbeacd;color:#8a5a12}
+.icloud-flow li.if-bad i{background:#f7dcd8;color:#9c3a25}
+.icloud-flow li.if-warn span{color:#8a5a12}
+.icloud-flow li.if-bad span{color:#9c3a25}
+.icloud-flow li.if-dim{opacity:.72}
+.icloud-flow .if-note{margin:6px 0 0;font-size:11px;color:#8fa3b4}
 /* 识别·唤醒卡:云端认出结果 → 一键唤醒成精灵(未收录 / 可唤醒 / 已在图鉴) */
 .iwake{display:flex;align-items:center;gap:14px;background:linear-gradient(150deg,#fff8e6,#fbf0d6);border:1px solid #e6c88a;border-radius:14px;padding:12px 14px;margin:12px 0 0;box-shadow:0 8px 22px rgba(160,120,50,.10)}
 .iwake>img{width:84px;height:84px;object-fit:contain;background:#fff;border:1px solid #efe3c9;border-radius:14px;flex:none}
@@ -1501,9 +1524,20 @@ body[data-bg="a"],body[data-bg="b"],body[data-bg="c"],body[data-bg="d"],body[dat
 .aq-verdict.ok{color:#2f7c52}
 .aq-verdict.bad{color:#b5432f}
 .aq-tally{color:#8a6a45}
+/* AI 现场出的题:标注来源,和本地题库区分开 */
+.aq-ai-tag{margin-top:8px;font-size:11.5px;line-height:1.6;color:#6b4a8a;background:#f4eefb;
+  border:1px solid #ddd0ee;border-radius:8px;padding:5px 8px;display:inline-block}
 .aq-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .aq-go.ghost{background:#fff8ec;color:#a82613;border:1.5px solid rgba(194,54,29,.5);box-shadow:none}
 .aq-go.ghost:hover{filter:none;background:#fff2e0}
+/* 开放题:自己写一句话,按档案要点判分 */
+.aq-open-in{width:100%;box-sizing:border-box;margin-top:6px;border:1.5px solid #e2cfae;border-radius:10px;
+  background:#fffdf7;color:#4a3520;font:inherit;font-size:13px;line-height:1.7;padding:8px 10px;resize:vertical}
+.aq-open-in:focus{outline:none;border-color:#c2361d;box-shadow:0 0 0 3px rgba(194,54,29,.12)}
+.aq-open-my{margin-top:6px;padding:7px 10px;border-left:3px solid #d8b26a;background:#fdf7ea;
+  border-radius:0 8px 8px 0;font-size:12.5px;color:#6b5334;line-height:1.7}
+.aq-open-ref{margin-top:8px;padding:8px 10px;border-radius:9px;background:#f6f1e6;border:1px dashed #dcc9a4;
+  font-size:12px;line-height:1.75;color:#6d5638}
 .aq-score{font-size:11.5px;font-weight:800;color:#ffe9c0;background:rgba(255,240,210,.16);border:1px solid rgba(255,236,200,.4);padding:3px 9px;border-radius:999px;flex:none;white-space:nowrap}
 
 /* ============ 开场画卷(全屏遮罩 · 木轴拉开 → 题字浮现 → 文物沿历史长河入列 → 淡出进主页) ============ */
@@ -2125,3 +2159,73 @@ body.flyleaf-on #intro{display:none!important}
 .ch-wait i:nth-child(2){animation-delay:.16s}
 .ch-wait i:nth-child(3){animation-delay:.32s}
 @keyframes chDot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+/* ============ AI 评测台(#/eval) ============ */
+.eval-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:4px 0 14px}
+.eval-stamp{font-size:12px;color:#8a7a63}
+.eval-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 16px}
+.eval-tile{background:linear-gradient(158deg,#fffdf6,#fbf3e2);border:1px solid #e8d5ae;border-radius:14px;
+  padding:12px 14px;box-shadow:0 8px 20px rgba(150,110,50,.07)}
+.eval-tile b{display:block;font-size:22px;line-height:1.3;color:#a82613;font-variant-numeric:tabular-nums}
+.eval-tile span{display:block;font-size:12px;color:#6b5a44;margin-top:2px}
+.eval-tile em{display:block;font-size:11px;color:#a1907a;font-style:normal;margin-top:3px}
+.eval-card{background:#fffdf8;border:1px solid #ecdcc0;border-radius:16px;padding:14px 16px;margin:0 0 12px;
+  box-shadow:0 10px 26px rgba(150,110,50,.06)}
+.eval-card-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.eval-card-head b{font-size:15px;color:#3f2d1b}
+.eval-card-head em{margin-left:auto;font-style:normal;font-size:11.5px;color:#a1907a}
+.eval-pill{font-size:12px;font-weight:800;padding:2px 9px;border-radius:999px;border:1px solid transparent}
+.eval-pill.ok{background:#eaf6ec;border-color:#c9e2cd;color:#2c6b34}
+.eval-pill.warn{background:#fdf3e2;border-color:#ecd2a4;color:#8a5a12}
+.eval-pill.bad{background:#fbeceb;border-color:#eec4bd;color:#a5301c}
+.eval-metrics{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.eval-metrics span{font-size:12px;color:#4d3b28;background:#f7f1e4;border:1px solid #eadcc2;
+  border-radius:8px;padding:4px 9px;display:inline-flex;gap:6px}
+.eval-metrics i{font-style:normal;color:#8a755a}
+.eval-fails{list-style:none;margin:10px 0 0;padding:0}
+.eval-fails li{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;font-size:12px;line-height:1.65;
+  padding:6px 0;border-top:1px dashed #eddcc0;color:#5a4630}
+.eval-fails li b{font-weight:600;color:#3f2d1b}
+.eval-fails li em{font-style:normal;color:#a5301c}
+.eval-ok{margin:10px 0 0;font-size:12.5px;color:#2c6b34}
+.eval-scope{margin:18px 0 0;padding:14px 16px;border-radius:14px;background:#f8f4ea;border:1px dashed #ddc9a3}
+.eval-scope b{font-size:13.5px;color:#3f2d1b}
+.eval-scope ul{margin:8px 0 0;padding-left:18px}
+.eval-scope li{font-size:12.5px;line-height:1.8;color:#5f4d37}
+@media (max-width:760px){
+  .eval-tiles{grid-template-columns:repeat(2,1fr)}
+  .eval-fails li{grid-template-columns:1fr}
+}
+
+/* ---- 幻觉红绿灯：气泡首行一个小圆点，绿=档案可核 / 黄=部分可核 / 红=模型自述 ---- */
+.aq-lt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;
+  box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.aq-lt.green{background:#2f8f5b}
+.aq-lt.yellow{background:#d99a1f}
+.aq-lt.red{background:#c2361d}
+.aq-lt.gray{background:#b4b2a9}
+
+/* ---- 跨文物对比卡：两列并排，手机可横向滑 ---- */
+.aq-cmp{margin:8px 0 2px;border:1px solid #e6d3b3;border-radius:10px;background:#fffaf0;overflow:hidden}
+.aq-cmp .cmp-t{padding:7px 10px;background:#f7e9cf;color:#7a4a20;font-size:12.5px;font-weight:600}
+.aq-cmp .cmp-tb{width:100%;border-collapse:collapse;font-size:12px;display:block;overflow-x:auto}
+.aq-cmp .cmp-tb th,.aq-cmp .cmp-tb td{border-top:1px solid #f0e2c8;padding:6px 8px;text-align:left;
+  vertical-align:top;min-width:96px;color:#5a3a26}
+.aq-cmp .cmp-tb th{font-weight:600;background:#fff6e6;white-space:nowrap}
+.aq-cmp .cmp-k{color:#8a6a45;white-space:nowrap;background:#fff6e6}
+.aq-cmp .cmp-d{margin:0;padding:6px 10px 2px 24px;font-size:12px;color:#6b4a30;line-height:1.7}
+.aq-cmp .cmp-d li{margin:2px 0}
+.aq-cmp .cmp-v{padding:6px 10px 8px;font-size:12px;color:#8a4a12;border-top:1px dashed #ecd8b6}
+
+/* ---- 反馈：👍/👎 与坏例库 ---- */
+.fb-foot{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:7px;padding-top:6px;
+  border-top:1px dashed #ecd8b6;font-size:11.5px;color:#a08a70}
+.fb-foot .fb-q{color:#a08a70}
+.fb-b{border:1px solid #e2c39a;background:#fffdf9;color:#7a4a20;border-radius:999px;
+  padding:3px 9px;font-size:11.5px;cursor:pointer;line-height:1.4}
+.fb-b:hover{border-color:#c2361d;color:#c2361d}
+.fb-done{color:#2f8f5b}
+.fb-q2{color:#8a6a45;margin-top:3px}
+.fb-a2{color:#5a3a26;margin-bottom:6px}
+.fb-empty{color:#a08a70}
+.fb-note{margin:6px 0 10px;font-size:11.5px;color:#8a6a45;line-height:1.7}

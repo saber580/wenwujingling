@@ -294,6 +294,16 @@
     if (!useProxy()) await boot();
     var all = await candsFor(!!opt.images);
     if (!all.length) throw new Error(opt.images ? "云端还没有开通看图模型" : "云端还没有可用模型");
+    /* 调用方可以点名要用哪个模型（双模型互审、级联回答要靠它换人）。
+       点名只是「优先」，真不可用还得往后找——否则一个模型没开通就整体挂掉。 */
+    if (opt.model) {
+      var want = String(opt.model).toLowerCase(), head = [], tail = [];
+      all.forEach(function (m) {
+        var nm = String(m.name || m.id || "").toLowerCase();
+        (nm.indexOf(want) >= 0 || want.indexOf(nm) >= 0) ? head.push(m) : tail.push(m);
+      });
+      if (head.length) all = head.concat(tail);
+    }
     var cands = all.slice(0, opt.tries || 3);
     var last = null;
     for (var k = 0; k < cands.length; k++) {
@@ -331,6 +341,8 @@
     /* 每个模型给 10 秒吐第一个字、28 秒收尾；三个候选依次上，最坏也不会卡几分钟 */
     var r = await collect(msgs, {
       temperature: body.temperature,
+      model: body.model,
+      maxTokens: body.max_tokens,
       firstMs: 10000,
       ms: Math.min(Number(ms) || 28000, 28000),
       tries: 3
