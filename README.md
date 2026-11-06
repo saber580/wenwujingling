@@ -37,36 +37,40 @@
 ## 二、技术架构
 
 ```
-                         ┌──────────────────────────────────────┐
-   浏览器（手机 / 电脑）  │  表现层：原生 HTML + CSS + ES2017 JS  │
-                         │  · css/style.css   桌面与通用版式     │
-                         │  · css/mobile.css  仅 ≤860px 生效     │
-                         │  · css/bg-paint.css 水墨背景与装饰    │
-                         └───────────────┬──────────────────────┘
-                                         │ fetch（同源 /api/*）
-                         ┌───────────────▼──────────────────────┐
-                         │  Agent 层：js/agent.js + js/tools.js │
-                         │  · 模型自己决定查什么、参数给什么    │
-                         │  · 6 个只读工具，MCP 风格 schema     │
-                         │  · 上限 4 轮 6 次，异常回落固定管线  │
-                         └───────────────┬──────────────────────┘
-                                         │
-                         ┌───────────────▼──────────────────────┐
-                         │  接入层：js/cloud-ai.js              │
-                         │  · 统一封装 identFetchCloud()        │
-                         │  · SSE 流式解析、tools 透传          │
-                         │  · tool_calls 分片按 index 拼装      │
-                         │  · 失败模型自动拉黑并切换候选        │
-                         └───────────────┬──────────────────────┘
-                                         │
-              ┌──────────────────────────┼─────────────────────────┐
-              │                          │                         │
-   ┌──────────▼─────────┐   ┌────────────▼──────────┐  ┌──────────▼─────────┐
-   │ 线上：nginx 反代    │   │ 本地：server.py        │  │ 可选：ident_cloud.py│
-   │ /api/* → 127.0.0.1  │   │ （Python 标准库）      │  │ 本机 AI 小桥        │
-   │ :8000 → 云端大模型  │   │ 静态托管 + /api 转发   │  │ 仅监听 127.0.0.1    │
-   │ 去掉 Origin 后转发  │   │ 支持 Range 分段传输    │  │ 校验 Origin，403 外部│
-   └────────────────────┘   └───────────────────────┘  └────────────────────┘
+   浏览器（手机 / 电脑）
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ 表现层  原生 HTML + CSS + ES2017（无框架、无构建）              │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ Agent v2   js/agent.js                                          │
+   │   规划(plan) → 并行执行(Promise.all) → 反思(reflect) → 收尾     │
+   │   引用角标跨多次检索统一重编号；上限 4 轮 / 9 次调用            │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ MCP Client  js/mcp-client.js                                    │
+   │   initialize → tools/list 服务端发现 → tools/call 远程执行       │
+   │   Streamable HTTP + HTTP/SSE 双传输；断连回落页面内工具层        │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ 安全与配置  js/safety.js + js/prompt-registry.generated.js      │
+   │   注入/越权/PII/敏感过滤、悬空引用与无依据硬数字检查            │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ 接入层  js/cloud-ai.js  统一 identFetchCloud、SSE 流式、        │
+   │         tools 透传、tool_calls 分片按 index 拼装、失败切模型     │
+   └──────────────────────────┬──────────────────────────────────────┘
+                              │ 同源 HTTP（/mcp、/api/*）
+   ┌──────────────────────────▼──────────────────────────────────────┐
+   │ 服务端  server.py（线上）/ ident_cloud.py（本机小桥 8898）      │
+   │   POST /mcp            JSON-RPC 2.0 · Streamable HTTP           │
+   │   GET  /mcp/sse        HTTP+SSE 传输（首帧 endpoint）           │
+   │   POST /mcp/messages   旧版 SSE 的客户端消息入口                 │
+   │   POST /api/rag        双路召回 + 引用溯源                       │
+   │   POST /api/llm · /api/tts · GET /api/prompt                    │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ mcp/  真 MCP Server                                             │
+   │   transport.py   JSON-RPC 方法、会话、SSE 推送                  │
+   │   tools_impl.py  8 个只读工具，服务端独立执行                   │
+   │   hybrid_rag.py  BM25 + LSA(128维) → RRF 融合 → [n] 出处        │
+   │   kb_index.json  74 件文物 / 1484 段档案（由 data.js 导出）      │
+   └─────────────────────────────────────────────────────────────────┘
+                nginx：/api/ 与 /mcp 反代到 127.0.0.1:8000
 ```
 
 **技术选型与理由**
@@ -78,9 +82,13 @@
 | 移动端 | 独立 `css/mobile.css`，整体包在 `@media (max-width:860px)` 内 | 手机改版与桌面版式**物理隔离**，改手机绝不污染桌面 |
 | 画布 | Canvas 2D（`AI 赋彩`、`文物修复`、海报生成） | 逐像素处理与导出图片，无需引入 WebGL |
 | AI 接入 | `fetch` + SSE 流式解析（`js/cloud-ai.js`） | 统一的超时/重试/降级策略，一处改动全站生效 |
-| 工具调用 | Function Calling + MCP 风格 tool schema（`js/tools.js`） | 一份 schema 两种协议通用，`inputSchema` 改名 `parameters` 即可互换 |
-| 决策循环 | Agent：模型自主选工具（`js/agent.js`） | 「查什么」由模型判断，错误在循环内自我修正，无需事前穷举别名 |
-| 服务端 | Python 标准库 `http.server` + nginx | 部署只需一个静态目录，运维成本最低 |
+| 工具调用 | 真 MCP：`js/mcp-client.js` + `mcp/transport.py` | 客户端 `initialize` 握手、`tools/list` 服务端发现、`tools/call` 服务端执行；一套 JSON-RPC 同时支持 Streamable HTTP 与 HTTP+SSE，换任何 MCP 客户端都能连 |
+| 决策循环 | Agent v2：规划 → 并行 → 反思（`js/agent.js`） | 计划里的独立步骤与模型一轮给出的多个 `tool_calls` 都并发执行；反思判定资料不足时按 `next_tool/next_args` 定向补查 |
+| 检索 | 双路召回：BM25 + LSA(128 维) → RRF（`mcp/hybrid_rag.py`） | 关键词路保实体精确，语义路补「说的是一回事、写的不是同一批字」；全程离线可复现 |
+| 溯源 | `[n]` 角标 → doc_id / 文物 / 字段 / 原文 | 跨多次检索统一重编号，回答里的角标可一路追回档案；输出侧自动摘除悬空角标 |
+| 配置 | `prompts/registry.json` → `js/prompt-registry.generated.js` | 4 个 prompt 版本 + 8 组消融共用一份配置，`file://` 打开也不必 fetch |
+| 安全 | `js/safety.js` 双向过滤 | 输入拦注入/越权/敏感并脱敏 PII，输出查悬空引用与无依据硬数字 |
+| 服务端 | Python 标准库 `http.server` + numpy + nginx | 部署只需一个静态目录；`/mcp` 与 `/api/` 一起反代到 8000 |
 | 素材 | WebP 为主 + 内嵌 dataURL 兜底 | 体积小；`file://` 下 canvas 不会被跨域污染 |
 
 **目录结构**
@@ -89,22 +97,48 @@
 文物精灵/
 ├── index.html              # 站点主入口（电脑端 + 手机端共用）
 ├── 精灵文物主.html          # 备用入口（内容与主入口同步）
-├── server.py               # 本地静态服务器 + /api 转发 + Range 分段
+├── server.py               # 本地静态服务器 + /api 转发 + MCP 端点 + Range 分段
+├── tts_service.py          # 现场语音合成（与预生成音频同一声线）
+├── mcp/                    # 真 MCP Server
+│   ├── transport.py        # JSON-RPC 2.0 方法、会话、SSE 推送
+│   ├── tools_impl.py       # 8 个只读工具，服务端独立执行
+│   ├── hybrid_rag.py       # BM25 + LSA 双路召回、RRF 融合、引用溯源
+│   └── kb_index.json       # 74 件文物 / 1484 段档案（生成式产物）
+├── prompts/                # 提示词版本库、消融矩阵、固定评测集
 ├── css/                    # style.css（通用）/ mobile.css（手机）/ bg-paint.css（背景）
 ├── js/
 │   ├── app.js              # 路由、页面渲染、登录、修复/赋彩/识宝等主逻辑
 │   ├── data.js             # 74 只精灵、十三站、图鉴等数据源
 │   ├── cloud-ai.js         # 云端 AI 统一接入层（流式/择优/降级）
-│   ├── tools.js            # 工具层：6 个只读工具 + MCP 风格 schema
-│   ├── agent.js            # Agent 循环：决策→执行→回填→再决策
+│   ├── tools.js            # 页面内工具层（MCP 断连时的回落实现）
+│   ├── mcp-client.js       # MCP 客户端：握手 / 工具发现 / 双传输
+│   ├── agent.js            # Agent v2：规划 → 并行 → 反思 → 溯源
+│   ├── safety.js           # 输入输出双向内容过滤
+│   ├── prompt-registry.generated.js  # 由 prompts/registry.json 生成
 │   ├── mobile-nav.js       # 手机底部标签栏、宣纸抽屉、滑动期降载
 │   └── aw-*.js / red-*.js  # AI 工坊各玩法、修复与预设
 ├── 精灵/ 文物/ 背景/ 装饰/ 音频/ 属性图标/ 心仪卡/ 打卡海报/ AI 赋彩/
-├── tools/                  # 素材生成、一键部署、自动化验收脚本
-├── docs/                   # 部署、环境变量、安全说明
+├── tools/                  # 素材生成、索引构建、一键部署、自动化验收脚本
+└── docs/                   # 部署说明、AI 深度自检页、消融实验报告
 ├── .env.example            # 环境变量模板（复制为 .env 后填写，不入库）
 └── requirements.txt        # 仅工具链需要的 Python 依赖
 ```
+
+**AI 技术深度自检（可复现）**
+
+| 能力 | 实现位置 | 验证 |
+| --- | --- | --- |
+| 真 MCP（JSON-RPC + SSE） | `mcp/transport.py` / `js/mcp-client.js` | `python tools/check_mcp.py 8901` → 35/35，含握手、批量、错误码、双传输 |
+| Agent 规划 / 并行 / 反思 | `js/agent.js` | `node tools/check_agent.js` → 28/28，含真并发、反思补查、消融开关 |
+| RAG 双路召回 + 溯源 | `mcp/hybrid_rag.py` | `python mcp/hybrid_rag.py "汉代的灯怎么把烟排走"` 看两路排名与出处 |
+| prompt 版本 + 消融 + 过滤 | `prompts/` / `js/safety.js` | `python tools/ablation.py` → `docs/消融实验报告.md` |
+
+启动本地服务 `PORT=8901 NO_BROWSER=1 python server.py` 后，浏览器打开
+`docs/AI深度自检.html`（加 `?auto=1` 可自动跑完）即可看到四项的实时结果。
+线上部署时，`tools/nginx-relic.conf` 已包含 `/mcp` 的反代与 SSE 关缓冲配置。
+
+构建顺序：`node tools/build_kb_index.js` → `node tools/build_prompt_bundle.js`。
+两份产物分别是 `mcp/kb_index.json` 与 `js/prompt-registry.generated.js`，都由源文件生成，不要手改。
 
 ---
 
@@ -208,6 +242,11 @@ Q 版立绘与页面设计为本项目原创，转载请注明出处。
 ---
 
 ## 七、更新记录（节选）
+
+- **2026-11-06** AI 技术深度补强：真 MCP Server（JSON-RPC 2.0 + Streamable HTTP / HTTP+SSE，8 个服务端工具）、Agent 规划→并行→反思、RAG 双路召回（BM25 + LSA + RRF）与 `[n]` 引用溯源、prompt 版本化 + 8 组消融 + 内容过滤；新增 `docs/AI深度自检.html` 在线四卡自检页与 `docs/省赛评分复测报告.md`
+- **2026-11-06** 小答回答改为从第一行开始；主站右下角新增常驻 MCP 状态徽章与「AI 深度自检」入口，页脚同步加链接
+- **2026-11-06** 语音链路：74 只精灵共 292 段自述音频 + `/api/tts` 现场合成（沿用同一声线）；退出键静音、边听边聊音色一致
+- 语音音频为生成产物，仓库只保留 `audio/index.json`；需要静态 mp3 时执行 `python tools/gen_voice.py`，或直接走服务端 `/api/tts`。
 
 - **2026-10-23** 修复 AI 赋彩画布只显示左半边 / 电脑端空白（裁切框随图缩放 + 越界夹取）
 - **2026-10-23** 修复 AI 文物修复出现大量空白碎片；空白格不计入修复进度
