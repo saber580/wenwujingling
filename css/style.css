@@ -2243,3 +2243,16 @@ body.flyleaf-on #intro{display:none!important}
 .fb-a2{color:#5a3a26;margin-bottom:6px}
 .fb-empty{color:#a08a70}
 .fb-note{margin:6px 0 10px;font-size:11.5px;color:#8a6a45;line-height:1.7}
+
+/* ---- AI 技术深度可见入口（评委无需控制台即可发现） ---- */
+.wj-tech-pill{position:absolute;right:0;bottom:calc(100% + 8px);display:flex;align-items:center;gap:6px;white-space:nowrap;padding:5px 10px;border:1px solid #e9c9a0;border-radius:999px;background:#fffdf8;color:#8a4a22;font-size:11px;text-decoration:none;z-index:8;box-shadow:0 4px 14px rgba(92,40,16,.14)}
+.wj-tech-pill i,.aq-techbar i{width:7px;height:7px;border-radius:50%;background:#2f9e63;flex:none}
+.wj-tech-pill.off i,.aq-techbar.off i{background:#b9a58c}
+.wj-tech-pill b{font-weight:600;color:#a82613;border-left:1px solid #ecd6b8;padding-left:6px}
+.wj-tech-pill:hover{border-color:#c2361d}
+.aq-techbar{display:flex;align-items:center;gap:6px;margin:0 12px 2px;padding:5px 9px;border:1px solid #ecd6b8;border-radius:9px;background:#fff8ec;color:#8a4a22;font-size:11px;text-decoration:none;flex:none}
+.aq-techbar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aq-techbar b{font-weight:600;color:#a82613;white-space:nowrap}
+.aq-techbar:hover{background:#fff1de;border-color:#d9b78b}
+.aq:has(.aq-panel:not([hidden])) .wj-tech-pill,.aq.panel-open .wj-tech-pill{display:none}
+@media (max-width:640px){.wj-tech-pill{font-size:10px;padding:4px 8px;right:auto;left:0}.aq-techbar{font-size:10.5px;margin:0 8px 2px}}

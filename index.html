@@ -6,7 +6,7 @@
 <title>文物精灵 · 山河长卷 · 完整版</title>
 <link rel="icon" type="image/webp" href="装饰/神兽标志.webp">
 <link rel="apple-touch-icon" href="装饰/神兽标志.webp">
-<link rel="stylesheet" href="css/style.css?v=20261106b" />
+<link rel="stylesheet" href="css/style.css?v=20261106f" />
 <link rel="stylesheet" href="css/red-v2.css?v=red29">
 <link rel="stylesheet" href="css/red-inner.css?v=ri8">
 <link rel="stylesheet" href="css/bg-paint.css?v=bp8">
@@ -804,6 +804,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
           <a href="#/museums">河北的博物馆</a>
           <a href="#/creative">文创灵感</a>
           <a href="#/poster">AI 打卡海报</a>
+          <a href="docs/AI%E6%B7%B1%E5%BA%A6%E8%87%AA%E6%A3%80.html?auto=1" target="_blank" rel="noopener">AI 技术自检 ↗</a>
         </div>
         <div class="fc"><b>关于</b>
           <span>关于本站 · 大学 AI 网页作品</span>
@@ -831,6 +832,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
 
   <!-- AQ-WIDGET-START · AI 红舞狮「小答」· 踩梅花桩来回跳(点开即聊 / 会答疑 / 会带路 / 会出题考官 / 可拖拽) -->
   <div class="aq" id="aq">
+    <a class="wj-tech-pill" id="wjTechPill" href="docs/AI%E6%B7%B1%E5%BA%A6%E8%87%AA%E6%A3%80.html?auto=1" target="_blank" rel="noopener" title="查看 AI 技术深度自检：MCP / RAG / Agent / 安全"><i></i><span id="wjTechPillText">MCP 握手检测中…</span><b>AI 深度自检 ↗</b></a>
     <div class="aq-ball" id="aqBall" title="AI 红舞狮 · 点我聊聊天" onpointerdown="aqDragStart(event)" onpointermove="aqDragMove(event)" onpointerup="aqDragEnd(event)" onpointercancel="aqDragEnd(event)">
       <span class="aq-glow"></span>
       <span class="aq-spark s1">✦</span>
@@ -859,6 +861,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
         <button type="button" class="aq-x" onclick="aqClose()" aria-label="收起">✕</button>
       </div>
       <div class="aq-body" id="aqBody"></div>
+      <a class="aq-techbar" id="aqTechBar" href="docs/AI%E6%B7%B1%E5%BA%A6%E8%87%AA%E6%A3%80.html?auto=1" target="_blank" rel="noopener"><i></i><span id="aqTechText">MCP 握手检测中…</span><b>查看自检报告 ↗</b></a>
       <div class="aq-chips" id="aqChips"></div>
       <div class="aq-input">
         <input id="aqIn" placeholder="问我:怎么捉精灵 / 带我去看铁狮子…" onkeydown="if(event.key==='Enter')aqSend(this.value)">
@@ -872,11 +875,14 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
   <script src="js/content-pack.js?v=cp1"></script>
   <script src="js/kb-rag.js?v=kb3"></script>
   <script src="js/tools.js?v=tool1"></script>
-  <script src="js/agent.js?v=ag1"></script>
+  <script src="js/safety.js?v=sg1"></script>
+  <script src="js/prompt-registry.generated.js?v=pr1"></script>
+  <script src="js/mcp-client.js?v=mc1"></script>
+  <script src="js/agent.js?v=ag2"></script>
   <script src="js/save-id.js"></script>
   <script src="js/qrcode.js"></script>
   <script src="js/ident-direct.js?v=20261019"></script>
-  <script src="js/app.js?v=20261106b"></script>
+  <script src="js/app.js?v=20261106e"></script>
   <script src="js/feedback.js?v=fb1"></script>
   <script src="js/eval-bench.js?v=ev2"></script>
   <script src="js/vendor/workbuddy-cloud-sdk.js"></script>
@@ -887,7 +893,8 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
 <script src="js/guide.js?v=gi1"></script>
 <script src="js/red-inner.js?v=ri8"></script>
 
-<script src="js/aw-live.js?v=aw5"></script>
+<script src="js/voice.js?v=v5"></script>
+  <script src="js/aw-live.js?v=aw9"></script>
 <script src="js/aw-mystery.js?v=my2"></script>
 <script src="js/aw-craft.js?v=cf4"></script>
 <script src="js/mobile-nav.js?v=m4"></script>
@@ -983,6 +990,52 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
       if (n > 60) clearInterval(iv);
     }, 100);
   } catch (e) {}
+})();
+</script>
+<script>
+/* 页面一加载就与 MCP server 握手（异步、不阻塞首屏）。
+   握手成功 → Agent 的工具经服务端执行、工具清单由 tools/list 发现；
+   不在线 → 自动回落页面内工具层，问答不受影响。
+   控制台可执行 WJMCP.selfTest() 查看协议一致性结果。 */
+(function () {
+  try {
+    if (!window.WJMCP) return;
+    window.WJMCP.connect().then(function (s) {
+      window.__WJ_MCP_STATUS__ = s;
+      try { document.dispatchEvent(new CustomEvent("mcp:ready", { detail: s })); } catch (e) {}
+    });
+  } catch (e) {}
+})();
+</script>
+<script>
+/* 让评委一眼看到 AI 深度：徽章文字随真实 MCP 握手结果变化，不写死。 */
+(function () {
+  function paint() {
+    var st = window.__WJ_MCP_STATUS__ || null;
+    if (!st) { try { st = window.WJMCP && WJMCP.status ? WJMCP.status() : null; } catch (e) {} }
+    var ok = !!(st && st.connected);
+    var txt = ok ? ('MCP 已握手 · ' + (st.toolCount || 0) + ' 工具 · v4.0-full')
+                 : '页面内工具层 · 可离线自检';
+    ['wjTechPillText', 'aqTechText'].forEach(function (id) {
+      var e = document.getElementById(id); if (e) e.textContent = txt;
+    });
+    ['wjTechPill', 'aqTechBar'].forEach(function (id) {
+      var e = document.getElementById(id); if (e) e.classList.toggle('off', !ok);
+    });
+  }
+  paint();
+  document.addEventListener('mcp:ready', paint);
+  setTimeout(paint, 1500); setTimeout(paint, 5000);
+  /* 面板展开时收起常驻胶囊，避免只露半截；面板内另有技术条承接入口。 */
+  var pn = document.getElementById('aqPanel');
+  if (pn && window.MutationObserver) {
+    var sync = function () {
+      var w = document.getElementById('aq');
+      if (w) w.classList.toggle('panel-open', !pn.hidden);
+    };
+    new MutationObserver(sync).observe(pn, { attributes: true, attributeFilter: ['hidden'] });
+    sync();
+  }
 })();
 </script>
 </body>

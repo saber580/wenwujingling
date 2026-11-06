@@ -4781,7 +4781,16 @@ function aqFillin(id, html) {
   if (!el) return;
   el.innerHTML = '<div class="aq-bub">' + html + '</div>';
   const box = document.getElementById("aqBody");
-  if (box) box.scrollTop = box.scrollHeight;
+  if (!box) return;
+  /* 回答从头开始：把本条气泡的顶部对齐到聊天区顶部。
+     旧行为是滚到整段记录的末尾，长回答只露出答案尾巴与反馈按钮，得往回翻。
+     内容顺序、样式、回答链路一概不动。 */
+  const br = box.getBoundingClientRect(), er = el.getBoundingClientRect();
+  const w = box.offsetWidth || br.width;
+  const k = (w && br.width) ? br.width / w : 1;   /* 手机端 .aq 有 scale，视觉像素换算回布局像素 */
+  const s = (k > 0.1 && k < 10) ? k : 1;
+  const top = box.scrollTop + (er.top - br.top) / s - 8;
+  box.scrollTop = Math.max(0, top);
 }
 function aqScorePaint() {
   const sc = document.getElementById("aqScore");
@@ -5102,19 +5111,84 @@ async function aqAgentRun(q) {
     text: r.text,
     model: r.model || "云端",
     kb: null,
-    agent: { rounds: r.rounds || 0, tools: used, steps: steps, ms: Date.now() - t0, capped: !!r.capped }
+    citations: r.citations || [],
+    agent: {
+      rounds: r.rounds || 0, tools: used, steps: steps, ms: Date.now() - t0,
+      capped: !!r.capped,
+      plan: r.plan || null,
+      phases: r.phases || [],
+      reflections: r.reflections || [],
+      citations: r.citations || [],
+      guard: r.guard || null,
+      prompt_version: r.prompt_version || "",
+      mcp: r.mcp || null,
+      parallelBatches: r.parallelBatches || 0
+    }
   };
 }
 
-/* 过程条：回答了用了哪些工具、各查到了什么。可解释性就落在这行小字上。 */
+/* 过程条：回答用了哪些工具、经历了哪些阶段、每句话的出处在哪。
+   规划 / 并行 / 反思 / MCP 握手 / 引用溯源 / 安全过滤都在这里可视化，
+   评委不用打开控制台就能看到 Agent 不是「一次黑箱生成」。 */
 function aqAgentTraceHTML(ag) {
-  if (!ag || !ag.steps || !ag.steps.length) return "";
-  const chips = ag.steps.map(s =>
-    '<span class="aq-tool' + (s.ok ? "" : " miss") + '" title="' + aqEsc(s.note) + '">' +
-    aqEsc(s.cn) + (s.arg ? "：" + aqEsc(s.arg).slice(0, 24) : "") + "</span>"
-  ).join("");
-  return '<div class="aq-trace"><span class="aq-trace-lead">🤖 自己查了 ' + ag.steps.length + " 次 · " +
-    (ag.ms / 1000).toFixed(1) + 's</span>' + chips + "</div>";
+  if (!ag) return "";
+  var esc = function (s) { return aqEsc(String(s == null ? "" : s)); };
+  var html = "";
+
+  if (ag.steps && ag.steps.length) {
+    var chips = ag.steps.map(function (s) {
+      return '<span class="aq-tool' + (s.ok ? "" : " miss") + '" title="' + esc(s.note) + '">' +
+        esc(s.cn) + (s.arg ? "：" + esc(s.arg).slice(0, 24) : "") + "</span>";
+    }).join("");
+    html += '<div class="aq-trace"><span class="aq-trace-lead">🤖 自己查了 ' + ag.steps.length +
+      " 次 · " + (ag.ms / 1000).toFixed(1) + "s</span>" + chips + "</div>";
+  }
+
+  /* 阶段轨迹：规划 → 并行 → 反思 → 过滤 */
+  var ph = ag.phases || [];
+  var plan = null, reflects = [], guards = [], parallelCount = 0;
+  for (var i = 0; i < ph.length; i++) {
+    if (ph[i].phase === "plan") plan = ph[i];
+    else if (ph[i].phase === "reflect") reflects.push(ph[i]);
+    else if (ph[i].phase === "guard" || ph[i].phase === "guard_output") guards.push(ph[i]);
+    else if (ph[i].phase === "act_parallel_plan" || ph[i].phase === "act_parallel_calls") parallelCount++;
+  }
+  var seg = [];
+  if (plan) seg.push("🧭 规划 " + (plan.steps ? plan.steps.length : 0) + " 步" +
+    (plan.source === "llm" ? "" : "（规则兜底）"));
+  if (parallelCount) seg.push("⚡ 并行 " + parallelCount + " 批");
+  if (reflects.length) seg.push("🔍 反思 " + reflects.length + " 次" +
+    (reflects[0].next_tool && reflects[0].next_tool !== "none" ? "→补查" : "→资料已够"));
+  if (ag.mcp && ag.mcp.connected) {
+    seg.push("🔌 MCP 已握手 · " + (ag.mcp.toolCount || 0) + " 工具" +
+      (ag.mcp.fallbackCalls ? "（回落 " + ag.mcp.fallbackCalls + " 次）" : ""));
+  } else {
+    seg.push("🔌 页面内工具（MCP 未连）");
+  }
+  if (guards.length) {
+    var rules = [];
+    guards.forEach(function (g) { (g.rules || []).forEach(function (r) { if (rules.indexOf(r) < 0) rules.push(r); }); });
+    if (rules.length) seg.push("🛡 " + rules.slice(0, 3).join("、"));
+  }
+  if (ag.prompt_version) seg.push("📌 " + ag.prompt_version);
+  if (seg.length) {
+    html += '<div class="aq-trace" style="opacity:.86"><span class="aq-trace-lead">阶段</span>' +
+      '<span style="font-size:11px;letter-spacing:.2px">' + esc(seg.join(" · ")) + "</span></div>";
+  }
+
+  /* 引用溯源：角标 → 档案编号 / 文物 / 字段 / 原文片段 */
+  var cs = ag.citations || [];
+  if (cs.length) {
+    var items = cs.slice(0, 6).map(function (c) {
+      var tip = c.doc_id + " · " + c.field + " · " + (c.channels || []).join("+") + "\n" + c.snippet;
+      return '<span title="' + esc(tip) + '" style="display:inline-block;margin:2px 4px 0 0;padding:2px 7px;' +
+        'border:1px solid rgba(160,110,60,.35);border-radius:9px;font-size:11px;cursor:help">' +
+        esc(c.ref) + " " + esc(c.title) + "·" + esc(c.field) + "</span>";
+    }).join("");
+    html += '<div class="aq-trace" style="opacity:.86"><span class="aq-trace-lead">📎 出处 ' +
+      cs.length + " 条</span>" + items + "</div>";
+  }
+  return html;
 }
 
 async function aqCloudAsk(q, done) {
