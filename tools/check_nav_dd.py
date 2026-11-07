@@ -35,6 +35,9 @@ def say(ok, name, detail=""):
 
 
 c = CDP("about:blank")
+c.send("Network.enable")
+# 本地 server.py 会给 index.html 带缓存头，不清缓存会测到旧版
+c.send("Network.setCacheDisabled", {"cacheDisabled": True})
 c.send("Emulation.setDeviceMetricsOverride",
        {"width": W, "height": H, "deviceScaleFactor": 1, "mobile": False})
 c.send("Emulation.setTouchEmulationEnabled", {"enabled": False})
@@ -57,10 +60,21 @@ for _ in range(20):
     time.sleep(0.2)
 time.sleep(0.3)
 
+# 线上首屏脚本多：导航 DOM 与 app.js 都要等，固定 sleep 会在
+# 「导航已在、toggleDD 还没定义」的空档里点空 —— 一律按条件等。
+for _ in range(80):
+    ready = c.eval("document.readyState==='complete'"
+                   "&&document.querySelectorAll('.topnav .nav-dd').length===3"
+                   "&&typeof toggleDD==='function'"
+                   "&&typeof closeOtherDD==='function'")
+    if ready:
+        break
+    time.sleep(0.4)
 n = c.eval("document.querySelectorAll('.topnav .nav-dd').length")
 if n != 3:
-    print("导航栏目数量异常：", n)
+    print("导航栏目数量异常：", n, "（readyState=%s）" % c.eval("document.readyState"))
     sys.exit(2)
+print("  导航就绪：3 栏，脚本已加载")
 
 
 def btn(nav):

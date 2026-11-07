@@ -96,7 +96,7 @@
     "html.craft-on .rh-tool:hover{transform:translateY(-5px);box-shadow:0 18px 34px rgba(60,10,4,.34);border-color:rgba(255,214,150,.9)}",
     "html.craft-on .rh-tool:hover .rh-tool-em{transform:translateY(-3px) scale(1.08)}",
     "html.craft-on .rh-tool-em{transition:transform .28s cubic-bezier(.2,.85,.2,1)}",
-    ".craft-toast{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:9999;",
+    ".craft-toast{position:fixed;left:50%;top:78px;transform:translateX(-50%);z-index:9999;pointer-events:none;",
     "  font-family:\"STKaiti\",\"KaiTi\",\"楷体\",serif;font-size:13px;letter-spacing:1px;",
     "  padding:9px 18px;border-radius:999px;color:#FFF3D6;",
     "  background:linear-gradient(180deg,#C0392F,#A5181C);border:1px solid rgba(255,214,150,.8);",
