@@ -47,22 +47,11 @@
       "</div></article>";
   }
 
-  function build() {
-    fanA.innerHTML = DECK_A.map(function (it, i) { return cardHTML(it, i, "a"); }).join("");
-    fanB.innerHTML = DECK_B.map(function (it, i) { return cardHTML(it, i, "b"); }).join("");
-    cards = Array.prototype.slice.call(document.querySelectorAll("#flyleaf .fl-card"));
-    cards.forEach(function (c) {
-      c.addEventListener("click", function (e) { e.stopPropagation(); select(c); });
-      c.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(c); }
-      });
-    });
-  }
-
-  function layout() {
-    if (!stage || !document.body.contains(stage)) return;
-    var w = stage.clientWidth || 980;
-    var cw = parseFloat(getComputedStyle(document.getElementById("flyleaf")).getPropertyValue("--fl-cw")) || 140;
+  /* 把每张牌摆到扇位：只写 --x / --y / --r，全程不读任何样式。
+     一旦在这中间读了布局(offsetWidth/clientWidth/getComputedStyle)，
+     浏览器就会先按「没有 --x」把卡片算成叠在一起的一摞，
+     随后写入 --x 就变成了过渡起点 —— 首帧看见"两摞牌"，再用 .5s 摊开。 */
+  function positions(w, cw) {
     var gap = closed ? cw * 0.24 : Math.max(cw * 0.55, Math.min(cw * 0.9, w / 7.8));
     var curve = closed ? 0 : gap * 0.06;
     var rot = closed ? 1.8 : 6.2;
@@ -77,6 +66,44 @@
         c.style.setProperty("--r", (t * rot * dir).toFixed(2) + "deg");
         c.style.zIndex = String(10 + i);
       }
+    });
+  }
+
+  /* 舞台宽度与卡宽量一次即可（必须在插卡之前量，理由同上） */
+  function metrics() {
+    var w = (stage && stage.clientWidth) || 980;
+    var cw = 140;
+    try {
+      var v = getComputedStyle(document.getElementById("flyleaf")).getPropertyValue("--fl-cw");
+      cw = parseFloat(v) || 140;
+    } catch (e) { cw = 140; }
+    return { w: w, cw: cw };
+  }
+
+  function layout() {
+    if (!stage || !document.body.contains(stage)) return;
+    var m = metrics();
+    positions(m.w, m.cw);
+  }
+
+  function build() {
+    /* 顺序即正确性：先量 → 再插卡 → 插完立刻写扇位，中间不读样式。
+       这样浏览器第一次算样式时卡片就已经在扇位上，不会先画成"两摞"再飞开。 */
+    var m = metrics();
+    if (deck) deck.classList.add("no-anim");
+    fanA.innerHTML = DECK_A.map(function (it, i) { return cardHTML(it, i, "a"); }).join("");
+    fanB.innerHTML = DECK_B.map(function (it, i) { return cardHTML(it, i, "b"); }).join("");
+    positions(m.w, m.cw);
+    cards = Array.prototype.slice.call(document.querySelectorAll("#flyleaf .fl-card"));
+    cards.forEach(function (c) {
+      c.addEventListener("click", function (e) { e.stopPropagation(); select(c); });
+      c.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(c); }
+      });
+    });
+    /* 两帧之后再放开过渡，悬停/点选动画照旧 */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { if (deck) deck.classList.remove("no-anim"); });
     });
   }
 
@@ -161,8 +188,9 @@
     roDesc = document.getElementById("flRoDesc");
     toggle = document.getElementById("flToggle");
 
+    /* build() 内部已经把每张牌摆到扇位了，这里不要再调 layout()
+       —— 那会多读一次布局，等于给"从叠起来到摊开"留了个过渡窗口。 */
     build();
-    layout();
     dust();
 
     stage.addEventListener("pointermove", function (e) {

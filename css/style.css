@@ -1777,6 +1777,10 @@ body.flyleaf-on #intro{display:none!important}
 .fl-deck{position:absolute; inset:0; transform-style:preserve-3d;
   transform:rotateX(var(--tx,0deg)) rotateY(var(--ty,0deg));
   transition:transform .5s cubic-bezier(.2,.8,.25,1)}
+/* 首帧禁用位移过渡：卡片插入时就已经写好 --x/--y/--r，
+   绝不允许先画成"两摞牌"再摊开（老显卡/远程桌面/后台标签页会把这种首帧过渡
+   卡在起始帧，一进站就停在叠着的状态，2026-11-07 线上踩过一次）。 */
+.fl-deck.no-anim .fl-card{transition:none!important}
 .fl-fan{position:absolute; left:50%; top:0; width:0; height:0}
 .fl-fan.a{top:21%}
 .fl-fan.b{top:79%}
