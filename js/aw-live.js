@@ -130,6 +130,75 @@
     "  .aw-grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}.aw-stage{height:78px}",
     "  .aw-card img{width:68px;height:68px}}",
 
+    "/* ---- 文物来电：3D 悬浮手机（机身取 uiverse 那款，浮动取 hover.dev，配色换成本站红金） ---- */",
+    ".aw-hero{display:grid;grid-template-columns:minmax(0,1fr) 208px;gap:20px;align-items:center}",
+    ".aw-hero-txt{min-width:0;position:relative;z-index:1}",
+    ".aw-call{position:relative;display:flex;flex-direction:column;align-items:center;gap:9px;perspective:760px}",
+    ".aw-phone{position:relative;width:168px;height:322px;transform-style:preserve-3d}",
+    /* 背后那层错位金板：对应参考图里紫色那圈立体厚度 */
+    /* 厚度用阴影叠出来，不要另起一层 3D 平面 —— 那层不跟着机身转，会整块盖到屏幕上 */
+    ".aw-phone-body{position:absolute;inset:0;border-radius:26px;padding:7px;box-sizing:border-box;",
+    "  background:linear-gradient(160deg,#2E1B14,#120A08);",
+    "  box-shadow:9px 10px 0 -2px #D9B571,12px 14px 0 -2px #8E6A32,",
+    "    0 20px 40px rgba(20,4,2,.46),inset 0 0 0 1px rgba(255,214,150,.22);",
+    "  transform:rotateY(-11deg) rotateX(4deg) rotateZ(-1.2deg);animation:awPhoneFloat 6.4s ease-in-out infinite}",
+    "@keyframes awPhoneFloat{",
+    "  0%,100%{transform:rotateY(-11deg) rotateX(4deg) rotateZ(-1.2deg) translateY(0)}",
+    "  50%{transform:rotateY(-11deg) rotateX(4deg) rotateZ(-1.2deg) translateY(-9px)}}",
+    ".aw-phone-screen{position:relative;width:100%;height:100%;border-radius:20px;overflow:hidden;",
+    "  background:linear-gradient(180deg,#FFFCF3,#FAF0D9);display:flex;flex-direction:column}",
+    ".aw-phone-notch{position:absolute;left:50%;top:7px;transform:translateX(-50%);width:46px;height:8px;",
+    "  border-radius:0 0 6px 6px;background:#120A08;z-index:3}",
+    ".aw-phone-side{position:absolute;right:-2px;width:2px;border-radius:2px;background:#1C110C}",
+    ".aw-phone-side.up{top:64px;height:26px}.aw-phone-side.dn{bottom:66px;height:34px}",
+    ".aw-ps-bar{display:flex;align-items:center;justify-content:space-between;gap:6px;flex:none;",
+    "  padding:9px 9px 3px;font-size:8px;letter-spacing:.08em;color:#8A6A44}",
+    ".aw-ps-ic{font-size:7.5px;letter-spacing:.06em;color:#8A6A44}",
+    /* 屏幕上方那块「空白地」：随时换一位精灵 */
+    ".aw-ps-stage{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;",
+    "  justify-content:center;gap:6px;padding:0 8px 4px}",
+    ".aw-ps-spirit{width:92px;height:92px;object-fit:contain;",
+    "  filter:drop-shadow(0 8px 14px rgba(120,60,10,.22));animation:awPsBreath 3.6s ease-in-out infinite}",
+    "@keyframes awPsBreath{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.03)}}",
+    ".aw-ps-spirit.swap{animation:awPsSwap .36s ease}",
+    "@keyframes awPsSwap{from{opacity:0;transform:translateY(12px) scale(.9)}to{opacity:1;transform:none}}",
+    ".aw-ps-name{font-size:12.5px;letter-spacing:.1em;color:#7C2A12}",
+    ".aw-ps-sub{font-size:9px;letter-spacing:.08em;color:#A9885E;margin-top:-3px}",
+    ".aw-ps-hang{position:absolute;right:6px;top:2px;z-index:2;display:none;cursor:pointer;",
+    "  font-family:inherit;font-size:8.5px;letter-spacing:.06em;color:#7C2A12;background:rgba(255,248,236,.9);",
+    "  border:1px solid rgba(176,124,62,.55);border-radius:999px;padding:2px 7px}",
+    ".aw-call.ringing .aw-ps-hang{display:block}",
+    /* 底部弧面 + 开始键：参考图里那圈紫色改成红金 */
+    ".aw-ps-dock{flex:none;height:84px;display:flex;align-items:flex-end;justify-content:center;",
+    "  padding:0 12px 12px;border-radius:100% 100% 0 0 / 44px 44px 0 0;",
+    "  background:linear-gradient(180deg,#C0392F,#7C0F13);box-shadow:inset 0 1px 0 rgba(255,214,150,.4)}",
+    ".aw-ps-go{width:100%;font-family:inherit;font-size:12px;letter-spacing:.26em;padding:8px 0 8px 4px;",
+    "  border-radius:8px;border:1px solid rgba(255,214,150,.72);cursor:pointer;transition:.2s;",
+    "  background:linear-gradient(180deg,#FFFBEF,#F6E6C6);color:#A5181C}",
+    ".aw-ps-go:hover{background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.22)}",
+    /* 来电态：机身抖动 + 圈圈扩散 + 键变红 */
+    ".aw-call.ringing .aw-phone-body{animation:awPhoneRing .46s ease-in-out infinite}",
+    "@keyframes awPhoneRing{",
+    "  0%,100%{transform:rotateY(-11deg) rotateX(4deg) rotateZ(-1.2deg) translateX(0)}",
+    "  25%{transform:rotateY(-11deg) rotateX(4deg) rotateZ(-2.6deg) translateX(-3px)}",
+    "  75%{transform:rotateY(-11deg) rotateX(4deg) rotateZ(.2deg) translateX(3px)}}",
+    ".aw-call.ringing .aw-ps-stage::before,.aw-call.ringing .aw-ps-stage::after{content:\"\";",
+    "  position:absolute;left:50%;top:38%;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;",
+    "  border:1px solid rgba(193,57,47,.55);animation:awPsRing 1.7s ease-out infinite;pointer-events:none}",
+    ".aw-call.ringing .aw-ps-stage::after{animation-delay:.85s}",
+    "@keyframes awPsRing{0%{transform:scale(.62);opacity:.85}100%{transform:scale(1.55);opacity:0}}",
+    ".aw-call.ringing .aw-ps-go{background:linear-gradient(180deg,#C0392F,#8E1418);color:#FFF3D6;",
+    "  border-color:rgba(255,214,150,.85);animation:awPsGoPulse 1.5s ease-in-out infinite}",
+    "@keyframes awPsGoPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,214,150,.55)}50%{box-shadow:0 0 0 7px rgba(255,214,150,0)}}",
+    ".aw-call-hint{margin:0;max-width:210px;text-align:center;font-size:10.5px;line-height:1.7;",
+    "  letter-spacing:.02em;color:rgba(255,233,184,.84)}",
+    "@media (max-width:900px){.aw-hero{grid-template-columns:1fr;gap:14px}",
+    "  .aw-call{margin:0 auto}.aw-phone{width:140px;height:268px}.aw-ps-spirit{width:74px;height:74px}",
+    "  .aw-ps-dock{height:82px}.aw-call-hint{max-width:240px}}",
+    "@media (prefers-reduced-motion:reduce){.aw-phone-body,.aw-ps-spirit,.aw-call.ringing .aw-phone-body,",
+    "  .aw-call.ringing .aw-ps-go{animation:none}.aw-call.ringing .aw-ps-stage::before,",
+    "  .aw-call.ringing .aw-ps-stage::after{animation:none;opacity:.3}}",
+
     "/* ---- 对话抽屉 ---- */",
     ".aw-chat{position:fixed;right:20px;bottom:20px;width:min(392px,94vw);height:min(568px,74vh);z-index:120;",
     "  display:none;flex-direction:column;overflow:hidden;",
@@ -562,7 +631,7 @@
     el.hidden = false; el.textContent = v;
   }
 
-  function openChat(id) {
+  function openChat(id, opt) {
     var s = S(id);
     if (!s) return;
     CUR = s; HIST = []; BUSY = false;
@@ -577,9 +646,86 @@
     $("awChips").innerHTML = ks.map(function (k) {
       return '<button type="button" data-q="' + esc(k) + '">' + esc(k) + "</button>";
     }).join("");
-    sys("已唤醒「" + s.name + "」。它会以自己的身份、朝代和脾气与你聊天。");
-    greet(s);
+    if (opt && opt.call) {
+      sys("☎ 已接通 ·「" + s.name + "」在电话那头");
+      callGreet(s);
+    } else {
+      sys("已唤醒「" + s.name + "」。它会以自己的身份、朝代和脾气与你聊天。");
+      greet(s);
+    }
   }
+
+  /* ---- 接通就开口：本地先念一句，云端再补一句 ----
+     只靠云端 greet 的话，网络一慢电话那头就是一段死寂，看着像"人机"。
+     这里先用本地文案立刻出声（不依赖网络），再让云端接着问一句想聊什么。 */
+  /* 开场白要短、要立刻能念出来。别把 era 拼进去 —— 那是"西汉 · 汉武帝元狩五年…"的长串，
+     拼上就跟名字重复，念起来像台词本。朝代细节留给云端那句。 */
+  var CALL_LINES = [
+    function (s) { return "喂？我是" + s.name + "。你说，我听着。"; },
+    function (s) { return "喂——听得见吗？我是" + s.name + "，这号多少年没响过了。"; },
+    function (s) { return "喂，是你在找我？我是" + s.name + "，在。"; }
+  ];
+  var CALL_SILENCE = "……信号有点远，你大点声。我先听着。";
+
+  function callGreet(s) {
+    BUSY = true;
+    var line = CALL_LINES[Math.floor(Math.random() * CALL_LINES.length)](s);
+    put("them", line, true);                     // quiet：嗓子由下面统一排队，避免被云端那句顶掉
+    var spoken = (window.Voice && window.Voice.enabled() && CUR)
+      ? window.Voice.say(line, { primary: s.primary, id: s.id })
+      : Promise.resolve(false);
+
+    var lb = liveBubble(false), done = false;
+    var tm = setTimeout(function () {
+      if (done) return;
+      done = true; lb.fail();
+      put("them", CALL_SILENCE, true);
+      BUSY = false;
+    }, 9000);
+
+    chat([
+      { role: "system", content: persona(s) },
+      { role: "user", content: "（电话刚接通，你已经说过：" + line + "）请用一句话接着问他打这个电话想聊什么，别重复自我介绍，三十字以内。" }
+    ], function (t) { if (!done) lb.push(t); })
+      .then(function (r) {
+        if (done) return;
+        done = true; clearTimeout(tm);
+        lb.finish(r.text, function () {
+          HIST.push({ role: "assistant", content: r.text });
+          setVia(r.via);
+          /* 等本地那句念完再接云端那句，别把开场白截断 */
+          Promise.resolve(spoken).catch(function () {}).then(function () { speakThem(r.text); });
+        });
+        BUSY = false;
+      })
+      .catch(function () {
+        if (done) return;
+        done = true; clearTimeout(tm); lb.fail();
+        put("them", CALL_SILENCE, true);
+        BUSY = false;
+      });
+  }
+
+  /* ---- 拨号音 / 接通音：WebAudio 合成，不占素材，跟着「有声」开关走 ---- */
+  var AC = null;
+  function beep(freq, dur, delay, vol) {
+    if (window.Voice && !window.Voice.enabled()) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if (AC.state === "suspended") AC.resume();
+      var t0 = AC.currentTime + (delay || 0);
+      var o = AC.createOscillator(), g = AC.createGain();
+      o.type = "sine"; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(vol || 0.06, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(AC.destination);
+      o.start(t0); o.stop(t0 + dur + 0.02);
+    } catch (e) {}
+  }
+  function ringBack() { beep(450, 0.32, 0, 0.05); beep(450, 0.32, 0.44, 0.05); }
+  function pickUp() { beep(760, 0.1, 0, 0.06); beep(1040, 0.12, 0.11, 0.06); }
+
   function greet(s) {
     BUSY = true;
     var lb = liveBubble(true);
@@ -744,10 +890,34 @@
     var keys = Object.keys(A.primary);
     return '<div class="aw-page">' +
       '<div class="aw-hero">' +
-        '<span class="aw-eyebrow">AI AWAKEN · 活 态 苏 醒</span>' +
-        '<h2>文物活了，还会跟你说话</h2>' +
-        '<p>每一只 Q 版精灵都在呼吸、漂浮、眨眼——点任意一只，它就用<b>自己朝代的身份、脾气和记忆</b>跟你聊天：讲来历、说工艺、答问题、出考题。</p>' +
-        '<span class="aw-stat">共 <b id="awpCnt">0</b> 只精灵已苏醒 · 云端 <span id="awpState">待探测</span></span>' +
+        '<div class="aw-hero-txt">' +
+          '<span class="aw-eyebrow">AI AWAKEN · 活 态 苏 醒</span>' +
+          '<h2>文物活了，还会跟你说话</h2>' +
+          '<p>每一只 Q 版精灵都在呼吸、漂浮、眨眼——点任意一只，它就用<b>自己朝代的身份、脾气和记忆</b>跟你聊天：讲来历、说工艺、答问题、出考题。</p>' +
+          '<span class="aw-stat">共 <b id="awpCnt">0</b> 只精灵已苏醒 · 云端 <span id="awpState">待探测</span></span>' +
+        '</div>' +
+        /* 文物来电：手机上半屏空着，精灵一位一位轮换；按「开始」随机一位打过来 */
+        '<div class="aw-call" id="awCall">' +
+          '<div class="aw-phone">' +
+            '<div class="aw-phone-body">' +
+              '<span class="aw-phone-notch"></span>' +
+              '<i class="aw-phone-side up"></i><i class="aw-phone-side dn"></i>' +
+              '<div class="aw-phone-screen">' +
+                '<div class="aw-ps-bar"><span>燕赵 · 遗珍</span><span class="aw-ps-ic">▂▄▆ ⌁ ▮</span></div>' +
+                '<div class="aw-ps-stage">' +
+                  '<button type="button" class="aw-ps-hang" id="awPsHang">挂断</button>' +
+                  '<img class="aw-ps-spirit" id="awPsImg" alt="" decoding="async">' +
+                  '<div class="aw-ps-name" id="awPsName">—</div>' +
+                  '<div class="aw-ps-sub" id="awPsSub">随时换一位精灵</div>' +
+                '</div>' +
+                '<div class="aw-ps-dock">' +
+                  '<button type="button" class="aw-ps-go" id="awPsGo">开始</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<p class="aw-call-hint" id="awCallHint">按「开始」，随机一位精灵打电话给你</p>' +
+        '</div>' +
       '</div>' +
       '<div class="aw-bar">' +
         '<input class="aw-find" id="awpFind" placeholder="搜名字 / 朝代 / 材质…">' +
@@ -868,6 +1038,115 @@
     });
   }
 
+  /* ---- 文物来电：屏幕空处自动轮换精灵，按「开始」随机一位打过来 ---- */
+  var CALL = { on: false, id: "", timer: 0, pool: [] };
+
+  function callPool() {
+    if (CALL.pool.length) return CALL.pool;
+    var all = (typeof SPIRITS !== "undefined") ? SPIRITS : {};
+    CALL.pool = Object.keys(all).filter(function (id) { return all[id] && all[id].name; });
+    return CALL.pool;
+  }
+
+  function callPick(not) {
+    var p = callPool();
+    if (!p.length) return "";
+    for (var k = 0; k < 10; k++) {
+      var id = p[Math.floor(Math.random() * p.length)];
+      if (id !== not) return id;
+    }
+    return p[0];
+  }
+
+  function callShow(id, anim) {
+    var s = S(id), img = $("awPsImg"), nm = $("awPsName");
+    if (!s || !img) return;
+    img.src = "精灵/透明/" + id + ".webp";
+    img.alt = s.name;
+    if (nm) nm.textContent = s.name;
+    if (anim) {
+      img.classList.remove("swap");
+      void img.offsetWidth;              /* 强制回流，动画才能重放 */
+      img.classList.add("swap");
+    }
+    if (!img.__awSwapEnd) {              /* swap 会顶掉「呼吸」，动画一结束就摘掉 */
+      img.__awSwapEnd = 1;
+      img.addEventListener("animationend", function () { img.classList.remove("swap"); });
+    }
+  }
+
+  function callTick() {
+    if (CALL.on) return;                 /* 来电中不换人，别让正在响的那位跑掉 */
+    var id = callPick(CALL.id);
+    if (!id) return;
+    CALL.id = id;
+    callShow(id, true);
+  }
+
+  /* 只在专页可见时轮换：切走或页面进后台都停掉，不白烧定时器 */
+  function callRotate(on) {
+    if (CALL.timer) { clearInterval(CALL.timer); CALL.timer = 0; }
+    if (!on) return;
+    CALL.timer = setInterval(function () {
+      if (document.hidden || !isAlive() || !document.getElementById("awCall")) return;
+      callTick();
+    }, 3000);
+  }
+
+  function callBind() {
+    var host = $("awCall"), go = $("awPsGo"), hang = $("awPsHang"), hint = $("awCallHint");
+    if (!host || !go || go.__awBound) return;
+    go.__awBound = 1;
+
+    if (!CALL.id) {
+      var first = callPick("");
+      if (first) { CALL.id = first; callShow(first, false); }
+    }
+    callRotate(true);
+
+    function reset(txt) {
+      CALL.on = false;
+      host.classList.remove("ringing");
+      var sub = $("awPsSub");
+      if (sub) sub.textContent = "随时换一位精灵";
+      go.textContent = "开始";
+      if (hint) hint.textContent = txt || "按「开始」，随机一位精灵打电话给你";
+    }
+
+    go.addEventListener("click", function () {
+      if (CALL.on) { answer(); return; }
+      var id = callPick(CALL.id);
+      var s = S(id);
+      if (!s) return;
+      CALL.id = id;
+      CALL.on = true;
+      callShow(id, true);
+      host.classList.add("ringing");
+      ringBack();
+      var sub = $("awPsSub");
+      if (sub) sub.textContent = "正在呼叫你…";
+      go.textContent = "接听";
+      if (hint) hint.textContent = "「" + s.name + "」正在呼叫你…";
+    });
+
+    function answer() {
+      var id = CALL.id, s = S(id);
+      pickUp();
+      host.classList.remove("ringing");
+      var sub = $("awPsSub");
+      if (sub) sub.textContent = "随时换一位精灵";
+      go.textContent = "开始";
+      CALL.on = false;
+      if (hint) hint.textContent = "已接通 ·「" + (s ? s.name : "它") + "」在电话那头";
+      openChat(id, { call: true });
+    }
+
+    if (hang) hang.addEventListener("click", function (e) {
+      e.stopPropagation();
+      reset("已挂断 · 按「开始」再随机一位");
+    });
+  }
+
   function aliveMount() {
     var app = document.getElementById("app");
     if (!app) return;
@@ -877,6 +1156,7 @@
     var navs = document.querySelectorAll(".topnav .nav-item");
     for (var i = 0; i < navs.length; i++) navs[i].classList.toggle("active", navs[i].getAttribute("data-nav") === "poster");
     aliveBind();
+    callBind();
     alivePaint();
     setTimeout(alivePaint, 60);
   }
@@ -884,7 +1164,10 @@
   function isAlive() {
     return String(location.hash || "").replace(/^#\/?/, "").split("/")[0] === "alive";
   }
-  function onHash() { if (isAlive()) setTimeout(aliveMount, 0); }
+  function onHash() {
+    if (isAlive()) setTimeout(aliveMount, 0);
+    else callRotate(false);        /* 离开专页就停掉轮换，回来再启动 */
+  }
 
   window.addEventListener("hashchange", onHash);   // 注册在 app.js 之后 → 覆盖其默认渲染
 
