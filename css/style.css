@@ -74,6 +74,12 @@ body{
 @media(hover:hover){
   .nav-dd:hover .nav-drop{display:block}
   .nav-dd:hover .chev{transform:rotate(180deg)}
+  /* 互斥：指针进了另一栏，带 .open 的旧栏立即让位（JS 没生效也不叠成两栏） */
+  .topnav:has(.nav-dd:hover) .nav-dd.open:not(:hover) .nav-drop{display:none}
+  .topnav:has(.nav-dd:hover) .nav-dd.open:not(:hover) .chev{transform:none}
+  /* 点过收起的这一栏，指针还没离开前不许 hover 又把它顶开 */
+  .nav-dd.dd-hold .nav-drop{display:none!important}
+  .nav-dd.dd-hold .chev{transform:none}
 }
 /* 顶部栏目的锚点:跳转时给吸顶导航留出空间 */
 #home-mine,#home-map,#home-attr,#home-stations{scroll-margin-top:88px}

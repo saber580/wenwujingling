@@ -36,9 +36,28 @@ function toggleDD(e, btn) {
   if (e) e.stopPropagation();
   const item = btn.closest(".nav-dd");
   const was = item.classList.contains("open");
-  $$(".nav-dd.open").forEach(n => n.classList.remove("open"));
-  if (!was) item.classList.add("open");
+  closeOtherDD(null);
+  if (!was) { item.classList.remove("dd-hold"); item.classList.add("open"); }
+  else { item.classList.remove("open"); item.classList.add("dd-hold"); }
 }
+/* 同时只允许一栏展开：指针落到别的栏目上就把上一个收掉。
+   不加这条时「点开精灵 → 移到探索」会出现 A 的 .open 与 B 的 :hover 各亮一栏。 */
+function closeOtherDD(keep) {
+  $$(".nav-dd.open").forEach(n => { if (n !== keep) n.classList.remove("open"); });
+}
+document.addEventListener("mouseover", function (e) {
+  const t = e.target;
+  const dd = t && t.closest ? t.closest(".nav-dd") : null;
+  if (dd) closeOtherDD(dd);
+});
+/* 指针离开这一栏，把"临时压制 hover"解掉，下次悬停照常展开 */
+document.addEventListener("mouseout", function (e) {
+  const dd = e.target && e.target.closest ? e.target.closest(".nav-dd") : null;
+  if (!dd) return;
+  const to = e.relatedTarget;
+  if (to && dd.contains(to)) return;
+  dd.classList.remove("dd-hold");
+});
 document.addEventListener("click", () => $$(".nav-dd.open").forEach(n => n.classList.remove("open")));
 
 /* 图片 */
