@@ -294,6 +294,85 @@ h1,h2,h3{margin:0}
 }
 
 
+/* ===== 拾遗录 · 文物拟人画廊 ===== */
+.sa-feature{margin:6px 0 26px;padding:18px 18px 16px;border-radius:20px;
+  background:linear-gradient(170deg,#fffdf6,#faf1dd);border:1px solid rgba(180,140,60,.34);
+  box-shadow:0 18px 40px -22px rgba(120,80,20,.3)}
+.sa-fhead{text-align:center;margin-bottom:12px}
+.sa-fhead .sa-ep{display:inline-block;font-size:11.5px;letter-spacing:2px;color:#9a6a20;
+  border:1px solid rgba(190,150,70,.5);border-radius:999px;padding:2px 12px;background:#fffdf6}
+.sa-fhead h3{margin:8px 0 6px;font-size:19px;letter-spacing:1px;color:#5c3317}
+.sa-fhead p{margin:0 auto;max-width:46em;font-size:13px;line-height:1.85;color:var(--ink-2)}
+
+.sa-viewer{position:relative;margin:4px auto 8px;max-width:1020px}
+.sa-track{display:flex;align-items:center;gap:16px;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;padding:2px 2px 4px}
+.sa-track::-webkit-scrollbar{display:none}
+.sa-slide{position:relative;flex:0 0 auto;margin:0;cursor:zoom-in;border-radius:12px;
+  overflow:hidden;background:#fffdf8;scroll-snap-align:center;
+  box-shadow:0 16px 34px -16px rgba(110,74,18,.45),0 0 0 1px rgba(180,140,60,.32),
+             0 0 0 6px rgba(255,253,246,.9);}
+.sa-slide img{display:block;height:auto;width:auto;max-height:min(66vh,640px);
+  max-width:min(80vw,620px);object-fit:contain;background:#fdfaf3}
+.sa-slide figcaption{position:absolute;left:0;right:0;bottom:0;padding:26px 14px 11px;
+  font-size:12px;line-height:1.5;color:#fff;opacity:0;transition:opacity .2s;
+  background:linear-gradient(transparent,rgba(38,24,8,.7))}
+.sa-slide:hover figcaption{opacity:1}
+.sa-badge{position:absolute;top:10px;left:10px;font-size:11px;padding:2px 9px;border-radius:999px;
+  color:#6b4212;background:rgba(255,251,240,.9);box-shadow:0 2px 6px rgba(80,50,10,.18)}
+
+.sa-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:38px;height:38px;
+  border-radius:50%;border:1px solid rgba(180,140,60,.45);background:rgba(255,253,246,.94);
+  color:#8a5a20;font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center;
+  box-shadow:0 6px 14px rgba(110,74,18,.2);transition:background .15s,transform .15s}
+.sa-nav:hover{background:#fff;transform:translateY(-50%) scale(1.06)}
+.sa-prev{left:2px}
+.sa-next{right:2px}
+
+.sa-dots{display:flex;gap:7px;justify-content:center;margin:8px 0 2px}
+.sa-dots i{width:7px;height:7px;border-radius:50%;background:rgba(150,110,50,.28);cursor:pointer;transition:all .2s}
+.sa-dots i.on{background:#c9922f;width:18px;border-radius:999px}
+
+.sa-acts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:12px}
+.sa-note{font-size:12px;color:var(--ink-2)}
+
+.sa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px;margin-bottom:22px}
+.sa-work{margin:0;cursor:pointer;border-radius:12px;overflow:hidden;background:#fffdf8;
+  border:1px solid rgba(180,140,60,.3);box-shadow:0 10px 22px -14px rgba(110,74,18,.4);
+  transition:transform .16s,box-shadow .16s}
+.sa-work:hover{transform:translateY(-3px);box-shadow:0 16px 30px -14px rgba(110,74,18,.5)}
+.sa-work img{display:block;width:100%;aspect-ratio:640/824;object-fit:cover;object-position:top}
+.sa-work figcaption{padding:7px 9px 9px;font-size:11.5px;line-height:1.45;color:#5c4a32;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:44px}
+
+.sa-credit{padding:14px 16px;border-radius:14px;background:rgba(255,253,246,.75);
+  border:1px dashed rgba(180,140,60,.45);font-size:12.5px;line-height:1.85;color:var(--ink-2)}
+.sa-credit b{display:block;color:#8a5a20;margin-bottom:3px;font-size:13px}
+.sa-credit p{margin:0}
+.sa-credit a{color:#a8641f;text-decoration:underline}
+
+.sa-zoom{position:fixed;inset:0;z-index:9999;display:none;place-items:center;
+  background:rgba(22,14,4,.9);padding:22px;cursor:zoom-out}
+.sa-zoom.show{display:grid}
+.sa-zoom img{max-width:100%;max-height:88vh;object-fit:contain;border-radius:8px;
+  box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.sa-zoom span{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);
+  font-size:12.5px;color:#f4e7cf;max-width:92vw;text-align:center}
+.sa-zoom-x{position:absolute;top:18px;right:22px;font-size:20px;color:#f4e7cf;font-style:normal}
+
+@media (max-width:768px){
+  .sa-feature{padding:14px 12px 12px;border-radius:16px}
+  .sa-fhead h3{font-size:17px}
+  .sa-track{gap:12px}
+  .sa-slide img{max-height:min(56vh,460px);max-width:86vw}
+  .sa-nav{width:32px;height:32px;font-size:17px}
+  .sa-prev{left:-4px}.sa-next{right:-4px}
+  .sa-acts .btn{flex:1 1 auto}
+  .sa-note{flex:1 1 100%;text-align:center}
+  .sa-grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px}
+  .sa-work figcaption{font-size:10.5px;min-height:40px;padding:6px 7px 7px}
+}
+
 /* ---------- AI 赋彩(真彩画板 · 色板 / 笔头 / 橡皮 / 参考原图) ---------- */
 .dye-stage{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start;margin:14px 0 18px}
 .dye-cv-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(180,140,60,.4);background:#fdfaf2;box-shadow:0 10px 26px rgba(120,90,40,.10)}

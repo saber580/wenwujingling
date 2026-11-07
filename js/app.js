@@ -196,6 +196,7 @@ function render() {
   else if (page === "restore") app.innerHTML = viewRestore();
   else if (page === "tea") app.innerHTML = viewTea();
   else if (page === "dye") app.innerHTML = viewDye();
+  else if (page === "shiyilu") app.innerHTML = viewShiyilu();
   else if (page === "ident") app.innerHTML = viewIdent();
   else if (page === "eval") app.innerHTML = viewEval();
   else app.innerHTML = viewHome();
@@ -203,7 +204,8 @@ function render() {
   if (page === "dye") setTimeout(dyeInit, 40);              // 渲染后铺好黑白画纸(等图片解码完再允许上色)
   if (page === "ident") setTimeout(identInit, 40);          // 渲染后绑好对比滑块,接续上一次的修复与识别结果
   if (page === "eval") setTimeout(evalInitPage, 30);        // 渲染后立刻跑一遍金标集,把指标填进卡片
-  if (page === "tea") setTimeout(teaInitView, 40);          // 渲染后点亮茶话会云端状态条,顺手探一次小桥
+  if (page === "tea") setTimeout(teaInitView, 40);
+  if (page === "shiyilu") setTimeout(saInit, 40);          // 画廊:绑横向滚动,同步底部圆点          // 渲染后点亮茶话会云端状态条,顺手探一次小桥
   window.scrollTo({ top: 0 });
   initHomeFx();
   // 从别的页面点「地图/图鉴」里的首页栏目:等首页渲染完再滚到锚点
@@ -1930,6 +1932,152 @@ function relicClockPick(id) {
   const pool = teaPool().map(function (x) { return x.id; });
   if (pool.indexOf(id) < 0) { rsToast(nm + " 还没在你这儿醒过来——去图鉴唤醒它,就能请它上桌"); return; }
   teaToggle(id);
+}
+
+/* ---------------- 拾遗录 · 文物拟人画廊 ----------------
+   小红书作者「拾遗录」的原创手绘:文物变成会抱怨、会认命的打工人。
+   本站只做非商业展示与学习交流,版权归原作者;点封面直达原作。
+   第 8 话画的沧州铁狮子,正好是图鉴里的 tielion。 */
+const SHIYILU = {
+  author: "拾遗录",
+  home: "https://www.xiaohongshu.com/user/profile/69f16bd40000000001007800",
+  ep: [
+    { f: "shiyilu/ep08-1.webp", t: "封面", cap: "第 8 话 · 最惨的文物——沧州铁狮子" },
+    { f: "shiyilu/ep08-2.webp", t: "漫画", cap: "三个小伙伴千里迢迢跑到沧州,只为看一眼这头狮子" },
+    { f: "shiyilu/ep08-3.webp", t: "小讲堂", cap: "文物小讲堂:后周广顺三年铸,河北四宝之一" }
+  ],
+  works: [
+    { f: "shiyilu/covers/c00.webp", t: "鸮卣:古代职场双面人" },
+    { f: "shiyilu/covers/c01.webp", t: "文物来现代上班也是草台班子" },
+    { f: "shiyilu/covers/c02.webp", t: "文物拟人③ · 古代镇墓兽,现代打工猪猪侠" },
+    { f: "shiyilu/covers/c03.webp", t: "妇好:3000 年前的女性力量" },
+    { f: "shiyilu/covers/c04.webp", t: "文物混成国宝的代价竟是失业" },
+    { f: "shiyilu/covers/c05.webp", t: "当陶鹰鼎知道自己很受欢迎" },
+    { f: "shiyilu/covers/c06.webp", t: "陶鹰鼎还是没逃过当鸡食盆" },
+    { f: "shiyilu/covers/c07.webp", t: "文物拟人② · 当商代青铜器变成了打工人" },
+    { f: "shiyilu/covers/c08.webp", t: "陶鹰鼎:咋走哪都有人叫我鸡食盆" },
+    { f: "shiyilu/covers/c09.webp", t: "陶鹰鼎:可曾听说过什么鸡食盆" },
+    { f: "shiyilu/covers/c10.webp", t: "文物拟人① · 宋瓷变成猫猫后" },
+    { f: "shiyilu/covers/c11.webp", t: "国博人气文物陶鹰鼎,用途至今仍是谜" }
+  ]
+};
+function viewShiyilu() {
+  const slides = SHIYILU.ep.map(function (p, i) {
+    return '<figure class="sa-slide" onclick="saZoom(' + i + ')" title="点开放大">'
+      + '<img src="' + p.f + '" alt="' + p.cap + '"' + (i ? ' loading="lazy"' : '') + '>'
+      + '<span class="sa-badge">' + p.t + "</span>"
+      + "<figcaption>" + p.cap + "</figcaption></figure>";
+  }).join("");
+  const works = SHIYILU.works.map(function (w) {
+    return '<figure class="sa-work" onclick="saOpenWork()" title="去小红书看这一话">'
+      + '<img src="' + w.f + '" alt="' + w.t + '" loading="lazy">'
+      + "<figcaption>" + w.t + "</figcaption></figure>";
+  }).join("");
+  return `
+    <div class="page-head">
+      <h2>🖌 拾遗录 · 文物拟人画廊</h2>
+      <p>这一栏<b>不是 AI 画的</b>。是小红书作者「${SHIYILU.author}」用一支笔画的:文物变成会抱怨、会认命的打工人。我们把第 8 话请进展厅——因为画里那头"最惨的狮子",正好就在你的图鉴里。AI 能让文物开口说话,可这种一笔一笔的幽默,AI 还学不来。</p>
+    </div>
+
+    <section class="sa-feature">
+      <div class="sa-fhead">
+        <span class="sa-ep">第 8 话</span>
+        <h3>最惨的文物——沧州铁狮子</h3>
+        <p>本名「镇海吼」,后周广顺三年铸,距今一千多年,河北四宝之一。它比我们站里那只精灵更惨:露天站了一千年,被风雨、被盗、被"好心"修复过,所以画里的它一开口就在喊拔管。</p>
+      </div>
+      <div class="sa-viewer" id="sa-viewer">
+        <button type="button" class="sa-nav sa-prev" onclick="saGo(-1)" aria-label="上一页">‹</button>
+        <div class="sa-track" id="sa-track">${slides}</div>
+        <button type="button" class="sa-nav sa-next" onclick="saGo(1)" aria-label="下一页">›</button>
+      </div>
+      <div class="sa-dots" id="sa-dots">
+        ${SHIYILU.ep.map(function (_, i) { return '<i class="' + (i ? "" : "on") + '" onclick="saTo(' + i + ')"></i>'; }).join("")}
+      </div>
+      <div class="sa-acts">
+        <button class="btn gold" onclick="location.hash='#/spirit/tielion'">📖 沧州铁狮子在我的图鉴里</button>
+        <button class="btn ghost" onclick="location.hash='#/tea'">🍵 让它自己讲一遍</button>
+        <span class="sa-note">点画可放大;左右拖动、或用两侧箭头翻页</span>
+      </div>
+    </section>
+
+    <h3 class="section-title">作者还画了这些 <small class="muted">(共 ${SHIYILU.works.length} 篇 · 点封面去小红书看原作)</small></h3>
+    <div class="sa-grid">${works}</div>
+
+    <div class="sa-credit">
+      <b>关于这一栏</b>
+      <p>以上手绘均为小红书作者「<a href="${SHIYILU.home}" target="_blank" rel="noopener">${SHIYILU.author}</a>」的原创作品,版权归原作者所有。本站仅作<b>非商业展示与学习交流</b>,不用于任何售卖;每篇的完整内容请到作者主页阅读。</p>
+    </div>
+
+    <div class="sa-zoom" id="sa-zoom" onclick="saZoomClose(event)">
+      <img src="" alt="放大查看">
+      <span></span>
+      <i class="sa-zoom-x">✕</i>
+    </div>`;
+}
+/* 翻页 / 圆点 / 放大 */
+function saTrack() { return document.getElementById("sa-track"); }
+/* 翻页记住「当前第几张」,不要每次从滚动位置反推 —— 第一张贴左时,
+   视口中心其实更靠近第二张,点一次"下一页"会直接跳到底。 */
+let saIdx = 0, saLock = 0;
+function saTo(i) {
+  const t = saTrack(); if (!t) return;
+  const n = t.querySelectorAll(".sa-slide");
+  if (!n.length) return;
+  i = Math.max(0, Math.min(n.length - 1, i));
+  const s = n[i];
+  const r = s.getBoundingClientRect(), tr = t.getBoundingClientRect();
+  const left = r.left - tr.left + t.scrollLeft;
+  const goal = Math.max(0, left - (t.clientWidth - r.width) / 2);
+  saIdx = i; saDots(i);
+  saLock = Date.now() + 600;            // 平滑滚动期间的 scroll 事件别来抢方向
+  t.scrollTo({ left: goal, behavior: "smooth" });
+}
+function saGo(d) {
+  if (Date.now() < saLock) return;
+  saTo(saIdx + d);
+}
+function saDots(i) {
+  const d = document.getElementById("sa-dots"); if (!d) return;
+  Array.prototype.forEach.call(d.children, function (el, k) { el.classList.toggle("on", k === i); });
+}
+function saInit() {
+  const t = saTrack(); if (!t) return;
+  t.addEventListener("scroll", function () {
+    if (Date.now() < saLock) return;
+    const n = t.querySelectorAll(".sa-slide");
+    if (!n.length) return;
+    const tr = t.getBoundingClientRect();
+    let best = 0, bd = 1e9, mid = t.clientWidth / 2;
+    Array.prototype.forEach.call(n, function (el, i) {
+      const r = el.getBoundingClientRect();
+      const c = r.left - tr.left + r.width / 2;
+      const dd = Math.abs(c - mid);
+      if (dd < bd) { bd = dd; best = i; }
+    });
+    saIdx = best; saDots(best);
+  }, { passive: true });
+}
+function saZoom(i) {
+  const box = document.getElementById("sa-zoom");
+  if (!box) return;
+  const p = SHIYILU.ep[i] || SHIYILU.ep[0];
+  box.querySelector("img").src = p.f;
+  box.querySelector("span").textContent = p.cap;
+  box.classList.add("show");
+}
+function saZoomClose(e) {
+  if (e && e.target && e.target.tagName === "IMG") return;
+  const box = document.getElementById("sa-zoom");
+  if (box) box.classList.remove("show");
+}
+/* 站内没有授权转载其余各篇的内页,点了就诚实地送去作者主页 */
+let saWorkHinted = false;
+function saOpenWork() {
+  if (!saWorkHinted) {
+    saWorkHinted = true;
+    rsToast("其余各篇请到作者主页看原作,这就为你打开");
+  }
+  setTimeout(function () { window.open(SHIYILU.home, "_blank", "noopener"); }, 320);
 }
 
 /* ---------------- 茶话会页 ---------------- */
