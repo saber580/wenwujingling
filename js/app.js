@@ -120,7 +120,8 @@ function loadCaptured() {
   let ids = [];
   try { ids = JSON.parse(localStorage.getItem(SAVE_KEY)) || []; } catch (e) { ids = []; }
   // 初始三精灵默认拥有
-  Object.values(SPIRITS).forEach(s => { if (s.starter && !ids.includes(s.id)) ids.push(s.id); });
+  const SP = (typeof SPIRITS !== "undefined" && SPIRITS) ? SPIRITS : (window.SPIRITS || {});
+  Object.values(SP).forEach(s => { if (s.starter && !ids.includes(s.id)) ids.push(s.id); });
   return [...new Set(ids)];
 }
 let captured = loadCaptured();
@@ -2808,6 +2809,10 @@ async function identKeyPush(kk, model) {   /* 把手头这把钥匙推给小桥(
   try { await identFetchCloud(IDENT_CLOUD_API + "/api/setkey", { key: kk, model: (model || window.__IDENT_DIRECT_MODEL || "") }, 3000); } catch (e) {}
 }
 async function identCloudPing() {
+  /* 防御：app.js 顶层较大，首屏冷加载时本函数可能抢在 const IDENT 初始化前被 cloud-ai 的定时器调用（TDZ），稍后重试，不打断初始化 */
+  let __idReady = false;
+  try { __idReady = !!IDENT; } catch (e) { __idReady = false; }
+  if (!__idReady) { setTimeout(function () { identCloudPing(); }, 200); return; }
   /* 弱网下第一次探测常常超时：再补一次，别让用户以为「没配好」 */
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
