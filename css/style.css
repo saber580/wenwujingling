@@ -1779,7 +1779,10 @@ body.flyleaf-on #intro{display:none!important}
   transition:transform .5s cubic-bezier(.2,.8,.25,1)}
 /* 首帧禁用位移过渡：卡片插入时就已经写好 --x/--y/--r，
    绝不允许先画成"两摞牌"再摊开（老显卡/远程桌面/后台标签页会把这种首帧过渡
-   卡在起始帧，一进站就停在叠着的状态，2026-11-07 线上踩过一次）。 */
+   卡在起始帧，一进站就停在叠着的状态，2026-11-07 线上踩过一次）。
+   .fl-ready 由 flyleaf.js 在首帧之后才挂上 —— 即使浏览器缓存里是旧版 JS
+   （先插卡后写位置），这里也会把过渡掐掉，卡片直接吸附到扇位，不会先塌再摊。 */
+.fl-deck:not(.fl-ready) .fl-card,
 .fl-deck.no-anim .fl-card{transition:none!important}
 .fl-fan{position:absolute; left:50%; top:0; width:0; height:0}
 .fl-fan.a{top:21%}

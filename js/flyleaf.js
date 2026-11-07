@@ -101,9 +101,16 @@
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(c); }
       });
     });
-    /* 两帧之后再放开过渡，悬停/点选动画照旧 */
+    /* 两帧之后再放开过渡，悬停/点选动画照旧。
+       .fl-ready 同时是 CSS 的开关：没有它，.fl-card 不做位移过渡 ——
+       这样即使命中了旧缓存（旧 JS 先插卡后写位置），卡片也只会瞬间吸附到扇位，
+       不会出现"先叠成一摞再摊开"的那一帧。 */
     requestAnimationFrame(function () {
-      requestAnimationFrame(function () { if (deck) deck.classList.remove("no-anim"); });
+      requestAnimationFrame(function () {
+        if (!deck) return;
+        deck.classList.remove("no-anim");
+        deck.classList.add("fl-ready");
+      });
     });
   }
 

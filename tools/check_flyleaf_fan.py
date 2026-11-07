@@ -81,7 +81,13 @@ def main():
     c.send("Page.navigate", {"url": "about:blank"})
     time.sleep(0.3)
     c.send("Page.navigate", {"url": url})
-    time.sleep(2.6)
+    # 等牌出现（线上资源多、解析可能被大脚本拖住，不能固定睡几秒了事）
+    t0 = time.time()
+    while time.time() - t0 < 25:
+        if (c.eval("(window.__fanFrames||[]).length") or 0) >= 3:
+            break
+        time.sleep(0.1)
+    time.sleep(0.5)
 
     frames = json.loads(c.eval("JSON.stringify(window.__fanFrames||[])"))
     if not frames:
