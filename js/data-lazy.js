@@ -44,13 +44,24 @@
     });
   };
 
-  /* 首屏渲染完再预取：抢在用户点进图鉴之前把档案铺好，又不拖慢首页 */
+  /* 首屏渲染完再预取：抢在用户点进图鉴之前把档案铺好，又不拖慢首页。
+     两个门槛：① 浏览器真正空闲；② 手指没在划。300KB 脚本的解析加上字段合并
+     是实打实的主线程活，撞上惯性滑动就是「滑两下停一下」。滑动中先让开，
+     下一次空闲窗口再来；真等不到也不要紧，app.js 会在需要时 loadDeep() 现等。 */
   function prefetch() {
-    if (W.requestIdleCallback) {
-      W.requestIdleCallback(function () { W.loadDeep().catch(function () {}); }, { timeout: 2500 });
-    } else {
-      setTimeout(function () { W.loadDeep().catch(function () {}); }, 900);
+    if (!W.requestIdleCallback) {
+      setTimeout(function () { W.loadDeep().catch(function () {}); }, 1200);
+      return;
     }
+    function idle() {
+      /* 只在 MQ 命中时才有 is-scrolling；桌面上这个类永远不存在，不会挡路 */
+      if (D.body && D.body.classList.contains("is-scrolling")) {
+        W.requestIdleCallback(idle, { timeout: 4000 });
+        return;
+      }
+      W.loadDeep().catch(function () {});
+    }
+    W.requestIdleCallback(idle, { timeout: 6000 });
   }
 
   if (D.readyState === "loading") D.addEventListener("DOMContentLoaded", prefetch, { once: true });

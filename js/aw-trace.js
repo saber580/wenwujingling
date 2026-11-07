@@ -751,6 +751,45 @@
     ".trace-tv .screen:-webkit-full-screen .trace-gate-btn{width:96px;height:96px}",
     ".trace-tv .screen:fullscreen .trace-gate-tip,",
     ".trace-tv .screen:-webkit-full-screen .trace-gate-tip{font-size:15px;letter-spacing:.3em}",
+    /* ---- 手机端「大屏放映」：完全不依赖 Fullscreen API ----
+       微信 / X5 / UC 等内核里 requestFullscreen 要么没有、要么静默失败，
+       视频就只能内联在那块 13em 的小屏里 —— 表现为「按了放映，画面还是邮票大」。
+       这里改成把 .screen 直接铺满视口（纯 CSS，任何内核都成），桌面端再额外尽力
+       要一次原生全屏；两者互不冲突，退出时一起撤。
+       坑：.trace-page 上有 identity transform，会给 position:fixed 造出 containing
+       block，大屏期间必须把它的 transform 关掉，否则铺不满整个视口。 */
+    ".trace-tv .screen.trace-big{position:fixed;left:0;top:0;right:0;bottom:0;",
+    "  width:100vw;height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;",
+    "  z-index:9990;border:0;border-radius:0;background:#000;animation:none;",
+    "  display:flex;align-items:center;justify-content:center;overflow:hidden}",
+    "body.trace-big-on{overflow:hidden}",
+    /* .trace-page 上有一条 riRise 入场动画（fill:both），它把 transform 的最终帧一直扣着，
+       于是这颗元素永远算 containing block —— 光把 transform 关成 none 还不够，
+       animation 也得一起停，否则 position:fixed 仍然以它为参照，铺不满视口。
+       层级：#app 自己是 position:relative;z-index:1 的层叠上下文，顶栏(70)与手机
+       标签栏(59)都是它的兄弟节点，所以只抬 .trace-page 没用，得把 #app 一起抬上去。 */
+    "body.trace-big-on .trace-page{transform:none!important;animation:none!important;",
+    "  position:relative;z-index:9995}",
+    "body.trace-big-on #app{position:relative;z-index:9996}",
+    ".trace-tv .screen.trace-big .trace-video{border-radius:0}",
+    ".trace-tv .screen.trace-big .trace-tvbar{font-size:20px;gap:14px;",
+    "  padding:18px 22px calc(16px + env(safe-area-inset-bottom))}",
+    ".trace-tv .screen.trace-big .trace-tvbar button{width:1.7em;height:1.7em;font-size:.8em;border-radius:.32em}",
+    ".trace-tv .screen.trace-big .trace-tvbar .track{height:.3em}",
+    ".trace-tv .screen.trace-big .trace-eject{font-size:14px;opacity:1;",
+    "  right:14px;top:calc(14px + env(safe-area-inset-top))}",
+    ".trace-tv .screen.trace-big .trace-gate-btn{width:96px;height:96px}",
+    ".trace-tv .screen.trace-big .trace-gate-tip{font-size:15px;letter-spacing:.3em}",
+    ".trace-tv .screen.trace-big .trace-loading{font-size:20px}",
+    /* 缓冲提示：片子在 4G 上要读两三秒，黑屏会让人以为坏了 */
+    ".trace-tv .trace-loading{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;",
+    "  align-items:center;justify-content:center;gap:.55em;background:rgba(11,5,3,.84);",
+    "  color:#FFE9B8;font-size:.64em;letter-spacing:.14em;text-align:center;padding:0 .8em}",
+    ".trace-tv .trace-loading[hidden]{display:none}",
+    ".trace-tv .trace-loading i{width:1.6em;height:1.6em;border-radius:50%;",
+    "  border:.14em solid rgba(255,233,184,.24);border-top-color:#FFD98A;",
+    "  animation:trace-buf-spin .9s linear infinite}",
+    "@keyframes trace-buf-spin{to{transform:rotate(1turn)}}",
     ".trace-tv .trace-tv-note{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;",
     "  align-items:center;justify-content:center;gap:.35em;padding:0 .6em;background:#0B0503;",
     "  color:#FFE9B8;text-align:center}",
@@ -825,6 +864,22 @@
     "  radial-gradient(circle at 50% 45%,#1d1613,#050403)}",
     ".trace-page.perf-lite .trace-slot::after{display:none}",
     ".trace-page.perf-lite .card-inner{box-shadow:0 6px 14px rgba(70,30,10,.2)}",
+    /* ---- 手机端默认就走「省电画面」，不再等帧率自检 ----
+       窄屏上一屏只有 121px 大的电视屏，CRT 雪花的 0.2s 逐帧重绘 +
+       background-blend-mode:difference 全屏参与合成，滑动时跟滚动抢 GPU；
+       卡后的径向光晕和 16/34 大模糊阴影同理。这些在桌面上是加分项，
+       在手机上是「滑一下顿一下」。画面换成同一套静态扫描线，肉眼几乎无差。
+       手指滑动期间，剩下的常驻动画（卷盘转动、启动键脉冲）一起暂停。 */
+    "@media (max-width:860px){",
+    "  .trace-tv:not(.playing) .screen{animation:none!important;background:",
+    "    repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 .16em,rgba(58,46,36,.3) .16em .34em),",
+    "    radial-gradient(circle at 50% 45%,#1d1613,#050403)}",
+    "  .trace-slot::after{display:none}",
+    "  .trace-page .card-inner{box-shadow:0 8px 18px rgba(70,30,10,.24)}",
+    "}",
+    "body.is-scrolling .trace-tv .screen,",
+    "body.is-scrolling .trace-tape .cs-reel::before,",
+    "body.is-scrolling .trace-tv .tp-ring{animation-play-state:paused!important}",
     "@media (prefers-reduced-motion:reduce){.trace-spin{animation:none}",
     "  .trace-tv .screen{animation:none}}"
   ].concat(spotCSS(SPOTS.d))
@@ -904,6 +959,10 @@
               '</div>' +
               /* 影片铺满屏幕；没有素材时由 .trace-tv-note 顶上说明 */
               '<video class="trace-video" id="traceVideo" playsinline preload="none" hidden></video>' +
+              /* 读片那几秒盖一层转圈，手机网络慢时不会只看见一块黑 */
+              '<div class="trace-loading" id="traceLoading" hidden>' +
+                '<i></i><span id="traceLoadTxt">正在读取影像…</span>' +
+              '</div>' +
               '<div class="trace-tv-note" id="traceTvNote" hidden>' +
                 '<b id="traceTvNoteTitle">卡带已入机</b>' +
                 '<small id="traceTvNoteSub"></small>' +
@@ -1116,6 +1175,8 @@
     var bar = $("traceTvBar"), playBtn = $("tracePlayBtn"), fsBtn = $("traceFsBtn");
     var track = $("traceTrack"), fill = $("traceTrackFill");
     var gate = $("traceGate"), gateBtn = $("traceGateBtn");
+    var gateTip = gate ? gate.querySelector(".trace-gate-tip") : null;
+    var loading = $("traceLoading"), loadTxt = $("traceLoadTxt");
 
     /* 素材在 文物精灵的起源视频/，文件名按文物取（鼓俑 / 汉瓦当 / 妇好 …），
        每张卡的 video 字段就是它；找不到再退回「编号 / 清洗后的标题」两套老名字 */
@@ -1421,6 +1482,7 @@
     function noVideo() {
       var c = CARDS[inTv] || {};
       started = false;
+      setBusy(false);
       if (video) {
         video.hidden = true;
         video.removeAttribute("src");
@@ -1434,15 +1496,15 @@
         if (noteSub) noteSub.innerHTML = "还没找到影像<br>把 <b>" +
           esc(c.video || ("0" + (inTv + 1)).slice(-2)) + ".mp4</b> 放进 文物精灵的起源视频/";
       }
-      if (document.fullscreenElement && document.exitFullscreen) {
-        try { document.exitFullscreen(); } catch (e) {}
-      }
+      exitBig();
     }
 
     function playVideo(i) {
       inTv = i;
       started = false;
       candK = 0;
+      setBusy(false);
+      if (gateTip) gateTip.textContent = "按此放映";
       cands = videoCands(i);
       /* 这一盘以前成功播过：把那个地址提到最前，换盘回来不必再试错 */
       if (okUrl[i]) {
@@ -1459,51 +1521,140 @@
         video.removeAttribute("src");
         try { video.load(); } catch (e) {}
       }
+      /* 手机上这块屏幕常常半截压在底部标签栏底下，启动键点下去会打在标签栏上，
+         看起来就是「按了没反应」。入带后把屏幕滚到视野中间，保证键露在外面。 */
+      if (screen) {
+        try {
+          var sr = screen.getBoundingClientRect();
+          var vh = window.innerHeight || 800;
+          if (sr.top < 64 || sr.bottom > vh - 110) {
+            window.scrollBy({
+              top: sr.top + sr.height / 2 - vh * 0.42,
+              behavior: "smooth"
+            });
+          }
+        } catch (e) {}
+      }
     }
     /* 启动键：按下才第一次真正加载影片 */
-    /* 全屏只能由用户手势触发：必须在 click 的同一个任务里调用，不能等探针回调 */
-    /* 手机竖屏全屏会让横片夹成一条，能锁就锁成横屏；锁不上（iOS）就算了 */
+    /* 真·全屏只能由用户手势触发：必须在 click 的同一个任务里调用，不能等异步回调 */
+    function coarse() {
+      try {
+        return !!(window.matchMedia && window.matchMedia("(pointer:coarse)").matches);
+      } catch (e) { return false; }
+    }
+    /* 手机竖屏全屏会让横片夹成一条，能锁就锁成横屏；锁不上（iOS / 微信）就算了 */
     function tryLandscape() {
-      if (!window.matchMedia || !window.matchMedia("(pointer:coarse)").matches) return;
+      if (!coarse()) return;
       var o = window.screen && window.screen.orientation;
       if (!o || !o.lock) return;
       try { var p = o.lock("landscape"); if (p && p.catch) p.catch(function () {}); } catch (e) {}
     }
 
-    /* iPhone Safari 不支持元素全屏，只认视频自己的 webkitEnterFullscreen；
-       它对「还没有 src 的 video」无效，所以 startPlay 里必须先挂片再调 goBig。 */
+    /* iPhone Safari 不支持元素全屏，只认视频自己的 webkitEnterFullscreen */
     function videoFullscreen() {
       if (!video || !video.webkitEnterFullscreen) return;
       try { video.webkitEnterFullscreen(); } catch (e) {}
     }
 
+    /* ---------------- 大屏：纯 CSS 铺满视口 ----------------
+       上一版靠 requestFullscreen 撑满，可它在微信 / X5 / UC 里经常没有或静默失败，
+       而且「先全屏再 play」在部分内核里会把刚起的播打断 —— 表现为「按了放映，
+       有的不出画面、而且都不放大」。现在：铺满这一步用 CSS 同步做完（谁都能用），
+       起播紧随其后；原生全屏只在鼠标设备上尽力试一次，失败也不影响观感。 */
+    var bigOn = false;
+    function applyBig() {
+      if (bigOn || !video || !screen) return;
+      bigOn = true;
+      screen.classList.add("trace-big");
+      if (document.body) document.body.classList.add("trace-big-on");
+    }
+    function exitBig() {
+      if (!bigOn) return;
+      bigOn = false;
+      if (screen) screen.classList.remove("trace-big");
+      if (document.body) document.body.classList.remove("trace-big-on");
+      /* 顺手把原生全屏也撤掉，别留一层黑 */
+      if (document.fullscreenElement && document.exitFullscreen) {
+        try { document.exitFullscreen(); } catch (e) {}
+      } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+        try { document.webkitExitFullscreen(); } catch (e) {}
+      }
+      if (video && video.webkitDisplayingFullscreen) {
+        try { video.webkitExitFullscreen(); } catch (e) {}
+      }
+    }
     function goBig() {
+      if (bigOn) return;
       if (document.fullscreenElement || document.webkitFullscreenElement) return;
+      applyBig();                                  // 先铺满：这一步一定成
+      if (coarse()) return;                        // 手机到此为止，不再碰全屏 API
       try {
         if (screen.requestFullscreen) {
           var p = screen.requestFullscreen();
-          if (p && p.then) p.then(tryLandscape, videoFullscreen);
+          if (p && p.then) p.then(tryLandscape, function () {});
           else tryLandscape();
         } else if (screen.webkitRequestFullscreen) {
           screen.webkitRequestFullscreen();
           tryLandscape();
-        } else {
+        } else if (video && video.webkitEnterFullscreen) {
           videoFullscreen();
         }
-      } catch (err) { videoFullscreen(); }
+      } catch (err) {}
     }
 
-    /* 退出全屏把方向锁解掉，否则整个页面被锁在横屏 */
+    /* 退出原生全屏（ESC / 系统返回）把大屏一起收掉，别留一块黑 */
     function onFsChange() {
       if (document.fullscreenElement || document.webkitFullscreenElement) return;
       var o = window.screen && window.screen.orientation;
       if (o && o.unlock) { try { o.unlock(); } catch (e) {} }
+      exitBig();
     }
     document.addEventListener("fullscreenchange", onFsChange);
     document.addEventListener("webkitfullscreenchange", onFsChange);
+    document.addEventListener("keydown", function (e) {
+      if ((e.key === "Escape" || e.key === "Esc") && bigOn) exitBig();
+    });
+    /* 大屏期间离开这一页（切路由）：body 上的锁滚动与 transform 覆盖必须撤掉，
+       否则整站都跟着不能滚。只挂一次，按 DOM 判断，不依赖某个闭包里的 bigOn。 */
+    if (!window.__traceBigTidy) {
+      window.__traceBigTidy = 1;
+      window.addEventListener("hashchange", function () {
+        if (document.querySelector(".trace-tv .screen")) return;
+        document.body.classList.remove("trace-big-on");
+        var s = document.querySelector(".screen.trace-big");
+        if (s) s.classList.remove("trace-big");
+      });
+    }
 
-    /* 启动键：按下这一下必须把「挂片 / 全屏 / 起播」全部做完，
-       三件事都留在同一个用户手势里，移动端才肯放行。 */
+    /* 缓冲提示：读片这两三秒盖一层转圈，别让人对着一块黑屏 */
+    function setBusy(on, txt) {
+      if (!loading) return;
+      loading.hidden = !on;
+      if (on && loadTxt && txt) loadTxt.textContent = txt;
+    }
+    /* 换下一个候选地址（文件名/格式不对时用）。此时播放授权已经拿到，不会被拦 */
+    function nextCand() {
+      candK++;
+      if (candK >= cands.length) { noVideo(); return; }
+      video.src = cands[candK];
+      try { video.load(); } catch (e) {}
+      var p = video.play();
+      if (p && p.catch) p.catch(function () {});
+    }
+    /* 起播被拒 / 解码失败：把启动键放回来，让用户还能再点一下，而不是卡黑屏 */
+    function onPlayFail(err) {
+      var n = (err && err.name) || "";
+      if (n === "AbortError") return;                  // 自己换源打断的，不算失败
+      setBusy(false);
+      if (n === "NotSupportedError") { nextCand(); return; }
+      started = false;
+      if (gate) gate.hidden = false;
+      if (gateTip) gateTip.textContent = "点一下再试";
+    }
+
+    /* 启动键：按下这一下把「挂片 / 铺满 / 起播」一次做完，
+       三件事都在同一个用户手势里，移动端才肯放行。 */
     function startPlay() {
       if (inTv < 0 || !video || started) return;
       var url = cands[candK];
@@ -1512,17 +1663,20 @@
       if (gate) gate.hidden = true;
       if (note) note.hidden = true;
       video.hidden = false;
+      video.preload = "auto";
       video.src = url;
+      try { video.load(); } catch (e) {}
       if (bar) bar.hidden = false;
       if (fill) fill.style.width = "0%";
-      goBig();                                       // 按下即最大放映
+      setBusy(true, "正在读取影像…");
+      goBig();                                          // 按下即最大放映
       var p = video.play();
-      if (p && p.catch) p.catch(function () {});     // 万一仍被拒，点画面可重试
+      if (p && p.catch) p.catch(onPlayFail);             // 被拒就还回启动键
     }
     function togglePlay() {
       if (!video || video.hidden) return;
       if (video.paused) {
-        goBig();                                     // 顺手把被拒的全屏补上
+        goBig();                                        // 顺手把被拒的放大补上
         var p = video.play();
         if (p && p.catch) p.catch(function () {});
       } else video.pause();
@@ -1530,12 +1684,12 @@
     function eject() {
       var i = inTv;
       inTv = -1;
-      /* 全屏里退带就把人放回页面，不然只剩一块空屏幕 */
-      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
-      else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+      /* 大屏 / 全屏里退带就把人放回页面，不然只剩一块空屏幕 */
+      exitBig();
       cands = [];
       candK = 0;
       started = false;
+      setBusy(false);
       if (gate) gate.hidden = true;
       tv.classList.remove("playing");
       if (video) {
@@ -1594,11 +1748,13 @@
          此时播放授权已经拿到，换源后继续 play() 不会被移动端拦下。 */
       video.addEventListener("error", function () {
         if (inTv < 0 || !started) return;
-        candK++;
-        if (candK >= cands.length) { noVideo(); return; }
-        video.src = cands[candK];
-        var p = video.play();
-        if (p && p.catch) p.catch(function () {});
+        nextCand();
+      });
+      /* 画面上来了就把转圈收掉；中途卡住就显示「正在缓冲」 */
+      video.addEventListener("playing", function () { setBusy(false); });
+      video.addEventListener("canplay", function () { setBusy(false); });
+      video.addEventListener("waiting", function () {
+        if (started && !video.paused && !video.ended) setBusy(true, "正在缓冲…");
       });
       video.addEventListener("loadedmetadata", function () {
         if (inTv >= 0 && cands[candK]) okUrl[inTv] = cands[candK];
@@ -1616,7 +1772,9 @@
       var k = Math.max(0, Math.min(1, (e.clientX - r.left) / Math.max(1, r.width)));
       try { video.currentTime = k * video.duration; } catch (err) {}
     });
-    if (fsBtn) fsBtn.addEventListener("click", function () {
+    if (fsBtn) fsBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (bigOn) { exitBig(); return; }
       if (document.fullscreenElement || document.webkitFullscreenElement) {
         if (document.exitFullscreen) document.exitFullscreen();
         else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -1757,23 +1915,35 @@
       });
     }
 
-    /* 帧率自检 · 低性能兜底：前 1.2 秒数帧，低于 42fps 说明没走 GPU 合成（软件渲染），
+    /* 帧率自检 · 低性能兜底：低于 42fps 说明没走 GPU 合成（软件渲染），
        自动挂 .perf-lite 关掉最贵的持续重绘（CRT 雪花、卡后光晕、大模糊阴影）。
-       有硬件加速时不触发，视觉完全不变 */
+       注意静止时 rAF 永远是 60fps（没活干），看不出真实负担 ——
+       所以滑动开始后再抽一次；两次任一偏低都算。有硬件加速时不触发，视觉不变 */
     (function watchPerf() {
       if (!window.requestAnimationFrame) return;
       var page = box.closest ? box.closest(".trace-page") : null;
       if (!page) return;
-      var n = 0, t0 = 0;
-      function tick(t) {
-        if (!t0) t0 = t;
-        n++;
-        if (t - t0 < 1200) { window.requestAnimationFrame(tick); return; }
-        var fps = Math.round(n / ((t - t0) / 1000));
-        page.setAttribute("data-fps", fps);
-        if (fps < 42) page.classList.add("perf-lite");
+      var done = false;
+      function sample(ms, cb) {
+        var n = 0, t0 = 0;
+        function tick(t) {
+          if (!t0) t0 = t;
+          n++;
+          if (t - t0 < ms) { window.requestAnimationFrame(tick); return; }
+          cb(n / ((t - t0) / 1000));
+        }
+        window.requestAnimationFrame(tick);
       }
-      window.requestAnimationFrame(tick);
+      function rate(fps) {
+        if (done) return;
+        page.setAttribute("data-fps", Math.round(fps));
+        if (fps < 42) { page.classList.add("perf-lite"); done = true; }
+      }
+      sample(1200, rate);
+      window.addEventListener("scroll", function once() {
+        window.removeEventListener("scroll", once);
+        setTimeout(function () { sample(900, rate); }, 120);
+      }, { passive: true });
     })();
   }
 

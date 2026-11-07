@@ -147,14 +147,30 @@
 
   /* 档案包(data-deep.js)异步补齐字段后,索引必须重建一次:
      首次 build 时 SPIRITS 只有简介与别名,问答/考点/来历还没到,
-     不重建就会检索不到这些段落,回答质量会明显下降。 */
+     不重建就会检索不到这些段落,回答质量会明显下降。
+
+     重建本身是一次「1400 多段文档一次过」的长任务:手机上是几百毫秒。
+     以前它在 data-deep.js 末尾同步跑,正好撞上用户刚开始向下滑 ——
+     表现就是「滑两下停一下」。现在只标脏,下一次 search() 自己建;
+     另外挑一个真空闲的时间预热一次,滑动中就跳过,交给 search 兜底。 */
   function rebuild() {
     DOCS = [];
     POST = Object.create(null);
     DF = Object.create(null);
     AVG_LEN = 0;
     BUILT = false;
-    return build();
+    try {
+      var rib = window.requestIdleCallback;
+      if (rib) {
+        rib(function () {
+          var busy = document.body &&
+            document.body.classList.contains("is-scrolling");
+          if (busy || BUILT) return;        /* 滑动中不抢主线程，等 search 或下次空闲 */
+          try { build(); } catch (e) {}
+        }, { timeout: 12000 });
+      }
+    } catch (e) {}
+    return { lazy: true };
   }
 
   /* ---------------- 检索 ---------------- */
