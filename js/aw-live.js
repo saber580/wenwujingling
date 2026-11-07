@@ -863,22 +863,14 @@
   function vrStart() {
     var why = vrBlockReason();
     if (why) {
-      /* 提示要贴合当前访问方式：本机/局域网能直接换成 8443 那条，
-         公网 IP 上根本没有 https 端口，别让用户照着敲一个不存在的地址 */
-      var host = location.hostname || "";
-      var localish = /^(localhost|127\.|0\.0\.0\.0$|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
-      /* 裸 IP 没证书，但 <ip>.sslip.io 会解析回这台机器，线上证书就签在它上面。
-         提示里直接给能用的地址，别让人自己猜。 */
-      var httpsAlt = /^\d+\.\d+\.\d+\.\d+$/.test(host) ? "https://" + host + ".sslip.io" : "";
+      /* 线上 http 会被 nginx 直接 302 到 https（同一地址、同一路径，地址栏只变协议），
+         所以走到这里基本只剩两种情况：浏览器本身不给，或者本机局域网用 http 打开。
+         不再让用户去「换一个地址」—— 那等于当面告诉他这站有两套门，还容易敲错。 */
       var msg = why === "insecure"
-        ? (localish
-            ? "现在是用 http 打开的，浏览器把麦克风锁死了 —— 换成 https://" + host + ":8443/ 再来（启动终端里有打印），或者直接打字，一样的。"
-            : (httpsAlt
-                ? "现在这条是 http，浏览器一律不给麦 —— 换成 " + httpsAlt + " 打开就能说，或者直接打字，一样的。"
-                : "线上这条是 http，浏览器一律不给麦 —— 要真说话得在 https 下，这里先用打字。"))
+        ? "这会儿浏览器把麦克风锁住了 —— 直接打字也一样，精灵照听不误。"
         : "这个浏览器不给用语音识别（Chrome / Edge 才有），直接打字一样的。";
       sys(msg);
-      vrNote(why === "insecure" ? "http 下不能开麦" : "此浏览器不支持语音", true);
+      vrNote(why === "insecure" ? "麦克风不可用 · 直接打字也行" : "此浏览器不支持语音", true);
       return;
     }
     if (VR.on) return;

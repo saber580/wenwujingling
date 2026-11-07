@@ -2210,15 +2210,29 @@ function posterCompose(spiritId) {
   });
 }
 
-/* ---------------- AI 赋彩页(Q 版黑白稿 · 点按填色 / 拖笔涂抹) ---------------- */
+/* ---------------- AI 赋彩页(真彩画板 · 色板 / 笔头 / 橡皮 / 参考原图) ---------------- */
+/* 十二种颜色不是随机取的 RGB,是按矿物 / 植物颜料来的:朱红、赭石、藤黄、石绿、石青、靛蓝…… */
+const DYE_PALETTE = [
+  { n: "朱红", v: "#c0392b" }, { n: "赭石", v: "#a05a2c" }, { n: "藤黄", v: "#e8b33a" },
+  { n: "石绿", v: "#4e8c6a" }, { n: "石青", v: "#3b6ea5" }, { n: "靛蓝", v: "#2c4a6e" },
+  { n: "绛紫", v: "#6e3b5a" }, { n: "胭脂", v: "#d16b8a" }, { n: "赤金", v: "#c9a227" },
+  { n: "铜绿", v: "#6e8f6a" }, { n: "青瓷", v: "#a9c6b6" }, { n: "素白", v: "#f2ead8" }
+];
+/* 画板三层(都在离屏里):
+   gray   —— 黑白线稿,始终压在用户颜色上面(正片叠底),所以怎么涂都盖不住线条;
+   paint  —— 用户亲手涂的颜色层,橡皮擦的就是它;
+   color  —— 原图(彩色),只用来做参考小图 / 一键赋彩 / 按住看原图,不参与玩家的画。 */
 const DYE = {
   idx: 0, tok: 0, ready: false,
-  color: null, gray: null, tmpCv: null, tmpCtx: null, tmpImg: null,
-  data: null, mask: null, buf: null, visited: null, stack: null,
+  color: null, gray: null, gd: null, paintCv: null, paintCtx: null,
+  vis: null, peek: null,
+  zone: null, mask: null, visited: null, stack: null, fillIdx: null,
   cvW: 0, cvH: 0, cnt: 0, total: 0,
-  brush: 24, done: false, autoTimer: null,
+  ink: "#c0392b", brush: 30, tool: "brush",
+  done: false, autoTimer: null, raf: 0,
   painting: false, moved: false, lastX: 0, lastY: 0, downX: 0, downY: 0
 };
+const DYE_INK_ITEM = "wj_dye_ink";
 function dyeSrc(i) { return "AI 赋彩/" + DYE_IMAGES[i].f; }
 /* 图稿「内嵌数据」:AI 赋彩\_data\<文件名>.js 里存着同一张图的 data: 形式。
    双击 index.html(file://)打开时,浏览器不允许读本机图片的像素(画布会被判为"污染"),
@@ -2257,17 +2271,21 @@ function viewDye() {
       <img loading="lazy" src="AI 赋彩/${m.f}" alt="第 ${i + 1} 幅 Q 版文物黑白稿" style="width:${(m.w * s).toFixed(1)}px;height:${(m.h * s).toFixed(1)}px;left:${left}px;top:${top}px">
     </button>`;
   }).join("");
+  const sws = DYE_PALETTE.map(p =>
+    `<button type="button" class="dye-sw" data-c="${p.v}" style="--sw:${p.v}" title="${p.n}" aria-label="${p.n}" onclick="dyeInk('${p.v}')"></button>`
+  ).join("");
   return `
     <div class="page-head">
       <h2>🎨 AI赋彩</h2>
-      <p>闭馆后的神秘画室:${n} 幅 Q 版文物都褪成了黑白稿。轻点填色、按住涂抹,亲手把颜色还给它们——完成度攒满,作品还能保存带回家。</p>
+      <p>闭馆后的神秘画室:${n} 幅 Q 版文物都褪成了黑白稿。蘸一支矿物色,亲手把颜色还给它们——轻点填一整块、按住涂一笔、涂错了拿橡皮擦掉;它本来长什么样,旁边一直摆着。</p>
     </div>
     <div class="tea-howto">
-      <b>🖌 怎么玩(三种手法 · 随你挑)</b>
+      <b>🖌 怎么玩(真彩画板 · 自己上色)</b>
       <ol>
-        <li><b>点一下 · 填一块</b>:在黑白稿上轻点,一整片同色的区域就会染回它本来的颜色。</li>
-        <li><b>按住拖 · 涂一笔</b>:像握画笔一样按住涂抹,笔到之处色彩慢慢浮出来;笔刷有 小 / 中 / 大 三档。</li>
-        <li><b>偷看答案 / 交给 AI</b>:「👁 按住看原图」对照彩色、「✨ 一键赋彩」看它上满色完整的样子,满意就点「💾 保存作品」把彩色收进相册。</li>
+        <li><b>蘸色</b>:下面一排是十二种传统色(朱红 / 赭石 / 石青 / 石绿 / 赤金…),点一下就蘸上了;想更准,点「🎨」自己调一个。</li>
+        <li><b>轻点 = 填一块,按住 = 涂一笔</b>:轻点处一整片封闭区域会用当前颜色填满(数字油画那样);按住拖动就是笔刷,细 / 中 / 粗三档。</li>
+        <li><b>涂错了就擦</b>:切到「🧽 橡皮」,擦掉的只是你涂的颜色,线稿一根都不会少。</li>
+        <li><b>照着画、画完带走</b>:右边(手机上在画布右上角)常驻缩小版原图,点一下放大;满意了就「💾 保存作品」,「✨ 一键赋彩」可以先偷看 AI 填满的样子。</li>
       </ol>
       <p>上色只在本机浏览器里完成,不联网、不上传;图稿来自「AI 赋彩」画册,共 ${n} 幅,点下面的缩略图随便挑。</p>
     </div>
@@ -2275,23 +2293,38 @@ function viewDye() {
       <div class="dye-cv-wrap">
         <canvas id="dye-cv" oncontextmenu="return false"></canvas>
         <canvas id="dye-cv-peek"></canvas>
-        <div class="dye-done-tip" id="dye-done">✨ 赋彩完成!可以「保存作品」啦</div>
+        <figure class="dye-ref-float" onclick="dyeRefZoom(true)" title="参考原图 · 点开看大图">
+          <canvas id="dye-ref-f"></canvas>
+          <figcaption>原图</figcaption>
+        </figure>
+        <div class="dye-done-tip" id="dye-done">✨ 涂得挺满了,可以「保存作品」啦</div>
       </div>
       <div class="dye-side">
         <div class="dye-prog"><i id="dye-bar"></i></div>
         <div class="dye-pct-line"><b id="dye-pct">0%</b><span id="dye-label">正在铺开画纸…</span></div>
+        <figure class="dye-ref-side">
+          <canvas id="dye-ref-s" onclick="dyeRefZoom(true)" title="点开看大图"></canvas>
+          <figcaption><b>参考原图</b><span>它本来长这样 · 点图看大图</span></figcaption>
+        </figure>
+        <div class="dye-palette" id="dye-palette">${sws}<label class="dye-custom" title="自己调一个颜色">🎨<input type="color" id="dye-color" value="${DYE.ink}" oninput="dyeInk(this.value)" aria-label="自定义颜色"></label></div>
         <div class="dye-tools">
-          <button type="button" class="btn ghost" onpointerdown="dyePeek(true)" onpointerup="dyePeek(false)" onpointerleave="dyePeek(false)" onpointercancel="dyePeek(false)" oncontextmenu="return false">👁 按住看原图</button>
+          <span class="dye-toolset" id="dye-toolset">
+            <button type="button" data-t="brush" class="cur" onclick="dyeTool('brush')">🖌 画笔</button>
+            <button type="button" data-t="eraser" onclick="dyeTool('eraser')">🧽 橡皮</button>
+          </span>
+          <span class="dye-brushset" id="dye-brushset">
+            <button type="button" data-b="16" onclick="dyeBrushSize(16)">细</button>
+            <button type="button" data-b="30" onclick="dyeBrushSize(30)">中</button>
+            <button type="button" data-b="52" onclick="dyeBrushSize(52)">粗</button>
+          </span>
+        </div>
+        <div class="dye-tools">
+          <button type="button" class="btn ghost dye-peekbtn" onpointerdown="dyePeek(true)" onpointerup="dyePeek(false)" onpointerleave="dyePeek(false)" onpointercancel="dyePeek(false)" oncontextmenu="return false">👁 按住看原图</button>
           <button type="button" class="btn gold" onclick="dyeAuto()">✨ 一键赋彩</button>
           <button type="button" class="btn ghost" onclick="dyeReset()">↺ 重新上色</button>
           <button type="button" class="btn" onclick="dyeSave()">💾 保存作品</button>
         </div>
         <div class="dye-tools">
-          <span class="dye-brushset">笔刷
-            <button type="button" data-b="14" onclick="dyeBrushSize(14)">小</button>
-            <button type="button" data-b="24" class="cur" onclick="dyeBrushSize(24)">中</button>
-            <button type="button" data-b="38" onclick="dyeBrushSize(38)">大</button>
-          </span>
           <button type="button" class="btn ghost" onclick="dyeStep(-1)">← 上一幅</button>
           <button type="button" class="btn ghost" onclick="dyeStep(1)">下一幅 →</button>
           <button type="button" class="btn ghost" onclick="dyeRand()">🎲 随机一幅</button>
@@ -2300,6 +2333,10 @@ function viewDye() {
     </div>
     <div class="section-title">🗂 挑一幅来赋彩(共 ${n} 幅 · 点缩略图切换)</div>
     <div class="dye-strip">${thumbs}</div>
+    <div class="dye-zoom" id="dye-zoom" onclick="dyeRefZoom(false)">
+      <canvas id="dye-ref-z"></canvas>
+      <span class="dye-zoom-x">✕ 点任意处关闭</span>
+    </div>
   `;
 }
 function dyeInit() {
@@ -2308,13 +2345,20 @@ function dyeInit() {
   if (!cv) return;
   const stage = document.getElementById("dye-stage");
   if (stage) stage.classList.add("busy");
+  let ink = "";
+  try { ink = localStorage.getItem(DYE_INK_ITEM) || ""; } catch (e) {}
+  if (/^#[0-9a-f]{6}$/i.test(ink)) DYE.ink = ink;
   dyeBind(cv);
+  dyeInk(DYE.ink, true);
+  dyeBrushSize(DYE.brush);
+  dyeTool(DYE.tool);
   dyeLoad(DYE.idx);
 }
 function dyeLoad(i) {
   const n = DYE_IMAGES.length;
   DYE.idx = ((i % n) + n) % n;
   dyeStopAuto();
+  dyeRefZoom(false);
   DYE.ready = false;
   const stage = document.getElementById("dye-stage");
   if (stage) { stage.classList.add("busy"); stage.classList.remove("done"); }
@@ -2357,8 +2401,10 @@ function dyeBuild(img, m) {
   const gctx = gray.getContext("2d");
   const gimg = gctx.createImageData(W, H);
   const gd = gimg.data;
+  /* 线稿:亮度化 + 轻微压暗,让线条比原图更"实",填色时边界也更好认 */
   for (let p = 0; p < src.length; p += 4) {
-    const v = (src[p] * 0.299 + src[p + 1] * 0.587 + src[p + 2] * 0.114) | 0;
+    const v0 = (src[p] * 0.299 + src[p + 1] * 0.587 + src[p + 2] * 0.114) | 0;
+    const v = Math.max(0, Math.min(255, Math.round((v0 - 12) * 1.16)));
     gd[p] = gd[p + 1] = gd[p + 2] = v;
     gd[p + 3] = 255;
   }
@@ -2368,36 +2414,65 @@ function dyeBuild(img, m) {
   if (!vis || !peek) return;
   vis.width = W; vis.height = H;
   peek.width = W; peek.height = H;
-  vis.getContext("2d").drawImage(gray, 0, 0);
   peek.getContext("2d").drawImage(color, 0, 0);
-  const tmpCv = document.createElement("canvas");
-  tmpCv.width = W; tmpCv.height = H;
-  DYE.tmpCv = tmpCv;
-  DYE.tmpCtx = tmpCv.getContext("2d");
-  DYE.tmpImg = gctx.createImageData(W, H);
-  DYE.buf = DYE.tmpImg.data;
-  DYE.color = color; DYE.gray = gray; DYE.data = src; DYE.vis = vis; DYE.peek = peek;
+  const pCv = document.createElement("canvas");
+  pCv.width = W; pCv.height = H;
+  /* 可涂区:把纯白纸底刨掉,进度条才不会被大片留白稀释掉 */
+  const zone = new Uint8Array(W * H);
+  let zoneCnt = 0;
+  for (let i = 0, p = 0; i < W * H; i++, p += 4) {
+    if (gd[p] <= 246) { zone[i] = 1; zoneCnt++; }
+  }
+  DYE.paintCv = pCv;
+  DYE.paintCtx = pCv.getContext("2d");
+  DYE.color = color; DYE.gray = gray; DYE.gd = gd; DYE.vis = vis; DYE.peek = peek;
+  DYE.zone = zone;
   DYE.mask = new Uint8Array(W * H);
   DYE.visited = new Uint8Array(W * H);
   DYE.stack = new Int32Array(W * H);
+  DYE.fillIdx = new Int32Array(W * H);
   DYE.cvW = W; DYE.cvH = H;
-  DYE.cnt = 0; DYE.total = W * H; DYE.done = false; DYE.ready = true;
+  DYE.cnt = 0; DYE.total = Math.max(1, zoneCnt); DYE.done = false; DYE.ready = true;
   DYE.painting = false; DYE.moved = false;
   const stage = document.getElementById("dye-stage");
   if (stage) stage.classList.remove("busy", "done");
   const tip = document.getElementById("dye-done");
   if (tip) tip.classList.remove("show");
   dyePeek(false);
+  dyePaint();
+  dyeRefCv("dye-ref-f", 150);
+  dyeRefCv("dye-ref-s", 300);
   const lab = document.getElementById("dye-label");
-  if (lab) lab.textContent = `第 ${DYE.idx + 1} / ${DYE_IMAGES.length} 幅 · 点按填色 · 按住拖笔`;
+  if (lab) lab.textContent = `第 ${DYE.idx + 1} / ${DYE_IMAGES.length} 幅 · 蘸色 · 轻点填块 · 按住涂笔`;
   dyeProgress();
   dyeThumbActive();
+}
+/* 合成:米色纸底 + 玩家涂的颜色 + 正片叠底的线稿 = 屏幕上看到的那张画 */
+function dyePaint() {
+  if (!DYE.vis || !DYE.paintCv || !DYE.gray) return;
+  const ctx = DYE.vis.getContext("2d");
+  const W = DYE.cvW, H = DYE.cvH;
+  ctx.save();
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "#fdfaf2";
+  ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(DYE.paintCv, 0, 0);
+  ctx.globalCompositeOperation = "multiply";
+  ctx.drawImage(DYE.gray, 0, 0);
+  ctx.restore();
+}
+/* 拖动时每帧最多重绘一次,别让 pointermove 把主线程排队排死 */
+function dyeRender() {
+  if (DYE.raf) return;
+  DYE.raf = requestAnimationFrame(() => { DYE.raf = 0; dyePaint(); });
 }
 function dyePos(e, cv) {
   const r = cv.getBoundingClientRect();
   return [(e.clientX - r.left) * (cv.width / r.width), (e.clientY - r.top) * (cv.height / r.height)];
 }
 function dyeBind(cv) {
+  if (cv.dataset.bound) return;
+  cv.dataset.bound = "1";
   cv.addEventListener("pointerdown", e => {
     if (!DYE.ready) return;
     e.preventDefault();
@@ -2412,43 +2487,50 @@ function dyeBind(cv) {
     const p = dyePos(e, cv);
     if (!DYE.moved) {
       const dx = p[0] - DYE.downX, dy = p[1] - DYE.downY;
-      if (dx * dx + dy * dy < 49) return;   // 7px 内仍按「点按」处理
+      if (dx * dx + dy * dy < 36) return;   // 6px 内仍按「轻点」处理
       DYE.moved = true;
     }
-    dyeStroke(DYE.lastX, DYE.lastY, p[0], p[1]);
+    dyeSeg(DYE.lastX, DYE.lastY, p[0], p[1]);
     DYE.lastX = p[0]; DYE.lastY = p[1];
     dyeProgress();
   });
   const stop = () => {
     if (!DYE.painting) return;
     DYE.painting = false;
-    if (!DYE.moved && DYE.ready) dyeFillAt(DYE.downX, DYE.downY);
+    /* 轻点 = 用当前颜色填一整块;橡皮模式下轻点就是擦一下,不填 */
+    if (!DYE.moved && DYE.ready && DYE.tool === "brush") dyeFillAt(DYE.downX, DYE.downY);
   };
   cv.addEventListener("pointerup", stop);
   cv.addEventListener("pointercancel", () => { DYE.painting = false; });
 }
-function dyeStroke(x0, y0, x1, y1) {
-  const r = DYE.brush;
+/* 一笔:用圆的线帽连起来,比逐点盖圆平滑得多 */
+function dyeSeg(x0, y0, x1, y1) {
+  if (!DYE.ready) return;
+  const pctx = DYE.paintCtx, r = DYE.brush, er = DYE.tool === "eraser";
+  pctx.save();
+  pctx.globalCompositeOperation = er ? "destination-out" : "source-over";
+  pctx.strokeStyle = DYE.ink;
+  pctx.lineWidth = r * 2;
+  pctx.lineCap = "round";
+  pctx.lineJoin = "round";
+  pctx.beginPath();
+  pctx.moveTo(x0, y0);
+  pctx.lineTo(x1, y1);
+  pctx.stroke();
+  pctx.restore();
   const dist = Math.hypot(x1 - x0, y1 - y0);
-  const steps = Math.max(1, Math.ceil(dist / (r * 0.5)));
+  const steps = Math.max(1, Math.ceil(dist / Math.max(2, r * 0.6)));
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
-    dyeBrush(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t);
+    dyeMark(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, r, !er);
   }
+  dyeRender();
 }
-function dyeBrush(x, y, r0) {
-  if (!DYE.ready) return;
+/* 进度统计只数「可涂区」里被涂到 / 被擦掉的像素 */
+function dyeMark(x, y, r, on) {
+  const mask = DYE.mask, zone = DYE.zone;
+  if (!mask || !zone) return;
   const W = DYE.cvW, H = DYE.cvH;
-  const r = r0 || DYE.brush;
-  if (x < -r * 2 || y < -r * 2 || x > W + r * 2 || y > H + r * 2) return;
-  const ctx = DYE.vis.getContext("2d");
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.clip();
-  ctx.drawImage(DYE.color, 0, 0);
-  ctx.restore();
-  const mask = DYE.mask;
   const xa = Math.max(0, Math.floor(x - r)), xb = Math.min(W - 1, Math.ceil(x + r));
   const ya = Math.max(0, Math.floor(y - r)), yb = Math.min(H - 1, Math.ceil(y + r));
   const rr = r * r;
@@ -2458,59 +2540,63 @@ function dyeBrush(x, y, r0) {
       const dx = xx - x;
       if (dx * dx + dy * dy > rr) continue;
       const i = yy * W + xx;
-      if (!mask[i]) { mask[i] = 1; DYE.cnt++; }
+      if (!zone[i]) continue;
+      if (on) { if (!mask[i]) { mask[i] = 1; DYE.cnt++; } }
+      else if (mask[i]) { mask[i] = 0; DYE.cnt--; }
     }
   }
 }
+/* 轻点填一块:沿亮度相近的浅色区漫延,碰到深色线条就停(不会漏到整幅画) */
 function dyeFillAt(x, y) {
   if (!DYE.ready) return;
   const W = DYE.cvW, H = DYE.cvH;
   const px = Math.floor(x), py = Math.floor(y);
   if (px < 0 || py < 0 || px >= W || py >= H) return;
-  const data = DYE.data, mask = DYE.mask;
-  const i0 = py * W + px, k0 = i0 * 4;
-  const r0 = data[k0], g0 = data[k0 + 1], b0 = data[k0 + 2];
-  const TOL = 72;   // 颜色容差(相邻像素 RGB 差之和),越大越容易连成一片
-  const visited = DYE.visited, stack = DYE.stack, buf = DYE.buf;
+  const gd = DYE.gd, i0 = py * W + px;
+  const l0 = gd[i0 * 4];
+  if (l0 < 106) return;   // 点在线条上,不填
+  /* 容差按「相对起点亮度」算,不是相对上一个邻居 —— 相对邻居会一格一格往外漂,
+     最后整片糊过去(实测能漏掉 88% 的画)。30 / 110 这组值下,一次点击只吃掉该吃的
+     那一格:瓶腹花纹区 1.5%,瓶口 0.4%,背景整片 73%(点背景当然就是涂背景)。 */
+  const TOL = 30, DARK = 110;
+  const visited = DYE.visited, stack = DYE.stack, idx = DYE.fillIdx;
   visited.fill(0);
-  buf.fill(0);
-  let top = 0, newly = 0;
-  const paint = i => {
-    const k = i * 4;
-    buf[k] = data[k]; buf[k + 1] = data[k + 1]; buf[k + 2] = data[k + 2]; buf[k + 3] = 255;
-    if (!mask[i]) { mask[i] = 1; newly++; }
-  };
-  stack[top++] = i0;
-  visited[i0] = 1;
-  paint(i0);
+  let top = 0, n = 0;
+  stack[top++] = i0; visited[i0] = 1; idx[n++] = i0;
   while (top > 0) {
     const i = stack[--top];
     const x2 = i % W, y2 = (i / W) | 0;
     for (let t = 0; t < 4; t++) {
       const j = t === 0 ? (x2 > 0 ? i - 1 : -1) : t === 1 ? (x2 < W - 1 ? i + 1 : -1) : t === 2 ? (y2 > 0 ? i - W : -1) : (y2 < H - 1 ? i + W : -1);
       if (j < 0 || visited[j]) continue;
+      const lj = gd[j * 4];
+      if (lj < DARK || Math.abs(lj - l0) > TOL) continue;
       visited[j] = 1;
-      const k = j * 4;
-      if (Math.abs(data[k] - r0) + Math.abs(data[k + 1] - g0) + Math.abs(data[k + 2] - b0) <= TOL) {
-        stack[top++] = j;
-        paint(j);
-      }
+      stack[top++] = j;
+      idx[n++] = j;
     }
   }
-  if (newly) {
-    DYE.tmpCtx.putImageData(DYE.tmpImg, 0, 0);
-    DYE.vis.getContext("2d").drawImage(DYE.tmpCv, 0, 0);
-    DYE.cnt += newly;
+  if (!n) return;
+  const img = DYE.paintCtx.getImageData(0, 0, W, H);
+  const d = img.data;
+  const cr = parseInt(DYE.ink.slice(1, 3), 16), cg = parseInt(DYE.ink.slice(3, 5), 16), cb = parseInt(DYE.ink.slice(5, 7), 16);
+  const mask = DYE.mask, zone = DYE.zone;
+  for (let k = 0; k < n; k++) {
+    const i = idx[k], q = i * 4;
+    d[q] = cr; d[q + 1] = cg; d[q + 2] = cb; d[q + 3] = 255;
+    if (zone[i] && !mask[i]) { mask[i] = 1; DYE.cnt++; }
   }
+  DYE.paintCtx.putImageData(img, 0, 0);
+  dyeRender();
   dyeProgress();
 }
 function dyeProgress() {
   const pct = DYE.total ? DYE.cnt / DYE.total : 0;
   const bar = document.getElementById("dye-bar");
-  if (bar) bar.style.width = (pct * 100).toFixed(1) + "%";
+  if (bar) bar.style.width = Math.min(100, pct * 100).toFixed(1) + "%";
   const t = document.getElementById("dye-pct");
-  if (t) t.textContent = Math.floor(pct * 100) + "%";
-  if (!DYE.done && pct >= 0.95) {
+  if (t) t.textContent = Math.floor(Math.min(1, pct) * 100) + "%";
+  if (!DYE.done && pct >= 0.62) {
     DYE.done = true;
     const stage = document.getElementById("dye-stage");
     if (stage) stage.classList.add("done");
@@ -2524,47 +2610,101 @@ function dyePeek(on) {
   if (!on || !DYE.ready) stage.classList.remove("peeking");
   else stage.classList.add("peeking");
 }
+function dyeInk(hex, silent) {
+  if (!/^#[0-9a-f]{6}$/i.test(String(hex || ""))) return;
+  DYE.ink = String(hex).toLowerCase();
+  const box = document.getElementById("dye-palette");
+  if (box) $$(".dye-sw", box).forEach(b => b.classList.toggle("cur", String(b.dataset.c).toLowerCase() === DYE.ink));
+  const inp = document.getElementById("dye-color");
+  if (inp && String(inp.value).toLowerCase() !== DYE.ink) inp.value = DYE.ink;
+  try { localStorage.setItem(DYE_INK_ITEM, DYE.ink); } catch (e) {}
+  /* 挑颜色就是打算画了:橡皮自动让位 */
+  if (!silent && DYE.tool === "eraser") dyeTool("brush");
+}
+function dyeTool(t) {
+  DYE.tool = t === "eraser" ? "eraser" : "brush";
+  const box = document.getElementById("dye-toolset");
+  if (box) $$("button", box).forEach(b => b.classList.toggle("cur", b.dataset.t === DYE.tool));
+  const cv = document.getElementById("dye-cv");
+  if (cv) cv.style.cursor = DYE.tool === "eraser" ? "cell" : "crosshair";
+}
 function dyeBrushSize(b) {
-  DYE.brush = b;
-  document.querySelectorAll(".dye-brushset button").forEach(x => x.classList.toggle("cur", Number(x.dataset.b) === b));
+  DYE.brush = Number(b) || 30;
+  const box = document.getElementById("dye-brushset");
+  if (box) $$("button", box).forEach(x => x.classList.toggle("cur", Number(x.dataset.b) === DYE.brush));
 }
 function dyeReset() {
   if (!DYE.ready) return;
   dyeStopAuto();
-  DYE.vis.getContext("2d").drawImage(DYE.gray, 0, 0);
+  DYE.paintCtx.clearRect(0, 0, DYE.cvW, DYE.cvH);
   DYE.mask.fill(0);
   DYE.cnt = 0; DYE.done = false;
   const stage = document.getElementById("dye-stage");
   if (stage) stage.classList.remove("done");
   const tip = document.getElementById("dye-done");
   if (tip) tip.classList.remove("show");
+  dyePaint();
   dyeProgress();
 }
 function dyeStopAuto() {
   if (DYE.autoTimer) { clearInterval(DYE.autoTimer); DYE.autoTimer = null; }
 }
+/* 一键赋彩:拿原图该处的颜色随机刷满,当作「AI 给的参考答案」 */
 function dyeAuto() {
   if (!DYE.ready || DYE.autoTimer) return;
   let step = 0;
   DYE.autoTimer = setInterval(() => {
     if (!DYE.ready) { dyeStopAuto(); return; }
     step++;
-    for (let k = 0; k < 6; k++) dyeBrush(Math.random() * DYE.cvW, Math.random() * DYE.cvH, 26 + Math.random() * 46);
+    const pctx = DYE.paintCtx;
+    for (let k = 0; k < 6; k++) {
+      const x = Math.random() * DYE.cvW, y = Math.random() * DYE.cvH, r = 26 + Math.random() * 46;
+      pctx.save();
+      pctx.beginPath();
+      pctx.arc(x, y, r, 0, Math.PI * 2);
+      pctx.clip();
+      pctx.drawImage(DYE.color, 0, 0);
+      pctx.restore();
+      dyeMark(x, y, r, true);
+    }
+    dyeRender();
     dyeProgress();
     if (step >= 46) {
       dyeStopAuto();
-      DYE.vis.getContext("2d").drawImage(DYE.color, 0, 0);
-      DYE.mask.fill(1);
+      DYE.paintCtx.drawImage(DYE.color, 0, 0);
+      DYE.mask.set(DYE.zone);
       DYE.cnt = DYE.total;
+      dyePaint();
       dyeProgress();
     }
   }, 40);
 }
+/* 参考原图:同一张彩色图铺到三个地方(桌面侧栏 / 手机浮窗 / 放大浮层) */
+function dyeRefCv(id, w) {
+  const cv = document.getElementById(id);
+  if (!cv || !DYE.color) return;
+  const c = DYE.color;
+  const s = Math.min(1, w / c.width);
+  cv.width = Math.max(2, Math.round(c.width * s));
+  cv.height = Math.max(2, Math.round(c.height * s));
+  const x = cv.getContext("2d");
+  x.imageSmoothingEnabled = true;
+  x.imageSmoothingQuality = "high";
+  x.drawImage(c, 0, 0, cv.width, cv.height);
+}
+function dyeRefZoom(on) {
+  const z = document.getElementById("dye-zoom");
+  if (!z) return;
+  if (on) { dyeRefCv("dye-ref-z", 760); z.classList.add("show"); }
+  else z.classList.remove("show");
+}
 function dyeSave() {
   if (!DYE.ready) return;
+  if (DYE.raf) { cancelAnimationFrame(DYE.raf); DYE.raf = 0; }
+  dyePaint();
   const a = document.createElement("a");
   a.href = DYE.vis.toDataURL("image/png");
-  a.download = "文物精灵_AI赋彩_第" + (DYE.idx + 1) + "幅.webp";
+  a.download = "文物精灵_AI赋彩_第" + (DYE.idx + 1) + "幅.png";
   document.body.appendChild(a);
   a.click();
   a.remove();
