@@ -32,6 +32,7 @@ import mimetypes
 import os
 import re
 import socket
+import ssl
 import sys
 import threading
 import urllib.error
@@ -57,6 +58,16 @@ ACCESS_KEY = "wbpk_EmA5VK2VcIUoBzfFI6Zacw_F1K3gdiinbg22xd0OTLtOuN32jy1A4wX"
 PORTS = [int(x) for x in (os.environ.get("PORTS") or os.environ.get("PORT") or "8080").split(",") if x.strip()]
 PORT = PORTS[0]
 
+# ---- 本地 HTTPS ----
+# 浏览器的麦克风（getUserMedia）与语音识别（SpeechRecognition）只在安全上下文里开放。
+# http://127.0.0.1 算安全，但手机用局域网 IP 访问 http://172.20.10.2:8080 不算，
+# 于是手机上「按住说话」直接不可用。这里额外开一个 https 端口解决。
+# 证书由 tools/mk_tls.py 生成；TLS_PORT=0 可关掉。
+CERT_DIR = os.path.join(ROOT, "certs")
+TLS_CERT = os.path.join(CERT_DIR, "relic.crt")
+TLS_KEY = os.path.join(CERT_DIR, "relic.key")
+TLS_PORT = int(os.environ.get("TLS_PORT") or "8443")
+
 
 class Server(ThreadingHTTPServer):
     """默认 backlog 只有 5：浏览器打开首页会并发拉几十个素材，
@@ -65,6 +76,41 @@ class Server(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
     request_queue_size = 256
+
+
+class TLSServer(Server):
+    """在监听 socket 上裹一层 TLS —— 之后 accept 出来的每个连接都是加密的。
+
+    握手失败的请求（证书没被信任、明文访问、扫描器探测）会抛 OSError；
+    父类 _handle_request_noblock 里对 OSError 是 catch 住直接 return 的，
+    所以单个坏连接不会把服务线程带走。
+    """
+
+    def __init__(self, addr, handler, ctx):
+        self.ctx = ctx
+        super().__init__(addr, handler)
+
+    def get_request(self):
+        sock, addr = self.socket.accept()
+        try:
+            sock.settimeout(15)           # 别让半开连接把握手线程吊死
+            return self.ctx.wrap_socket(sock, server_side=True), addr
+        except Exception:
+            try:
+                sock.close()
+            except Exception:
+                pass
+            raise
+
+
+def make_tls_ctx():
+    """加载 certs/ 里的证书。没有证书就返回 None（服务照常跑 HTTP）。"""
+    if not (os.path.exists(TLS_CERT) and os.path.exists(TLS_KEY)):
+        return None
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+    ctx.load_cert_chain(TLS_CERT, TLS_KEY)
+    return ctx
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -422,7 +468,25 @@ def main():
         print("所有端口都没能启动，检查是否被占用")
         return
 
-    local = "http://127.0.0.1:%d/%s" % (PORTS[0], ENTRY)
+    # ---- 顺带起 HTTPS：麦克风/语音识别必须有安全上下文，手机上尤其如此 ----
+    tls_url = ""
+    tls_note = ""
+    if TLS_PORT:
+        ctx = None
+        try:
+            ctx = make_tls_ctx()
+        except Exception as e:
+            tls_note = "证书加载失败: %s" % str(e)[:100]
+        if ctx is None and not tls_note:
+            tls_note = "没有证书 —— 先跑 python tools/mk_tls.py"
+        if ctx is not None:
+            try:
+                servers.append((TLS_PORT, TLSServer(("0.0.0.0", TLS_PORT), Handler, ctx)))
+                tls_url = "https://127.0.0.1:%d/%s" % (TLS_PORT, ENTRY)
+            except OSError as e:
+                tls_note = "端口 %d 被占用: %s" % (TLS_PORT, e)
+
+    local = tls_url or ("http://127.0.0.1:%d/%s" % (PORTS[0], ENTRY))
 
     if os.environ.get("NO_BROWSER") != "1":
         threading.Timer(0.7, lambda: webbrowser.open(local)).start()
@@ -430,8 +494,17 @@ def main():
     print("=" * 60)
     print("  文物精灵 已启动")
     print("  本机打开: %s" % local)
+    if tls_url:
+        print("  明文备用: http://127.0.0.1:%d/" % PORTS[0])
+    else:
+        print("  麦克风不可用: %s" % (tls_note or "HTTPS 未开启"))
     for ip in lan_ips():
         print("  同网访问: http://%s:%d/" % (ip, PORTS[0]))
+        if tls_url:
+            print("  同网 https: https://%s:%d/   ← 手机上要开麦请用这条" % (ip, TLS_PORT))
+    if tls_url:
+        print("  首次打开 https 会提示「不安全」（自签证书）：点 高级 → 继续前往；")
+        print("  想彻底不提示，双击 tools/trust_ca.bat 装一次根证书。")
     print("  ------------------------------")
     # 注意：控制台不打印明文口令（仓库/日志里都不应出现）。
     # 演示口令由环境变量 DEMO_PASS 提供；未设置时只提示去看部署文档。

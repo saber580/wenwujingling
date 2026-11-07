@@ -147,7 +147,8 @@ drawer = c.eval("(function(){var b=document.querySelector('.aw-chat');"
 say("show" in drawer["cls"], "接听后聊天抽屉打开", drawer["cls"])
 say(drawer["name"] == caller, "抽屉里就是刚才来电那一只", "%s vs %s" % (drawer["name"], caller))
 say("已接通" in drawer["first"], "有「已接通」系统消息", drawer["first"][:24])
-say("开始" in drawer["bt"], "接听后键复位成「开始」", drawer["bt"])
+say("说话" in drawer["bt"], "接听后键变成「说话」（可开口）", drawer["bt"])
+say("call" in drawer["cls"], "接通态：抽屉挂上通话条", drawer["cls"])
 
 # 挂断流程
 click(c, "#awPsHang")

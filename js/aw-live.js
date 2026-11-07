@@ -192,6 +192,25 @@
     "@keyframes awPsGoPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,214,150,.55)}50%{box-shadow:0 0 0 7px rgba(255,214,150,0)}}",
     ".aw-call-hint{margin:0;max-width:210px;text-align:center;font-size:10.5px;line-height:1.7;",
     "  letter-spacing:.02em;color:rgba(255,233,184,.84)}",
+    /* ---- 通话中：键变麦克风，屏底给一行"听着…/你说…" ---- */
+    ".aw-call.talking .aw-ps-hang{display:block}",
+    ".aw-call.talking .aw-ps-go{background:linear-gradient(180deg,#B33A2E,#7C0F13);color:#FFF3D6;",
+    "  border-color:rgba(255,214,150,.9);letter-spacing:.14em}",
+    ".aw-ps-heard{position:absolute;left:6px;right:6px;bottom:0;max-height:27px;overflow:hidden;",
+    "  text-align:center;font-size:9px;line-height:1.5;color:#8A5A2E;opacity:0;transition:opacity .2s;",
+    "  pointer-events:none;word-break:break-all}",
+    ".aw-call.talking .aw-ps-heard{opacity:1}",
+    /* 听着的时候：屏顶三根跳动的音量条 */
+    ".aw-ps-live{position:absolute;left:0;right:0;top:5px;display:none;align-items:center;",
+    "  justify-content:center;gap:3px;pointer-events:none}",
+    ".aw-call.listening .aw-ps-live{display:flex}",
+    ".aw-ps-live i{width:2px;height:10px;border-radius:2px;background:#C0392F;",
+    "  animation:awPsBar .9s ease-in-out infinite}",
+    ".aw-ps-live i:nth-child(2){height:15px;animation-delay:.16s}",
+    ".aw-ps-live i:nth-child(3){animation-delay:.32s}",
+    "@keyframes awPsBar{0%,100%{transform:scaleY(.42);opacity:.55}50%{transform:scaleY(1.15);opacity:1}}",
+    ".aw-call.listening .aw-phone-screen{box-shadow:inset 0 0 0 2px rgba(192,57,47,.5)}",
+    ".aw-call.listening .aw-ps-go{background:linear-gradient(180deg,#C0392F,#8E1418);color:#FFF3D6}",
     "@media (max-width:900px){.aw-hero{grid-template-columns:1fr;gap:14px}",
     "  .aw-call{margin:0 auto}.aw-phone{width:140px;height:268px}.aw-ps-spirit{width:74px;height:74px}",
     "  .aw-ps-dock{height:82px}.aw-call-hint{max-width:240px}}",
@@ -276,6 +295,23 @@
     ".aw-in button{font-family:inherit;background:#A5181C;border:1px solid #A5181C;color:#fff;",
     "  padding:8px 15px;border-radius:7px;cursor:pointer;font-size:13px;flex:none}",
     ".aw-in button:hover{background:#7C0F13}",
+    /* ---- 通话条（来电接通后才有）---- */
+    ".aw-callbar{display:none;gap:8px;padding:9px 10px 0;flex:none}",
+    ".aw-chat.call .aw-callbar{display:flex}",
+    ".aw-mic{flex:1;font-family:inherit;font-size:13px;letter-spacing:.04em;padding:9px 10px;",
+    "  border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;",
+    "  transition:.18s;background:linear-gradient(180deg,#FFF8EC,#F3E3C6);color:#7C2A12;",
+    "  border:1px solid rgba(200,154,82,.7)}",
+    ".aw-mic:hover{background:#fff}",
+    ".aw-mic-ic{font-size:14px;line-height:1}",
+    ".aw-chat.listening .aw-mic{background:linear-gradient(180deg,#C0392F,#8E1418);",
+    "  color:#FFF3D6;border-color:#8E1418;box-shadow:0 0 0 3px rgba(192,57,47,.16)}",
+    ".aw-chat.listening .aw-mic-ic{animation:awMicPulse 1s ease-in-out infinite}",
+    "@keyframes awMicPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.18);opacity:.72}}",
+    ".aw-end{font-family:inherit;font-size:12.5px;padding:9px 15px;border-radius:8px;cursor:pointer;",
+    "  background:#fff;color:#A5181C;border:1px solid rgba(165,24,28,.55);flex:none}",
+    ".aw-end:hover{background:#A5181C;color:#fff}",
+    "@media (prefers-reduced-motion:reduce){.aw-chat.listening .aw-mic-ic{animation:none}}",
     "/* ---- 圆窗上的「点我聊聊」提示 ---- */",
     ".aw-tip{position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);z-index:5;",
     "  font-family:\"STKaiti\",\"KaiTi\",\"楷体\",serif;font-size:11.5px;letter-spacing:.14em;",
@@ -461,6 +497,14 @@
       '<button type="button" class="aw-spk" id="awSpk" aria-pressed="true">有声</button>' +
     '</div>' +
     '<div class="aw-chips" id="awChips"></div>' +
+    /* 通话条：只在来电接通后出现。手机上下半屏被抽屉占着，
+       手机上的「说话」键够不到，所以真正的操作入口放这儿。 */
+    '<div class="aw-callbar" id="awCallBar">' +
+      '<button type="button" class="aw-mic" id="awMic" aria-pressed="false">' +
+        '<span class="aw-mic-ic">🎙</span><span id="awMicTxt">点一下说话</span>' +
+      '</button>' +
+      '<button type="button" class="aw-end" id="awEnd">挂断</button>' +
+    '</div>' +
     '<div class="aw-in"><input id="awInp" placeholder="和它说点什么…"><button id="awGo">发送</button></div>';
   document.body.appendChild(box);
 
@@ -473,9 +517,13 @@
     if (window.Voice) window.Voice.stop();
     resetVoiceUI(); syncSpk();
     box.classList.remove("show");
+    vrHangup();                 /* 关抽屉等于挂断：别让麦克风还在偷偷开着 */
   }
   $("awX").onclick = closeChat;
   $("awGo").onclick = send;
+  /* 通话条：麦克风与挂断。手机屏被抽屉盖住时，这里才是够得着的入口 */
+  $("awMic").onclick = function () { if (VR.on) vrStop(); else vrStart(); };
+  $("awEnd").onclick = function () { callReset("已挂断 · 按「开始」再随机一位"); };
   $("awInp").onkeydown = function (e) { if (e.key === "Enter") send(); };
 
   /* ---- 文物之声：让它开口讲自己的故事 ----
@@ -650,6 +698,7 @@
       sys("☎ 已接通 ·「" + s.name + "」在电话那头");
       callGreet(s);
     } else {
+      box.classList.remove("call", "listening");   /* 普通聊天不挂通话条 */
       sys("已唤醒「" + s.name + "」。它会以自己的身份、朝代和脾气与你聊天。");
       greet(s);
     }
@@ -726,6 +775,191 @@
   function ringBack() { beep(450, 0.32, 0, 0.05); beep(450, 0.32, 0.44, 0.05); }
   function pickUp() { beep(760, 0.1, 0, 0.06); beep(1040, 0.12, 0.11, 0.06); }
 
+  /* ================= 真语音通话（A 档：浏览器识别 + 现有 TTS） =================
+     之前接通只会念稿，用户没有一个"说话"的入口，所以听着像人机。
+     这一版只做三件事：把你说的话变成文字 → 走原有问答链 → 用原有嗓子念出来。
+
+     它靠浏览器的 SpeechRecognition，有两个绕不过去的前提：
+       1) 必须在安全上下文里（https 或 localhost），否则这个 API 连构造函数都没有；
+          线上现在是 http://IP，手机上一律拿不到 —— 只能退回打字。
+       2) Chrome 的识别服务在 Google，国内网络常连不上，会报 network；
+          Edge 走微软的服务，通常可用。失败原因如实说清楚，别装作在听。
+     要做到"稳定、可打断、可离线"，得换服务端 ASR（B 档），这一版不碰。 */
+  var VR = { rec: null, on: false, sent: false };
+
+  function vrSR() {
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  }
+
+  /* 返回不能用语音的原因；空字符串表示可用 */
+  function vrBlockReason() {
+    if (!window.isSecureContext) return "insecure";
+    if (!vrSR()) return "unsupported";
+    return "";
+  }
+
+  function vrNote(txt, warn) {
+    var el = $("awPsHeard");
+    if (!el) return;
+    el.textContent = txt || "";
+    el.style.color = warn ? "#A5181C" : "";
+  }
+
+  /* 状态一变就重画所有相关控件：手机屏上的键、抽屉底部的通话条、屏底那行提示。
+     两处按钮共用一份状态，避免出现"手机说在听、抽屉说没在听"。 */
+  function vrPaint() {
+    var on = !!VR.on;
+    var host = $("awCall");
+    var talking = !!(host && host.classList.contains("talking"));
+    if (host) host.classList.toggle("listening", on);
+    box.classList.toggle("call", talking);
+    box.classList.toggle("listening", on);
+    var go = $("awPsGo"), hint = $("awCallHint"), t = $("awMicTxt"), mic = $("awMic");
+    if (go && talking) go.textContent = on ? "● 听着…" : "🎙 说话";
+    if (hint && talking) {
+      /* 不能开麦的原因要一直挂在提示上，别让它看起来像"按了没反应" */
+      var why = vrBlockReason();
+      hint.textContent = on ? "正在听你说话 —— 说完会自动发出去"
+        : why === "insecure" ? "http 下浏览器禁麦 · 用 https 打开才能说话（也可以打字）"
+        : why === "unsupported" ? "这个浏览器不支持语音识别 · 直接打字一样的"
+        : "点「说话」直接讲，说完自动发出去";
+    }
+    if (t) t.textContent = on ? "正在听…（点一下停）" : "点一下说话";
+    if (mic) mic.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+
+  function vrListening(on) {
+    VR.on = !!on;
+    vrPaint();
+  }
+
+  function vrStop() {
+    if (!VR.rec) return;
+    try { VR.rec.stop(); } catch (e) {}
+  }
+
+  function vrStart() {
+    var why = vrBlockReason();
+    if (why) {
+      /* 提示要贴合当前访问方式：本机/局域网能直接换成 8443 那条，
+         公网 IP 上根本没有 https 端口，别让用户照着敲一个不存在的地址 */
+      var host = location.hostname || "";
+      var localish = /^(localhost|127\.|0\.0\.0\.0$|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+      var msg = why === "insecure"
+        ? (localish
+            ? "现在是用 http 打开的，浏览器把麦克风锁死了 —— 换成 https://" + host + ":8443/ 再来（启动终端里有打印），或者直接打字，一样的。"
+            : "线上这条是 http，浏览器一律不给麦 —— 要真说话只能在 https 下（本机启动时会给一条 https 地址），这里先用打字。")
+        : "这个浏览器不给用语音识别（Chrome / Edge 才有），直接打字一样的。";
+      sys(msg);
+      vrNote(why === "insecure" ? "http 下不能开麦" : "此浏览器不支持语音", true);
+      return;
+    }
+    if (VR.on) return;
+    /* 它还在念，就先别念了 —— 用户开口等于打断，这也算最朴素的一条 barge-in */
+    if (window.Voice) window.Voice.stop();
+    VR.sent = false;
+
+    var SR = vrSR(), r;
+    try { r = new SR(); } catch (e) { vrNote("麦克风没起来", true); return; }
+    r.lang = "zh-CN";
+    r.interimResults = true;      /* 边说边出字，屏幕上能看见"它在听" */
+    r.continuous = false;         /* 说完一句自动结束，手机端不用按两次 */
+    r.maxAlternatives = 1;
+    VR.rec = r;
+
+    r.onstart = function () { vrListening(true); vrNote("听着…"); };
+
+    r.onresult = function (e) {
+      var fin = "", mid = "";
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var one = e.results[i][0];
+        var seg = one ? one.transcript : "";
+        if (e.results[i].isFinal) fin += seg; else mid += seg;
+      }
+      if (mid) vrNote(mid);
+      if (fin && !VR.sent) {          /* 只发一次：onend 之后还可能补一条 result */
+        VR.sent = true;
+        vrFinish(fin);
+      }
+    };
+
+    r.onerror = function (e) {
+      var c = (e && e.error) || "";
+      VR.rec = null;
+      vrListening(false);
+      if (c === "aborted") return;    /* 自己 stop 的，不算错 */
+      var map = {
+        "no-speech": "没听清，再说一次？",
+        "audio-capture": "找不到麦克风，看看系统权限或有没有插上",
+        "not-allowed": "麦克风权限被拒了，点地址栏那个锁图标放开",
+        "service-not-allowed": "浏览器的语音服务被禁用",
+        "network": "识别服务连不上（Chrome 走 Google 的服务，国内常被拦）—— 换 Edge 打开，或者直接打字"
+      };
+      vrNote(map[c] || ("识别失败：" + c), true);
+      if (map[c]) sys(map[c]);
+    };
+
+    r.onend = function () {
+      VR.rec = null;
+      vrListening(false);
+    };
+
+    try { r.start(); } catch (e2) { VR.rec = null; vrNote("麦克风没起来", true); }
+  }
+
+  function vrFinish(txt) {
+    txt = String(txt || "").trim();
+    if (!txt) return;
+    vrNote("你说：" + txt);        /* 屏上留个凭据，别让用户怀疑"到底听进去了没有" */
+    /* 接通头几秒它正在说开场白，链路是锁着的。这句不能丢 —— 排队等它说完再送，
+       最多等 8 秒，超时就明说没送出去，别装作听到了。 */
+    if (BUSY) {
+      sys("（它还在说，这句我先记着）");
+      var tries = 0;
+      var timer = setInterval(function () {
+        if (BUSY && ++tries < 40) return;
+        clearInterval(timer);
+        if (BUSY) sys("这句没送出去，再说一次？");
+        else ask(txt);
+      }, 200);
+      return;
+    }
+    ask(txt);
+  }
+
+  /* 挂断 / 关抽屉时收尾：停识别、退出通话态、把手机键和通话条复原 */
+  function vrHangup() {
+    vrStop();
+    VR.rec = null;
+    VR.on = false;
+    var host = $("awCall");
+    if (host) host.classList.remove("talking");
+    box.classList.remove("call", "listening");
+    vrNote("");
+    if (host && !(typeof CALL === "object" && CALL && CALL.on)) {
+      var go = $("awPsGo");
+      if (go) go.textContent = "开始";
+    }
+  }
+
+  /* 挂断：手机、抽屉、识别、朗读一起收干净。
+     抽屉里的「挂断」和手机上的「挂断」都走这里，只有一份收尾逻辑。 */
+  function callReset(txt) {
+    CALL.on = false;
+    CALL.talking = false;
+    var host = $("awCall");
+    if (host) host.classList.remove("ringing");
+    vrHangup();
+    if (window.Voice) window.Voice.stop();
+    if (box.classList.contains("show")) closeChat();
+    var sub = $("awPsSub");
+    if (sub) sub.textContent = "随时换一位精灵";
+    var go = $("awPsGo");
+    if (go) go.textContent = "开始";
+    var hint = $("awCallHint");
+    if (hint) hint.textContent = txt || "按「开始」，随机一位精灵打电话给你";
+  }
+
   function greet(s) {
     BUSY = true;
     var lb = liveBubble(true);
@@ -749,7 +983,14 @@
   function send() {
     var el = $("awInp"), q = String(el.value || "").trim();
     if (!q || BUSY || !CUR) return;
-    el.value = ""; put("me", q); HIST.push({ role: "user", content: q });
+    el.value = "";
+    ask(q);
+  }
+  /* 提问的统一入口：键盘输入和语音识别都从这里进来，两条路共用同一套问答与朗读 */
+  function ask(q) {
+    q = String(q || "").trim();
+    if (!q || BUSY || !CUR) return;
+    put("me", q); HIST.push({ role: "user", content: q });
     var la = localAnswer(CUR, q);
     BUSY = true;
     var lb = liveBubble(false);
@@ -906,9 +1147,11 @@
                 '<div class="aw-ps-bar"><span>燕赵 · 遗珍</span><span class="aw-ps-ic">▂▄▆ ⌁ ▮</span></div>' +
                 '<div class="aw-ps-stage">' +
                   '<button type="button" class="aw-ps-hang" id="awPsHang">挂断</button>' +
+                  '<div class="aw-ps-live"><i></i><i></i><i></i></div>' +
                   '<img class="aw-ps-spirit" id="awPsImg" alt="" decoding="async">' +
                   '<div class="aw-ps-name" id="awPsName">—</div>' +
                   '<div class="aw-ps-sub" id="awPsSub">随时换一位精灵</div>' +
+                  '<div class="aw-ps-heard" id="awPsHeard"></div>' +
                 '</div>' +
                 '<div class="aw-ps-dock">' +
                   '<button type="button" class="aw-ps-go" id="awPsGo">开始</button>' +
@@ -1039,7 +1282,7 @@
   }
 
   /* ---- 文物来电：屏幕空处自动轮换精灵，按「开始」随机一位打过来 ---- */
-  var CALL = { on: false, id: "", timer: 0, pool: [] };
+  var CALL = { on: false, talking: false, id: "", timer: 0, pool: [] };
 
   function callPool() {
     if (CALL.pool.length) return CALL.pool;
@@ -1076,7 +1319,8 @@
   }
 
   function callTick() {
-    if (CALL.on) return;                 /* 来电中不换人，别让正在响的那位跑掉 */
+    /* 来电中、或正跟某位通话时都不换人，别让对面那位在通话里被替换掉 */
+    if (CALL.on || CALL.talking) return;
     var id = callPick(CALL.id);
     if (!id) return;
     CALL.id = id;
@@ -1104,17 +1348,15 @@
     }
     callRotate(true);
 
-    function reset(txt) {
-      CALL.on = false;
-      host.classList.remove("ringing");
-      var sub = $("awPsSub");
-      if (sub) sub.textContent = "随时换一位精灵";
-      go.textContent = "开始";
-      if (hint) hint.textContent = txt || "按「开始」，随机一位精灵打电话给你";
-    }
+    function reset(txt) { callReset(txt); }
 
     go.addEventListener("click", function () {
       if (CALL.on) { answer(); return; }
+      /* 已接通：这个键变成麦克风，点一下开始听、再点一下收 */
+      if (host.classList.contains("talking")) {
+        if (VR.on) vrStop(); else vrStart();
+        return;
+      }
       var id = callPick(CALL.id);
       var s = S(id);
       if (!s) return;
@@ -1133,12 +1375,14 @@
       var id = CALL.id, s = S(id);
       pickUp();
       host.classList.remove("ringing");
-      var sub = $("awPsSub");
-      if (sub) sub.textContent = "随时换一位精灵";
-      go.textContent = "开始";
+      host.classList.add("talking");     /* 接通：手机进通话态，键变麦克风 */
       CALL.on = false;
-      if (hint) hint.textContent = "已接通 ·「" + (s ? s.name : "它") + "」在电话那头";
+      CALL.talking = true;
+      var sub = $("awPsSub");
+      if (sub) sub.textContent = "通话中";
+      go.textContent = "🎙 说话";
       openChat(id, { call: true });
+      vrPaint();                          /* 让抽屉底部的通话条出现，提示文案也在这里定 */
     }
 
     if (hang) hang.addEventListener("click", function (e) {

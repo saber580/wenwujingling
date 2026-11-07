@@ -20,6 +20,8 @@ _debug/
 __pycache__/
 存档/
 *.py[cod]
+# 本地 HTTPS 证书：含本机局域网 IP，换台机器就得重签，跑 tools/mk_tls.py 生成
+certs/
 # LSA 向量缓存：删掉后首次启动会按 kb_index.json 自动重建，不必入库（约 3.5 MB）
 mcp/.vectors.npz
 *.egg-info/
