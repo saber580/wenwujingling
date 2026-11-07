@@ -51,7 +51,7 @@
       return h.indexOf("/spirit/") === 0 ? "codex" : "poster";
     }
     if (/^\/(codex|attr)/.test(h)) return "codex";
-    if (/^\/(station|museums|creative)/.test(h)) return "more";
+    if (/^\/(station|museums|creative|biz)/.test(h)) return "more";
     if (h === "/" || h === "") return "mine";
     return "";
   }

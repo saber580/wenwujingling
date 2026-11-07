@@ -264,6 +264,8 @@
         if (d && typeof d.content === "string" && d.content) {
           if (!state.started) { state.started = true; if (state.mark) state.mark(); }
           state.text += d.content;
+          /* 有订阅者就每片都播一次：UI 逐字铺开靠的就是这里 */
+          if (state.onDelta) { try { state.onDelta(state.text); } catch (e) {} }
         }
         if (d) absorbToolCalls(d, state);
       } catch (e) { /* 半截 JSON，跳过 */ }
@@ -287,7 +289,8 @@
       body.tool_choice = opt.toolChoice || "auto";
     }
 
-    var state = { started: false, text: "", mark: null, toolCalls: [], tcMap: {} };
+    var state = { started: false, text: "", mark: null, toolCalls: [], tcMap: {},
+                  onDelta: (opt && typeof opt.onDelta === "function") ? opt.onDelta : null };
     var ctrl = null, run;
 
     if (useProxy()) {
@@ -300,6 +303,7 @@
           if (d && typeof d.content === "string" && d.content) {
             if (!state.started) { state.started = true; if (state.mark) state.mark(); }
             state.text += d.content;
+            if (state.onDelta) { try { state.onDelta(state.text); } catch (e) {} }
           }
           if (d) absorbToolCalls(d, state);
         }
@@ -422,7 +426,7 @@
      循环（决策 → 执行工具 → 把结果回填 → 再决策）由 agent.js 负责，
      这里只做一次「带 tools 的请求」，把正文和模型的工具意图原样交回去。
      拆成单步是因为每一轮都要先把工具真正执行完，才能决定下一轮问什么。 */
-  async function doAgentStep(body) {
+  async function doAgentStep(body, onDelta) {
     var msgs = Array.isArray(body.messages) ? body.messages.slice() : [];
     if (!msgs.length) return { ok: false, error: "没有对话内容" };
     if (!(msgs[0] && msgs[0].role === "system")) msgs = [{ role: "system", content: SYS }].concat(msgs);
@@ -431,6 +435,7 @@
       toolChoice: body.tool_choice || "auto",
       temperature: body.temperature,
       model: body.model,
+      onDelta: onDelta,
       firstMs: 12000,
       ms: Math.min(Number(body.ms) || 32000, 40000),
       tries: 3
@@ -444,6 +449,113 @@
     }).filter(function (c) { return c.name; });
     return { ok: true, text: r.text || "", tool_calls: calls, model: r.model };
   }
+
+  /* ---------- 流式对话：把"每来一片就回调"的通道单独开出来 ----------
+     小答与精灵茶话会都要逐字铺开，两条链路共用一个 collector。
+     onDelta 收到的是本轮累计全文；换模型重试时新一路从短文本重新开始，
+     调用方按「文本变短」判定是一次新开始即可。 */
+  window.cloudChatStream = function (messages, opt) {
+    opt = opt || {};
+    var src = Array.isArray(messages) ? messages.slice() : [];
+    if (!src.length) return Promise.resolve({ ok: false, error: "没有对话内容" });
+    if (location.protocol === "file:")
+      return Promise.resolve({ ok: false, error: "云端 AI 需要通过网址访问" });
+    var msgs = (src[0] && src[0].role === "system") ? src : [{ role: "system", content: SYS }].concat(src);
+    return collect(msgs, {
+      temperature: opt.temperature,
+      model: opt.model,
+      maxTokens: opt.max_tokens,
+      onDelta: (typeof opt.onDelta === "function") ? opt.onDelta : null,
+      firstMs: 10000,
+      ms: Math.min(Number(opt.ms) || 28000, 28000),
+      tries: 3
+    }).then(function (r) {
+      if (!String(r.text || "").trim()) return { ok: false, error: "云端没有返回内容" };
+      return { ok: true, text: r.text, model: r.model };
+    }).catch(function (e) { return { ok: false, error: errText(e) }; });
+  };
+
+  /* Agent 的每一轮也支持订阅：模型收尾那一轮吐的正文，就是最终回答 */
+  window.cloudAgentStream = function (body, onDelta) {
+    return Promise.resolve()
+      .then(function () {
+        if (location.protocol === "file")
+          throw new Error("云端 AI 需要通过网址访问");
+        return doAgentStep(body || {}, (typeof onDelta === "function") ? onDelta : null);
+      })
+      .catch(function (e) { return { ok: false, error: errText(e) }; });
+  };
+
+  /* ---------- 逐字铺开（打字机）----------
+     模型按片吐字：片大时一屏糊上去、片小时干等好几秒，直出会一卡一卡。
+     这里排一个匀速队列，落后多少就按比例提速，追上后回到基础速度，
+     读起来像有人在慢慢说，而总时长不会被拖长。 */
+  window.wjTypewriter = function (el, opt) {
+    opt = opt || {};
+    var cps = opt.cps || 34, maxCps = opt.maxCps || 220, live = opt.liveClass || "wj-live";
+    var target = "", shown = 0, raf = 0, last = 0, started = false, waiters = [];
+    var reduce = false;
+    try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+    function paint() {
+      if (!el) return;
+      /* 按原文下标截断，只在显示时做轻量变换：模型爱吐 **加粗** 这类记号，
+         逐字阶段直接铺出来会露出星号；等收尾换正式 HTML 时再加粗，视觉上也不突兀。 */
+      var txt = target.slice(0, Math.floor(shown));
+      if (opt.transform) { try { txt = String(opt.transform(txt)); } catch (e) {} }
+      el.textContent = txt;
+      if (opt.onPaint) { try { opt.onPaint(el); } catch (e) {} }
+    }
+    function flushWaiters() {
+      var q = waiters; waiters = [];
+      q.forEach(function (f) { try { f(); } catch (e) {} });
+    }
+    /* 写完了就把光标撤掉：不然回答停在最后一句、光标还在那儿一直闪，
+       看着像"它还有话说"，其实已经说完了 */
+    function settle() {
+      if (el && live) { try { el.classList.remove(live); } catch (e) {} }
+      flushWaiters();
+    }
+    function loop(ts) {
+      if (!last) last = ts;
+      var dt = Math.min(0.12, Math.max(0, (ts - last) / 1000));   /* 切回后台再回来别一口气喷完 */
+      last = ts;
+      var back = target.length - shown;
+      var speed = back > 60 ? Math.min(maxCps, cps + back * 0.9) : cps;
+      shown = Math.min(target.length, shown + speed * dt);
+      paint();
+      if (shown < target.length) { raf = requestAnimationFrame(loop); }
+      else { raf = 0; settle(); }
+    }
+    function kick() {
+      if (raf) return;
+      last = 0;
+      raf = requestAnimationFrame(loop);
+    }
+    return {
+      /* 收到新一轮累计文本：变短说明换了一路，从头铺 */
+      push: function (t) {
+        t = String(t == null ? "" : t);
+        if (!t) return;
+        started = true;
+        if (el && live) { try { el.classList.add(live); } catch (e) {} }
+        if (t.length < target.length) { shown = 0; }
+        target = t;
+        if (reduce) { shown = target.length; paint(); return; }
+        kick();
+      },
+      reset: function () { target = ""; shown = 0; paint(); },
+      /* 收尾：先把已到的字铺完，再执行回调（补元信息、换格式化 HTML） */
+      finish: function (fn) {
+        if (fn) waiters.push(fn);
+        if (!started) { flushWaiters(); return; }
+        if (reduce) { shown = target.length; paint(); settle(); return; }
+        if (shown >= target.length && !raf) { settle(); return; }
+        kick();
+      },
+      hasText: function () { return started && target.length > 0; }
+    };
+  };
 
   /* ---------- 接管 identFetchCloud：所有 /api/* 都走云端 ---------- */
   var NEED_NET = { "/api/chat": 1, "/api/identify": 1, "/api/agent": 1 };

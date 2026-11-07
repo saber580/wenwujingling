@@ -665,7 +665,7 @@
     if (!page) key = "mine";
     else if (page === "codex" || page === "spirit") key = "codex";
     else if (ai.indexOf(page) >= 0) key = "poster";
-    else if (page === "museums" || page === "creative" || page === "station") key = "more";
+    else if (page === "museums" || page === "creative" || page === "station" || page === "biz") key = "more";
     items.forEach(function (a) {
       if (!a.dataset.nav) return;
       a.classList.toggle("active", a.dataset.nav === key);

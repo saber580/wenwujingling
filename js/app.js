@@ -154,13 +154,14 @@ function render() {
   const [page, param] = hash.split("/");
   document.body.dataset.page = page || "home";   // 供背景/样式按页面微调(如首页背景更透亮)
   // 高亮顶部栏目(首页→我的精灵 / 图鉴 / 其他 / AI 栏目)
-  const navKey = page === "" ? "mine" : (page === "codex" ? "codex" : (page === "poster" || page === "restore" || page === "tea" || page === "dye" || page === "ident" ? page : (page === "museums" || page === "creative" ? "more" : "")));
+  const navKey = page === "" ? "mine" : (page === "codex" ? "codex" : (page === "poster" || page === "restore" || page === "tea" || page === "dye" || page === "ident" ? page : (page === "museums" || page === "creative" || page === "biz" ? "more" : "")));
   $$(".topnav .nav-item").forEach(a => a.classList.toggle("active", a.dataset.nav === navKey));
   if (page === "station") app.innerHTML = viewStation(param);
   else if (page === "spirit") app.innerHTML = viewSpirit(param);
   else if (page === "codex") app.innerHTML = viewCodex();
   else if (page === "museums") app.innerHTML = viewMuseums();
   else if (page === "creative") app.innerHTML = viewCreative();
+  else if (page === "biz") app.innerHTML = viewBiz();
   else if (page === "poster") app.innerHTML = viewPoster();
   else if (page === "restore") app.innerHTML = viewRestore();
   else if (page === "tea") app.innerHTML = viewTea();
@@ -457,6 +458,94 @@ function viewCreative() {
         </div>`).join("")}
     </div>
     <div class="creative-note">✨ 想把喜欢的文物也变成一张卡?先到地图上把它收进图鉴吧。</div>`;
+}
+
+/* ---------------- 落地与合作页(探索 · 之五) ----------------
+   三条路径 + 成本结构 + 路线图。写到这一页的东西只有一条纪律：
+   不写没有依据的数字。所以价格全部标成「参考区间」，并注明是参赛原型阶段，
+   没有签约客户；成本一栏只讲清「哪几件事不花钱」，因为那几件是真能核验的。 */
+function viewBiz() {
+  return `
+    <div class="page-head">
+      <h2>🤝 落地与合作</h2>
+      <p>三条更现实的走法,和一笔算得清的成本。</p>
+    </div>
+    <div class="bz-note">
+      <b>先说明:</b>本站是高校学生团队的参赛原型,目前没有签约客户。下面的价格与规模是按公开资料和同类项目推算的<b>参考区间</b>,
+      不是合同报价;三条路径都对照现有代码能力做过可行性核对,真正落地前需与馆方、学校另行确认。
+    </div>
+
+    <h3 class="section-title">三条路径</h3>
+    <div class="bz-grid">
+      <div class="card bz-card">
+        <div class="bz-no">PATH 01 · G 端</div>
+        <h3>地方馆与文旅数字化</h3>
+        <p class="bz-sub">面向市县级博物馆、文旅局、考古遗址公园</p>
+        <div class="bz-row"><span class="bz-k">交付</span><span class="bz-v">精灵化导览(74 件文物 + 语音讲解)、12 站打卡动线、馆方后台知识库</span></div>
+        <div class="bz-row"><span class="bz-k">优势</span><span class="bz-v">每条 AI 回答都能追到 doc_id 与字段,馆方敢用;换馆只需要换知识库,不动前端</span></div>
+        <div class="bz-row"><span class="bz-k">起步</span><span class="bz-v">先做 1 家共建样板馆,用一个学期把内容换成本馆馆藏</span></div>
+        <div class="bz-price">8–15 万元 / 馆 / 年<i>含首年内容建设,续约只收维护费</i></div>
+      </div>
+      <div class="card bz-card">
+        <div class="bz-no">PATH 02 · B 端</div>
+        <h3>研学机构与课后服务</h3>
+        <p class="bz-sub">面向研学机构、中小学课后服务、少年宫</p>
+        <div class="bz-row"><span class="bz-k">交付</span><span class="bz-v">按校订阅、教师端任务单、学生作品(赋彩 / 打卡海报 / 心仪卡)</span></div>
+        <div class="bz-row"><span class="bz-k">优势</span><span class="bz-v">AI 工坊 12 个功能本身就是教学模块,不用另做一套课程</span></div>
+        <div class="bz-row"><span class="bz-k">起步</span><span class="bz-v">找 1 所合作校做社团课试点,跑完一个学期再谈年框</span></div>
+        <div class="bz-price">3–6 万元 / 校 / 年<i>SaaS 交付,边际成本接近 0,三条里最容易起量</i></div>
+      </div>
+      <div class="card bz-card">
+        <div class="bz-no">PATH 03 · 能力授权</div>
+        <h3>馆方 API 与第三方导览</h3>
+        <p class="bz-sub">面向有数字化预算的馆、第三方导览 App、文博内容平台</p>
+        <div class="bz-row"><span class="bz-k">交付</span><span class="bz-v">RAG 知识库 + 精灵人格 + Agent 工具链,按协议接入</span></div>
+        <div class="bz-row"><span class="bz-k">优势</span><span class="bz-v">MCP 协议化封装、35/35 自检通过,接入方不需要重建知识库</span></div>
+        <div class="bz-row"><span class="bz-k">起步</span><span class="bz-v">先开放 1 个馆的问答能力做联调,按调用量结算</span></div>
+        <div class="bz-price">基础授权费 + 调用阶梯<i>一次建设、多处复用,长期毛利最高</i></div>
+      </div>
+    </div>
+
+    <h3 class="section-title" style="margin-top:28px">成本:哪几件事不花钱</h3>
+    <div class="card">
+      <div class="bz-cost">
+        <div>
+          <p class="muted" style="margin:0 0 4px;line-height:1.8">一次问答会经过四个环节。其中三个在自建侧完成,只有最后一个按量付费 —— 这是这套方案对馆方最实在的地方。</p>
+          <div class="bz-ledger">
+            <div class="bz-lrow"><span class="bz-lmark">✓</span><span class="bz-lname">双路检索与融合<small>BM25 + 稠密向量,RRF 融合</small></span><span class="bz-lcost">自建 · 实测 0.71 ms<br>0 元</span></div>
+            <div class="bz-lrow"><span class="bz-lmark">✓</span><span class="bz-lname">安全过滤与 PII 脱敏<small>本地规则,不调外部接口</small></span><span class="bz-lcost">本地 · 无网络<br>0 元</span></div>
+            <div class="bz-lrow"><span class="bz-lmark">✓</span><span class="bz-lname">语音合成<small>同一精灵、同一句话命中缓存即复用</small></span><span class="bz-lcost">本地缓存<br>命中即 0 元</span></div>
+            <div class="bz-lrow pay"><span class="bz-lmark">●</span><span class="bz-lname">模型生成<small>快慢级联,简单问题走轻档</small></span><span class="bz-lcost">唯一按量付费项</span></div>
+          </div>
+        </div>
+        <div>
+          <h4 style="font-size:13.5px;margin:2px 0 8px;color:#3a332c">为什么这个成本结构站得住</h4>
+          <ul class="bz-why" style="margin:0;padding-left:18px">
+            <li>重活都在自建侧,账单只随「生成」增长,不随检索量和用户数增长。</li>
+            <li>研学场景里同一批学生会反复问同类问题,缓存与级联会把成本持续摊薄。</li>
+            <li>可复现:站内「AI 评测台」能当场重跑延迟与命中率,不是纸面数字。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="section-title" style="margin-top:28px">12 个月的三步</h3>
+    <div class="bz-steps">
+      <div class="bz-step"><div class="bz-when">第 1–4 月</div><h4>样板共建</h4><p>1 家馆 + 1 所学校。把内容换成对方馆藏,跑通第一篇交付文档,攒下可复述的案例。</p></div>
+      <div class="bz-step"><div class="bz-when">第 5–8 月</div><h4>区域复制</h4><p>沿河北 12 站动线铺开。把部署、内容替换、教师培训沉淀成标准包,交付不再依赖原班人。</p></div>
+      <div class="bz-step"><div class="bz-when">第 9–12 月</div><h4>能力授权</h4><p>开放馆方 API 与第三方导览合作,IP 二次开发按比例分成,从做项目转向做能力。</p></div>
+    </div>
+
+    <h3 class="section-title" style="margin-top:28px">边界与合规</h3>
+    <div class="card">
+      <div class="bz-law">
+        <div>文物图像版权归各馆藏机构,本站只做 Q 版二创与档案整理,商用前须逐件取得授权。</div>
+        <div>研学场景涉及未成年人:不采集人脸、不做用户画像、除对话外不留身份信息。</div>
+        <div>AI 输出保留引用来源,涉年代、尺寸、出土信息以馆方公示为准,不作权威结论。</div>
+        <div>开源仓库只放代码与脱敏后的公开资料,密钥与馆方内部数据一律不入库。</div>
+      </div>
+    </div>
+  `;
 }
 
 /* ---------------- AI 打卡海报(其他 · 之三) ----------------
@@ -4964,6 +5053,17 @@ async function aiChat(msgs, opt) {
   const body = { messages: msgs, temperature: (opt.temp == null ? 0.6 : opt.temp), max_tokens: opt.maxTokens || 700 };
   if (opt.model) body.model = opt.model;
   const ms = opt.ms || 18000;
+  /* 要逐字铺开时先走流式通道；它失败了再按原路整段取一次，行为不变、只是多一条快路 */
+  if (typeof opt.onDelta === "function" && typeof window.cloudChatStream === "function") {
+    let sr = null;
+    try {
+      sr = await window.cloudChatStream(msgs, {
+        temperature: body.temperature, max_tokens: body.max_tokens,
+        model: body.model, ms: ms, onDelta: opt.onDelta
+      });
+    } catch (e) { sr = null; }
+    if (sr && sr.ok && sr.text) return { text: sr.text, model: sr.model || "" };
+  }
   let text = "", used = "";
   try {
     const r = await identFetchCloud(IDENT_CLOUD_API + "/api/chat", body, ms);
@@ -4981,7 +5081,7 @@ const AI_CHEAP = "glm-5.2", AI_STRONG = "deepseek-v4";
 async function aiCascade(msgs, opt) {
   opt = opt || {};
   const hits = opt.hits || [];
-  const s1 = await aiChat(msgs, { temp: opt.temp, maxTokens: 420, ms: 9000, model: opt.cheap || AI_CHEAP });
+  const s1 = await aiChat(msgs, { temp: opt.temp, maxTokens: 420, ms: 9000, model: opt.cheap || AI_CHEAP, onDelta: opt.onDelta });
   if (!s1) return null;
   let cover = 1;
   try { if (hits.length && window.KB && KB.check) cover = KB.check(s1.text, hits).ratio; } catch (e) { cover = 1; }
@@ -4993,7 +5093,7 @@ async function aiCascade(msgs, opt) {
     role: "user",
     content: String(last.content || "") + "\n\n（上一个回答不够完整，或有数字对不上档案，请更完整、严格按档案重答一遍，不要解释原因。）"
   }]);
-  const s2 = await aiChat(msgs2, { temp: opt.temp, maxTokens: opt.maxTokens || 700, ms: 18000, model: opt.strong || AI_STRONG });
+  const s2 = await aiChat(msgs2, { temp: opt.temp, maxTokens: opt.maxTokens || 700, ms: 18000, model: opt.strong || AI_STRONG, onDelta: opt.onDelta });
   if (!s2) return { text: s1.text, model: s1.model, upgraded: false, first: { model: s1.model, cover: cover }, note: "升级没成功，用第一轮结果" };
   return { text: s2.text, model: s2.model, upgraded: true, first: { model: s1.model, cover: cover } };
 }
@@ -5073,7 +5173,7 @@ const AQ_TOOL_CN = {
   list_collection: "浏览馆藏"
 };
 
-async function aqAgentRun(q) {
+async function aqAgentRun(q, onDelta) {
   if (!window.WJAgent || !window.WJTools) return null;
   const t0 = Date.now();
   let r = null;
@@ -5083,6 +5183,7 @@ async function aqAgentRun(q) {
       temperature: 0.6,
       maxRounds: 3,
       ms: 26000,
+      onDelta: (typeof onDelta === "function") ? onDelta : null,
       onStep: (s) => {
         /* 每执行完一个工具，就把正在「翻书」的那颗气泡换成当前进度 */
         try {
@@ -5196,13 +5297,14 @@ function aqAgentTraceHTML(ag) {
   return html;
 }
 
-async function aqCloudAsk(q, done) {
+async function aqCloudAsk(q, done, hook) {
+  const onDelta = (hook && typeof hook.onDelta === "function") ? hook.onDelta : null;
   /* ── 先走 Agent ──
      模型自己决定查什么，拿到的是一手档案而不是「一段预检索的文本」。
      任何异常（工具层没加载、超时、轮次用尽仍无正文）都静默回落到下面的固定管线，
      用户感知不到差别，只会发现回答更准了。 */
   if (aqAgentEnabled()) {
-    const ar = await aqAgentRun(q);
+    const ar = await aqAgentRun(q, onDelta);
     if (ar) { done(ar); return; }
   }
   /* 0) 先看是不是「拿两件比一比」——这类问题单文档检索答不好，走对比卡 */
@@ -5213,7 +5315,7 @@ async function aqCloudAsk(q, done) {
     try { ev = aqKB().compareEvidence(q); } catch (e) { ev = null; }
     const sys = AQ_CLOUD_SYS + "\n\n【站内档案（两件器物）】\n" + ((ev && ev.text) || "") +
       "\n请按「谁更早、谁更巧、差在哪」三层比较，最后一句给结论；只用档案里的信息，不要扩展。";
-    const r = await aiChat([{ role: "system", content: sys }, { role: "user", content: q }], { temp: 0.6, maxTokens: 620, ms: 20000 });
+    const r = await aiChat([{ role: "system", content: sys }, { role: "user", content: q }], { temp: 0.6, maxTokens: 620, ms: 20000, onDelta: onDelta });
     done({ text: r ? r.text : "", model: r ? r.model : "", cmp: cmp, kb: null });
     return;
   }
@@ -5234,7 +5336,7 @@ async function aqCloudAsk(q, done) {
   }
   const msgs = [{ role: "system", content: sys }].concat(AQ_HIST.slice(-6), [{ role: "user", content: q }]);
   /* 级联：快模型先答，答案里的硬数据对不上档案再升级重答。省一次调用，也把「什么时候该花大钱」写成规则。 */
-  const rr = await aiCascade(msgs, { temp: 0.75, maxTokens: 700, hits: ev ? ev.hits : [] });
+  const rr = await aiCascade(msgs, { temp: 0.75, maxTokens: 700, hits: ev ? ev.hits : [], onDelta: onDelta });
   let text = rr ? rr.text : "", used = rr ? rr.model : "";
   if (text) {
     AQ_HIST.push({ role: "user", content: q }, { role: "assistant", content: String(text).slice(0, 500) });
@@ -5622,6 +5724,46 @@ function aqChipsPaint() {
   if (!c) return;
   c.innerHTML = AQ_CHIPS.map(t => "<button type=\"button\" onclick=\"aqSend('" + t.replace(/'/g, "\\'") + "')\">" + t + "</button>").join("");
 }
+/* 逐字铺开：模型按片吐字，片大时一屏糊上去、片小时干等好几秒。
+   这里把增量交给共用打字机（cloud-ai.js 的 wjTypewriter）匀速写；
+   首字还没到时，气泡充当思考态并轮换提示当前在做什么。
+   注意：Agent 每执行一个工具都会 aqFillin 换掉整颗气泡，所以打字机必须懒创建，
+   等第一片正文到了再绑定当时那个 .aq-bub，否则会写进已被替换掉的旧节点。 */
+/* 逐字阶段只做「去记号」的轻量清洗：模型爱吐 **加粗** 这类 Markdown，
+   直接铺出来会露出星号；等收尾换成正式 HTML 时再加粗，观感上也不突兀。 */
+function stripMd(s) {
+  return String(s || "").replace(/\*\*/g, "");
+}
+
+const AQ_THINK_STEPS = ["小答去云端翻书…", "翻检站内档案…", "核对年代与数字…"];
+function aqLiveStart(tid) {
+  const host = document.getElementById(tid);
+  let tw = null, step = 0, timer = 0;
+  const stop = () => { if (timer) { clearInterval(timer); timer = 0; } };
+  if (host && typeof window.wjTypewriter === "function") {
+    timer = setInterval(() => {
+      if (tw) return;
+      const b = host.querySelector(".aq-bub");
+      if (!b) return;
+      step = (step + 1) % AQ_THINK_STEPS.length;
+      b.innerHTML = '<span class="aq-dots"><i></i><i></i><i></i></span> ' + AQ_THINK_STEPS[step];
+    }, 1400);
+  }
+  function ensure() {
+    if (tw) return tw;
+    const b = host ? host.querySelector(".aq-bub") : null;
+    if (!b || typeof window.wjTypewriter !== "function") return null;
+    b.innerHTML = "";
+    tw = window.wjTypewriter(b, { cps: 34, maxCps: 240, liveClass: "aq-live", transform: stripMd });
+    return tw;
+  }
+  return {
+    push(t) { stop(); const w = ensure(); if (w) w.push(t); },
+    reset() { const w = ensure(); if (w) w.reset(); },
+    finish(fn) { stop(); const w = ensure(); if (w) w.finish(fn); else if (fn) fn(); },
+    hasText() { return !!(tw && tw.hasText()); }
+  };
+}
 function aqSend(text) {
   text = String(text == null ? "" : text).trim();
   const inp = document.getElementById("aqIn");
@@ -5637,6 +5779,7 @@ function aqSend(text) {
   if (r.miss || r.tryCloud) {
     aqPush("ai", "<span class=\"aq-dots\"><i></i><i></i><i></i></span> 小答去云端翻书…", tid);
     AQ.pendingTid = tid;                 /* Agent 执行工具时靠它找到这颗气泡，边查边报进度 */
+    const live = aqLiveStart(tid);       /* 思考态轮换 + 逐字铺开；模型不吐字时它只负责等 */
     aqCloudAsk(text, (cloud) => {
       AQ.pendingTid = "";
       let html;
@@ -5661,9 +5804,10 @@ function aqSend(text) {
         if (r.miss) html += "<br><small class=\"aq-tally\">☁️ 云端这次没接上:本机开着 tools/ident_cloud.py 小桥、或粘一次 AI 钥匙,我就能现场查资料啦~</small>";
       }
       if (r.go) html += "<div class=\"aq-acts\"><button type=\"button\" class=\"aq-go\" onclick=\"aqGo('" + r.go.h + "')\">" + r.go.n + " ▶</button></div>";
-      aqFillin(tid, html);
+      /* 先把已经流出来的正文铺完，再补「云端作答 / 档案 / Agent 轨迹」这些元信息 */
+      live.finish(() => aqFillin(tid, html));
       if (r.nav && !r.tryCloud) setTimeout(() => aqGo(r.nav), 900);
-    });
+    }, { onDelta: (t) => live.push(t) });
     return;
   }
   aqPush("ai", "<span class=\"aq-dots\"><i></i><i></i><i></i></span> 小答想一想…", tid);

@@ -40,7 +40,16 @@
     if (W.WJPrompts) return W.WJPrompts.active(opt.ablated || []);
     return FALLBACK_CFG;
   }
-  function post(path, body, ms) {
+  function post(path, body, ms, onDelta) {
+    /* 带订阅时走流式通道：模型收尾那一轮吐的正文能边到边显示 */
+    if (typeof onDelta === "function") {
+      if (path === "/api/agent" && typeof W.cloudAgentStream === "function")
+        return W.cloudAgentStream(body, onDelta);
+      if (path === "/api/chat" && typeof W.cloudChatStream === "function")
+        return W.cloudChatStream(Array.isArray(body.messages) ? body.messages : [], {
+          temperature: body.temperature, max_tokens: body.max_tokens, ms: ms, onDelta: onDelta
+        });
+    }
     if (typeof W.identFetchCloud === "function") return W.identFetchCloud(path, body, ms);
     return Promise.reject(new Error("AI 通道还没就绪，请刷新页面"));
   }
@@ -236,7 +245,7 @@
       ms: opt.ms || 26000
     };
     if (!tools.length) delete body.tools;
-    return post("/api/agent", body, body.ms);
+    return post("/api/agent", body, body.ms, opt.onDelta);
   }
 
   async function reflectOnce(q, results, cfg, names, round) {
@@ -388,7 +397,7 @@
         if (!lastText) {
           var fb = await post("/api/chat", {
             messages: messages, temperature: 0.3, ms: opt.ms || 26000
-          }, opt.ms || 26000).catch(function () { return null; });
+          }, opt.ms || 26000, opt.onDelta).catch(function () { return null; });
           if (fb && fb.ok) {
             lastText = fb.text; model = fb.model || "";
             phases.push({ phase: "degrade", reason: "工具轮失败，回落普通问答" });
@@ -454,7 +463,7 @@
         messages: messages.concat([{ role: "user",
           content: "资料就查到这儿。请直接根据上面查到的东西回答我最初的问题，不要再查了。" }]),
         temperature: 0.3, ms: opt.ms || 26000
-      }, opt.ms || 26000).catch(function () { return null; });
+      }, opt.ms || 26000, opt.onDelta).catch(function () { return null; });
       if (fin && fin.ok) { lastText = fin.text || ""; model = fin.model || model; capped = true; }
     }
     if (!String(lastText || "").trim()) {

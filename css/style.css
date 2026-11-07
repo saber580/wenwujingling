@@ -1414,6 +1414,11 @@ body[data-bg="a"],body[data-bg="b"],body[data-bg="c"],body[data-bg="d"],body[dat
 .aq-dots i{width:6px;height:6px;border-radius:50%;background:#d19a6a;animation:qtDot 1.1s ease-in-out infinite}
 .aq-dots i:nth-child(2){animation-delay:.18s}
 .aq-dots i:nth-child(3){animation-delay:.36s}
+/* 逐字铺开时尾巴上闪的光标：让「还在说」这件事一眼可见 */
+.aq-bub.aq-live::after{content:"";display:inline-block;width:2px;height:1em;margin-left:2px;vertical-align:-.12em;background:#b93018;animation:aqCaret 1s steps(2,start) infinite}
+/* 常亮为主、每周期短暂下压：既像打字光标，也不会在截图/肉眼某一瞬间完全消失 */
+@keyframes aqCaret{0%,62%{opacity:1}63%,100%{opacity:.18}}
+@media (prefers-reduced-motion:reduce){.aq-bub.aq-live::after{animation:none;opacity:.65}}
 .aq-chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 12px 4px}
 .aq-chips button{border:1px solid #e4bd8c;background:#fff8ec;color:#8a4a22;font-size:11.5px;padding:4px 10px;border-radius:999px;cursor:pointer;transition:.2s}
 .aq-chips button:hover{border-color:#c2361d;color:#a82613;background:#fff3e2}
@@ -2256,3 +2261,59 @@ body.flyleaf-on #intro{display:none!important}
 .aq-techbar:hover{background:#fff1de;border-color:#d9b78b}
 .aq:has(.aq-panel:not([hidden])) .wj-tech-pill,.aq.panel-open .wj-tech-pill{display:none}
 @media (max-width:640px){.wj-tech-pill{font-size:10px;padding:4px 8px;right:auto;left:0}.aq-techbar{font-size:10.5px;margin:0 8px 2px}}
+
+/* ================= 落地与合作页(探索 · 之五) ================= */
+.bz-note{font-size:12.5px;color:#7a6a52;background:#fbf3e2;border:1px dashed #e0c9a0;border-radius:12px;padding:11px 15px;margin:14px 0 4px;line-height:1.85}
+.bz-note b{color:#8e3220}
+.bz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(254px,1fr));gap:14px;margin-top:16px}
+.bz-card{position:relative;display:flex;flex-direction:column;padding:18px 18px 15px}
+.bz-no{font-size:10.5px;letter-spacing:2.4px;color:#b08a4a;font-weight:700}
+.bz-card h3{font-size:16.5px;margin:7px 0 3px}
+.bz-sub{font-size:11.5px;color:#8a7a63;line-height:1.65;margin:0 0 11px}
+.bz-row{display:flex;gap:9px;font-size:12.5px;line-height:1.8;margin:3px 0}
+.bz-k{flex:0 0 40px;color:#a8906d;font-size:11.5px;padding-top:1px}
+.bz-v{flex:1;color:#4a423a}
+.bz-price{margin-top:auto;padding-top:11px;border-top:1px dashed #e4cfae;font-size:12.5px;color:#8a6d3b}
+.bz-price b{font-size:16.5px;color:var(--red-d);letter-spacing:.3px}
+.bz-price i{font-style:normal;font-size:11px;color:#a08a6a;display:block;margin-top:3px;line-height:1.6}
+
+/* 成本清单:哪些环节不花钱 */
+.bz-cost{display:grid;grid-template-columns:1.08fr .92fr;gap:26px;margin-top:10px}
+.bz-ledger{display:grid;gap:0;margin-top:6px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.bz-lrow{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:10px;padding:9px 12px;font-size:12.5px;background:var(--paper-2);border-bottom:1px solid #f0e7d6}
+.bz-lrow:last-child{border-bottom:none}
+.bz-lrow.pay{background:#fdf3ea}
+.bz-lmark{width:14px;height:14px;border-radius:50%;display:grid;place-items:center;font-size:9px;color:#fff;background:var(--jade)}
+.bz-lrow.pay .bz-lmark{background:var(--red)}
+.bz-lname{color:#3f3830}
+.bz-lname small{display:block;font-size:11px;color:#9a8a72;font-weight:400;margin-top:1px}
+.bz-lcost{font-size:11.5px;color:#8a7a63;white-space:nowrap;text-align:right}
+.bz-lrow.pay .bz-lcost{color:var(--red-d);font-weight:600}
+.bz-why{margin-top:2px}
+.bz-why li{font-size:12.5px;color:#4a423a;line-height:1.85;margin-bottom:6px}
+.bz-why{gap:0}
+
+/* 12 个月路线 */
+.bz-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+.bz-step{position:relative;padding:14px 15px 13px;background:var(--paper-2);border:1px solid var(--line);border-radius:14px}
+.bz-step::before{content:"";position:absolute;left:15px;top:0;width:26px;height:3px;border-radius:0 0 3px 3px;background:var(--red)}
+.bz-when{font-size:11px;color:#a8906d;letter-spacing:.6px;margin-bottom:5px}
+.bz-step h4{font-size:14px;margin:0 0 4px;font-weight:700;color:#3a332c}
+.bz-step p{font-size:12px;color:#5b5248;line-height:1.8;margin:0}
+
+/* 合规 */
+.bz-law{display:grid;grid-template-columns:repeat(2,1fr);gap:13px 28px;margin-top:10px}
+.bz-law div{font-size:12.8px;color:#4a423a;line-height:1.85;padding-left:16px;position:relative}
+.bz-law div::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:2px;background:#c9a227}
+
+@media(max-width:760px){
+  .bz-cost{grid-template-columns:1fr;gap:16px}
+  .bz-steps{grid-template-columns:1fr}
+  .bz-law{grid-template-columns:1fr;gap:10px}
+  .bz-card{padding:16px}
+}
+
+/* 本页正文排得满:小答上方的「MCP 已握手」徽标会压住第三张卡的正文,
+   底部切角标签栏(93px 高)会盖住最后一屏,这里统一让开。 */
+body[data-page="biz"] .wj-tech-pill{display:none}
+@media(max-width:760px){body[data-page="biz"]{padding-bottom:126px}}

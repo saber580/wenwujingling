@@ -151,7 +151,18 @@
     ".aw-m.them{align-self:flex-start;background:#fff;border:1px solid rgba(200,154,82,.4);color:#3B2418}",
     ".aw-m.me{align-self:flex-end;background:#A5181C;color:#fff}",
     ".aw-m.sys{align-self:center;font-size:11px;color:#8a6a44;background:rgba(200,154,82,.14);border-radius:6px;padding:4px 9px;text-align:center}",
-    ".aw-typing{align-self:flex-start;color:#8a6a44;font-size:12px;padding:4px 8px}",
+    ".aw-typing{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;color:#8a6a44;font-size:12px;",
+    "  padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.72);border:1px dashed rgba(200,154,82,.45)}",
+    ".aw-typing .aw-dots{display:inline-flex;gap:3px;align-items:center}",
+    ".aw-typing .aw-dots i{width:4px;height:4px;border-radius:50%;background:#A5181C;opacity:.3;animation:awDot 1.1s ease-in-out infinite}",
+    ".aw-typing .aw-dots i:nth-child(2){animation-delay:.16s}",
+    ".aw-typing .aw-dots i:nth-child(3){animation-delay:.32s}",
+    "@keyframes awDot{0%,100%{opacity:.25;transform:translateY(0)}45%{opacity:1;transform:translateY(-2px)}}",
+    ".aw-m.them.aw-live::after{content:\"\";display:inline-block;width:2px;height:1em;margin-left:2px;",
+    "  vertical-align:-.12em;background:#A5181C;animation:awCaret 1s steps(2,start) infinite}",
+    "@keyframes awCaret{0%,62%{opacity:1}63%,100%{opacity:.18}}",
+    "@media (prefers-reduced-motion:reduce){.aw-typing .aw-dots i{animation:none;opacity:.6}",
+    "  .aw-m.them.aw-live::after{animation:none;opacity:.65}}",
     "/* ---- 文物之声：让它开口 ---- */",
     ".aw-voice{display:flex;align-items:center;gap:7px;padding:9px 12px 0;flex:none}",
     ".aw-voice button{font-family:inherit;font-size:11.5px;letter-spacing:.04em;padding:5px 11px;border-radius:6px;",
@@ -334,8 +345,16 @@
         throw new Error((j && j.error) || "云端没有返回内容");
       });
   }
-  function chat(msgs) {
+  function chat(msgs, onDelta) {
     if (cloudReady()) {
+      /* 有订阅就走流式：它讲的时候字是一个一个出来的，而不是憋完一屏再"啪"地出现 */
+      if (typeof onDelta === "function" && typeof window.cloudChatStream === "function") {
+        return window.cloudChatStream(msgs, { onDelta: onDelta }).then(function (j) {
+          if (j && j.ok && String(j.text || "").trim())
+            return { via: "云端 · " + (j.model || "大模型"), text: String(j.text).trim() };
+          throw new Error((j && j.error) || "云端没有返回内容");
+        });
+      }
       return viaCloud(msgs).catch(function (e) {
         throw new Error("云端：" + ((e && e.message) || "未接通"));
       });
@@ -476,11 +495,65 @@
     logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight;
     /* 它说的话，顺带用嗓子讲出来。quiet 用于"讲自己的故事"——
        那种情况文字是按段铺开的，边讲边高亮，不该再读一遍 */
-    if (who === "them" && !quiet && box.classList.contains("show") &&
-        CUR && window.Voice && window.Voice.enabled()) {
+    if (who === "them" && !quiet) speakThem(txt);
+    return d;
+  }
+  /* 单独拎出来：逐字铺开时正文是自己写的，不能走 put()，但最后一样要念 */
+  function speakThem(txt) {
+    if (box.classList.contains("show") && CUR && window.Voice && window.Voice.enabled()) {
       window.Voice.say(txt, { primary: CUR.primary, id: CUR.id });
     }
-    return d;
+  }
+
+  /* ---- 逐字铺开 + 思考态 ----
+     模型按片吐字，直接用会一卡一卡；这里交给共用打字机匀速写，
+     首字未到时先显示"正在回想…"，并轮换提示它在做什么。 */
+  var LIVE_STEPS = ["正在回想…", "翻检典册…", "斟酌措辞…"];
+
+  function liveBubble(wake) {
+    var bubble = null, tw = null, stage = 0;
+    var steps = wake ? ["正在苏醒…", "抖落尘土…", "睁开眼睛…"] : LIVE_STEPS;
+    var tp = document.createElement("div");
+    tp.className = "aw-typing";
+    tp.innerHTML = '<span class="aw-stage">' + steps[0] + '</span>' +
+                   '<span class="aw-dots"><i></i><i></i><i></i></span>';
+    logEl.appendChild(tp); logEl.scrollTop = logEl.scrollHeight;
+    var timer = setInterval(function () {
+      if (tw) return;
+      var s = tp.querySelector(".aw-stage");
+      if (!s) return;
+      stage = (stage + 1) % steps.length;
+      s.textContent = steps[stage];
+    }, 1200);
+    function stopTp() {
+      if (timer) { clearInterval(timer); timer = 0; }
+      if (tp.parentNode) tp.remove();
+    }
+    return {
+      push: function (t) {
+        if (!tw) {
+          stopTp();
+          bubble = document.createElement("div");
+          bubble.className = "aw-m them";
+          logEl.appendChild(bubble);
+          tw = (typeof window.wjTypewriter === "function")
+            ? window.wjTypewriter(bubble, { cps: 36, maxCps: 240, liveClass: "aw-live" })
+            : null;
+        }
+        if (tw) tw.push(t);
+        else if (bubble) { bubble.textContent = String(t || ""); logEl.scrollTop = logEl.scrollHeight; }
+      },
+      finish: function (text, cb) {
+        stopTp();
+        var done = function () {
+          if (bubble) bubble.textContent = String(text || "");
+          logEl.scrollTop = logEl.scrollHeight;
+          if (cb) cb();
+        };
+        if (tw) tw.finish(done); else done();
+      },
+      fail: stopTp
+    };
   }
   function sys(txt) { put("sys", txt); }
   function setVia(v) {
@@ -509,16 +582,19 @@
   }
   function greet(s) {
     BUSY = true;
-    var tp = document.createElement("div"); tp.className = "aw-typing";
-    tp.textContent = s.name + " 正在苏醒…"; logEl.appendChild(tp);
+    var lb = liveBubble(true);
     chat([{ role: "system", content: persona(s) },
-          { role: "user", content: "用一句话自报家门，说清你是谁、什么朝代的。" }])
+          { role: "user", content: "用一句话自报家门，说清你是谁、什么朝代的。" }],
+          function (t) { lb.push(t); })
       .then(function (r) {
-        tp.remove(); put("them", r.text); HIST.push({ role: "assistant", content: r.text });
-        setVia(r.via);
+        lb.finish(r.text, function () {
+          HIST.push({ role: "assistant", content: r.text });
+          setVia(r.via);
+          speakThem(r.text);
+        });
       })
       .catch(function (e) {
-        tp.remove();
+        lb.fail();
         put("them", localAnswer(s, "你是谁") || ("我是" + s.name + "。" + (s.intro || "")));
         sys(bridgeHint(e) || "云端未接通，已落回本机台词库（离线也能聊）");
       })
@@ -530,15 +606,18 @@
     el.value = ""; put("me", q); HIST.push({ role: "user", content: q });
     var la = localAnswer(CUR, q);
     BUSY = true;
-    var tp = document.createElement("div"); tp.className = "aw-typing";
-    tp.textContent = CUR.name + " 正在想…"; logEl.appendChild(tp);
-    chat([{ role: "system", content: persona(CUR) }].concat(HIST.slice(-7)))
+    var lb = liveBubble(false);
+    chat([{ role: "system", content: persona(CUR) }].concat(HIST.slice(-7)),
+         function (t) { lb.push(t); })
       .then(function (r) {
-        tp.remove(); put("them", r.text); HIST.push({ role: "assistant", content: r.text });
-        setVia(r.via);
+        lb.finish(r.text, function () {
+          HIST.push({ role: "assistant", content: r.text });
+          setVia(r.via);
+          speakThem(r.text);
+        });
       })
       .catch(function (e) {
-        tp.remove();
+        lb.fail();
         put("them", la || "哎呀，我这会儿脑子有点转不动（云端没接通），你换个话头问问？");
         if (bridgeHint(e)) sys(bridgeHint(e));
       })
