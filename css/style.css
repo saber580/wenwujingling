@@ -227,6 +227,72 @@ h1,h2,h3{margin:0}
 .tea-lock b{display:block;font-size:17px;margin:8px 0 4px}
 .tea-lock .lk-bar{max-width:260px;height:8px;border-radius:999px;background:rgba(120,80,20,.12);margin:12px auto 14px;overflow:hidden}
 .tea-lock .lk-bar i{display:block;height:100%;background:linear-gradient(90deg,#e0a94e,#c8792f);border-radius:999px}
+/* ===== 十二灵时辰盘(茶话会表盘) · 12 个刻度换成 12 只精灵的缩影 =====
+   观感取自 uiverse「nice-fly」那只拟物挂钟:厚玉盘、浮雕刻度、红秒针;
+   配色换成暖白玉,好和整站的宣纸米色接上。 */
+.rc-wrap{--rc-d:min(452px,34vw);margin:2px auto 22px;display:flex;flex-direction:column;align-items:center;gap:12px}
+/* isolation 建层叠上下文:中心那层雾才不会盖住指针 */
+.rc-face{position:relative;isolation:isolate;width:var(--rc-d);height:var(--rc-d);border-radius:50%;
+  background:radial-gradient(circle at 50% 34%,#fffdf8 0%,#fcf6ec 46%,#f1e5d0 100%);
+  border:1px solid rgba(196,164,104,.5);
+  box-shadow:0 0 0 calc(var(--rc-d) * .016) rgba(255,253,246,.92),
+             0 30px 58px -18px rgba(110,74,18,.4),0 10px 20px rgba(110,74,18,.12),
+             inset 0 14px 24px rgba(255,255,255,.96),inset 0 -16px 28px rgba(150,110,50,.14);}
+/* 内圈那一道凹槽,拟物感基本全靠它 */
+.rc-face::before{content:"";position:absolute;inset:calc(var(--rc-d) * .032);border-radius:50%;pointer-events:none;
+  box-shadow:inset 0 3px 6px rgba(150,110,50,.22),inset 0 -2px 4px rgba(255,255,255,.94),0 1px 0 rgba(255,255,255,.8);}
+/* 盘心一层极淡的暖雾,免得中间一大片空 —— 必须压在指针下面 */
+.rc-face::after{content:"";position:absolute;inset:calc(var(--rc-d) * .19);border-radius:50%;z-index:0;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,253,247,.7) 0%,rgba(255,253,247,0) 70%);}
+
+.rc-tick{position:absolute;left:50%;top:50%;width:calc(var(--rc-d) * .152);height:calc(var(--rc-d) * .152);
+  transform:translate(-50%,-50%) rotate(var(--ang)) translateY(calc(var(--rc-d) * -.355)) rotate(calc(-1 * var(--ang)));
+  display:grid;place-items:center;padding:0;cursor:pointer;border-radius:50%;z-index:1;
+  background:linear-gradient(158deg,#fffefa,#f8f0df);border:1px solid rgba(190,158,96,.42);
+  box-shadow:0 6px 13px rgba(120,80,20,.14),0 1px 0 rgba(255,255,255,.9),inset 0 2px 5px rgba(150,110,50,.1);
+  transition:border-color .18s,box-shadow .18s,background .18s;}
+.rc-tick img{width:88%;height:88%;object-fit:contain;pointer-events:none;
+  filter:drop-shadow(0 2px 3px rgba(80,50,10,.2));transition:transform .18s;}
+.rc-tick:hover{border-color:rgba(196,140,50,.9);box-shadow:0 10px 20px rgba(140,90,20,.24),inset 0 1px 0 #fff;}
+.rc-tick:hover img{transform:scale(1.1);}
+.rc-tick.on{border-color:#c9922f;background:linear-gradient(158deg,#fff9ec,#fbecc9);
+  box-shadow:0 10px 20px rgba(160,100,20,.26),0 0 0 2px rgba(212,175,55,.42),inset 0 1px 0 #fff;}
+.rc-tick.on::after{content:"✓";position:absolute;right:-2px;top:-2px;width:40%;height:40%;border-radius:50%;
+  display:grid;place-items:center;font-size:9px;font-weight:800;color:#5c2b12;
+  background:linear-gradient(160deg,#f0c46a,#dfa446);box-shadow:0 2px 5px rgba(150,100,20,.35);}
+/* 秒针扫到哪一格,那一格就轻轻提一下 —— 12 个刻度不只是贴图 */
+.rc-tick.lit{border-color:#d8a63c;background:linear-gradient(158deg,#fffdf5,#fbeecd);
+  box-shadow:0 9px 18px rgba(150,95,20,.22),0 0 0 2px rgba(212,175,55,.34),inset 0 1px 0 #fff;}
+.rc-tick.lit img{transform:scale(1.08);}
+
+.rc-hand{position:absolute;left:50%;bottom:50%;transform-origin:50% 100%;border-radius:99px;z-index:2;
+  pointer-events:none;will-change:transform;}
+.rc-hh{width:calc(var(--rc-d) * .028);height:calc(var(--rc-d) * .245);margin-left:calc(var(--rc-d) * -.014);
+  background:linear-gradient(180deg,#4c4c56,#2b2b33);box-shadow:0 2px 5px rgba(0,0,0,.24);}
+.rc-mm{width:calc(var(--rc-d) * .019);height:calc(var(--rc-d) * .33);margin-left:calc(var(--rc-d) * -.0095);
+  background:linear-gradient(180deg,#4c4c56,#2b2b33);box-shadow:0 2px 5px rgba(0,0,0,.24);}
+/* 秒针整秒跳,带一点回弹 —— 机械挂钟的味儿;尾巴从轴心往下探一截 */
+.rc-ss{width:calc(var(--rc-d) * .01);height:calc(var(--rc-d) * .4);margin-left:calc(var(--rc-d) * -.005);
+  background:linear-gradient(180deg,#d8503a,#b33522);box-shadow:0 1px 3px rgba(150,40,20,.3);
+  transition:transform .17s cubic-bezier(.34,1.56,.5,1);}
+.rc-ss::after{content:"";position:absolute;left:0;top:100%;width:100%;height:calc(var(--rc-d) * .055);
+  border-radius:99px;background:linear-gradient(180deg,#c8442c,#a52f1e);}
+
+.rc-hub{position:absolute;z-index:3;left:50%;top:50%;width:calc(var(--rc-d) * .05);height:calc(var(--rc-d) * .05);
+  margin:calc(var(--rc-d) * -.025) 0 0 calc(var(--rc-d) * -.025);border-radius:50%;
+  background:radial-gradient(circle at 36% 30%,#fff 0%,#e9e3d7 42%,#c0b9ab 72%,#9a9386 100%);
+  box-shadow:0 3px 6px rgba(40,30,10,.26),inset 0 -2px 3px rgba(0,0,0,.15),0 0 0 calc(var(--rc-d) * .011) rgba(255,255,255,.8);}
+
+.rc-cap{text-align:center;line-height:1.55;max-width:22em}
+.rc-cap b{display:block;font-size:15px;letter-spacing:2.5px;color:#7a4a1c;font-variant-numeric:tabular-nums}
+.rc-cap span{font-size:12px;color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){.rc-ss{transition:none}.rc-tick img{transition:none}}
+@media (max-width:900px){.rc-wrap{--rc-d:min(84vw,340px)}}
+@media (max-width:520px){
+  .rc-cap b{font-size:14px;letter-spacing:2px}
+  .rc-cap span{font-size:11.5px}
+}
+
 
 /* ---------- AI 赋彩(真彩画板 · 色板 / 笔头 / 橡皮 / 参考原图) ---------- */
 .dye-stage{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start;margin:14px 0 18px}

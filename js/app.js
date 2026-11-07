@@ -1232,6 +1232,7 @@ function teaPaint(note) {
   const cl = $("#tea-clear"); if (cl) cl.style.display = TEA.picks.length ? "" : "none";
   const nt = $("#tea-note"); if (nt) nt.textContent = note || "至少选 3 只、最多 6 只;年代和地域越杂,聊得越热闹";
   teaChipPaint();
+  relicClockSync();
 }
 function teaPanelRefresh() { const pn = $("#tea-panel"); if (pn) pn.innerHTML = teaPanelHTML(); teaChipPaint(); }
 function teaToggle(id) {
@@ -1439,6 +1440,7 @@ function teaCloudKeyPaste() {
 /* 进入茶话会页:点亮状态条,并顺手探一次小桥(有网才探) */
 function teaInitView() {
   teaChipPaint();
+  relicClockStart();          // 表针:页面不在时自己停,切回来再起
   if (typeof fetch !== "function") return;
   if (IDENT.cloud !== "on") { try { identCloudPing().then(teaChipPaint); } catch (e) {} }
 }
@@ -1845,6 +1847,91 @@ function teaLinesHTML(lines, base, sayStart) {
   const html = lines.map(function (l, i) { const h = teaLineHTML(l, i - base, si); if (l.t === "say") si++; return h; }).join("");
   return { html: html, say: si };
 }
+/* ---------------- 十二灵时辰盘(茶话会开场那面钟) ----------------
+   12 个刻度不是数字,是 12 只精灵的缩影;指针走真实时间,
+   点刻度上的精灵 = 请它上桌(和下面的选人网格同一个开关)。 */
+const RC_IDS = [
+  "tielion", "baiyulion", "qinghuaci", "longhu",
+  "yinqi", "wuzhuqian", "jinqi", "baozhen",
+  "xuanzhi", "xiangqi", "lvyoutaozhu", "yuzhui"
+];
+function relicClockHTML() {
+  const ticks = RC_IDS.map(function (id, i) {
+    const s = SPIRITS[id];
+    const nm = s ? s.name : id;
+    return '<button type="button" class="rc-tick" data-id="' + id + '" style="--ang:' + (i * 30) + 'deg"'
+      + ' onclick="relicClockPick(\'' + id + '\')" title="' + nm + '">'
+      + '<img src="精灵/透明/' + id + '.webp" alt="' + nm + '" loading="lazy"></button>';
+  }).join("");
+  return '<div class="rc-wrap">'
+    + '<div class="rc-face" id="rc-face" role="group" aria-label="十二灵时辰盘">' + ticks
+    + '<span class="rc-hand rc-hh" id="rc-hh" aria-hidden="true"></span>'
+    + '<span class="rc-hand rc-mm" id="rc-mm" aria-hidden="true"></span>'
+    + '<span class="rc-hand rc-ss" id="rc-ss" aria-hidden="true"></span>'
+    + '<span class="rc-hub" aria-hidden="true"></span>'
+    + '</div>'
+    + '<div class="rc-cap"><b id="rc-time">--:--</b>'
+    + '<span>十二灵围坐一桌 · 点刻度上的精灵,就请它上桌</span></div>'
+    + '</div>';
+}
+/* 角度要累加:秒针从 354° 走到 0° 时不能倒着转一整圈 */
+function relicClockDeg(el, deg) {
+  if (!el) return;
+  let prev = el._deg;
+  if (prev == null) prev = deg;
+  let d = deg;
+  while (d < prev - 180) d += 360;
+  while (d > prev + 180) d -= 360;
+  el._deg = d;
+  el.style.transform = "rotate(" + d + "deg)";
+}
+let rcTimer = 0, rcLit = -1;
+function relicClockRun() {
+  const face = document.getElementById("rc-face");
+  if (!face) { clearInterval(rcTimer); rcTimer = 0; return; }
+  const t = new Date();
+  const s = t.getSeconds(), m = t.getMinutes(), h = t.getHours() % 12;
+  /* 秒针扫到第几格(每格 5 秒):那一格的精灵提一下,静态贴图就活了 */
+  const lit = Math.floor(s / 5) % 12;
+  if (lit !== rcLit) {
+    const ticks = face.children;
+    for (let i = 0, n = 0; i < ticks.length; i++) {
+      if (ticks[i].className.indexOf("rc-tick") !== 0) continue;
+      ticks[i].classList.toggle("lit", n === lit);
+      n++;
+    }
+    rcLit = lit;
+  }
+  relicClockDeg(document.getElementById("rc-ss"), s * 6);
+  relicClockDeg(document.getElementById("rc-mm"), (m + s / 60) * 6);
+  relicClockDeg(document.getElementById("rc-hh"), (h + m / 60 + s / 3600) * 30);
+  const lb = document.getElementById("rc-time");
+  if (lb) {
+    const txt = ("0" + t.getHours()).slice(-2) + ":" + ("0" + m).slice(-2);
+    if (lb.textContent !== txt) lb.textContent = txt;
+  }
+}
+function relicClockStart() {
+  if (rcTimer) clearInterval(rcTimer);
+  relicClockRun();
+  rcTimer = setInterval(relicClockRun, 120);
+}
+/* 选中状态跟着 TEA.picks 走(下面网格点选也要同步到钟面上) */
+function relicClockSync() {
+  $$(".rc-tick").forEach(function (el) {
+    el.classList.toggle("on", TEA.picks.indexOf(el.getAttribute("data-id")) >= 0);
+  });
+}
+function relicClockPick(id) {
+  if (!document.getElementById("rc-face")) return;
+  const s = SPIRITS[id];
+  const nm = s ? s.name : id;
+  if (TEA.story) { rsToast(nm + " · 这一场已经开场了,想换人请点「↺ 重选精灵」"); return; }
+  const pool = teaPool().map(function (x) { return x.id; });
+  if (pool.indexOf(id) < 0) { rsToast(nm + " 还没在你这儿醒过来——去图鉴唤醒它,就能请它上桌"); return; }
+  teaToggle(id);
+}
+
 /* ---------------- 茶话会页 ---------------- */
 function viewTea() {
   const pool = teaPool();
@@ -1855,6 +1942,7 @@ function viewTea() {
       <h2>🍵 AI 精灵茶话会</h2>
       <p>闭馆之后,把几只文物精灵请到一桌:读它们的年代、出土地和知识库,生成一段跨时空的对话小故事——看看后周的铁狮子,和战国中山国的小伙伴,隔着千年聊些什么。联网登录后,每一幕由云端 AI 现场写词;断网自动切回本机台词库,怎么都不会冷场。</p>
     </div>
+    ${relicClockHTML()}
     <div class="tea-cloudchip${teaChipState().cls}" id="tea-cloud-chip">${teaChipState().html}</div>
     <div class="tea-howto">
       <b>🍵 怎么玩(三步 · 你来当主持 · 云端真聊)</b>
