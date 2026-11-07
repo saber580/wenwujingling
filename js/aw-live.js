@@ -735,7 +735,8 @@
 
   function callGreet(s) {
     BUSY = true;
-    var line = CALL_LINES[Math.floor(Math.random() * CALL_LINES.length)](s);
+    /* 优先用转屏时就已经定好、并且已经送去合成的那句 */
+    var line = callLine(s.id) || CALL_LINES[0](s);
     put("them", line, true);                     // quiet：嗓子由下面统一排队，避免被云端那句顶掉
     var spoken = (window.Voice && window.Voice.enabled() && CUR)
       ? window.Voice.say(line, { primary: s.primary, id: s.id })
@@ -756,10 +757,14 @@
       .then(function (r) {
         if (done) return;
         done = true; clearTimeout(tm);
+        /* 文字一到就先合成：打字机还要铺一会儿，这段正好把 2~4 秒的合成时间盖住 */
+        if (window.Voice && window.Voice.prefetch) {
+          window.Voice.prefetch(r.text, { primary: s.primary, id: s.id });
+        }
         lb.finish(r.text, function () {
           HIST.push({ role: "assistant", content: r.text });
           setVia(r.via);
-          /* 等本地那句念完再接云端那句，别把开场白截断 */
+          /* 等本地那句念完再接云端那句，别把开场白截断；此时音频已经备好，接得上来 */
           Promise.resolve(spoken).catch(function () {}).then(function () { speakThem(r.text); });
         });
         BUSY = false;
@@ -862,10 +867,15 @@
          公网 IP 上根本没有 https 端口，别让用户照着敲一个不存在的地址 */
       var host = location.hostname || "";
       var localish = /^(localhost|127\.|0\.0\.0\.0$|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+      /* 裸 IP 没证书，但 <ip>.sslip.io 会解析回这台机器，线上证书就签在它上面。
+         提示里直接给能用的地址，别让人自己猜。 */
+      var httpsAlt = /^\d+\.\d+\.\d+\.\d+$/.test(host) ? "https://" + host + ".sslip.io" : "";
       var msg = why === "insecure"
         ? (localish
             ? "现在是用 http 打开的，浏览器把麦克风锁死了 —— 换成 https://" + host + ":8443/ 再来（启动终端里有打印），或者直接打字，一样的。"
-            : "线上这条是 http，浏览器一律不给麦 —— 要真说话只能在 https 下（本机启动时会给一条 https 地址），这里先用打字。")
+            : (httpsAlt
+                ? "现在这条是 http，浏览器一律不给麦 —— 换成 " + httpsAlt + " 打开就能说，或者直接打字，一样的。"
+                : "线上这条是 http，浏览器一律不给麦 —— 要真说话得在 https 下，这里先用打字。"))
         : "这个浏览器不给用语音识别（Chrome / Edge 才有），直接打字一样的。";
       sys(msg);
       vrNote(why === "insecure" ? "http 下不能开麦" : "此浏览器不支持语音", true);
@@ -964,6 +974,8 @@
   function callReset(txt) {
     CALL.on = false;
     CALL.talking = false;
+    CALL.line = "";                    /* 下一通换句新的，别总说同一句 */
+    CALL.lineId = "";
     var host = $("awCall");
     if (host) host.classList.remove("ringing");
     vrHangup();
@@ -984,6 +996,9 @@
           { role: "user", content: "用一句话自报家门，说清你是谁、什么朝代的。" }],
           function (t) { lb.push(t); })
       .then(function (r) {
+        if (window.Voice && window.Voice.prefetch) {
+          window.Voice.prefetch(r.text, { primary: s.primary, id: s.id });
+        }
         lb.finish(r.text, function () {
           HIST.push({ role: "assistant", content: r.text });
           setVia(r.via);
@@ -1014,6 +1029,9 @@
     chat([{ role: "system", content: persona(CUR) }].concat(HIST.slice(-7)),
          function (t) { lb.push(t); })
       .then(function (r) {
+        if (window.Voice && window.Voice.prefetch) {
+          window.Voice.prefetch(r.text, { primary: CUR.primary, id: CUR.id });
+        }
         lb.finish(r.text, function () {
           HIST.push({ role: "assistant", content: r.text });
           setVia(r.via);
@@ -1299,7 +1317,7 @@
   }
 
   /* ---- 文物来电：屏幕空处自动轮换精灵，按「开始」随机一位打过来 ---- */
-  var CALL = { on: false, talking: false, id: "", timer: 0, pool: [] };
+  var CALL = { on: false, talking: false, id: "", timer: 0, pool: [], line: "", lineId: "" };
 
   function callPool() {
     if (CALL.pool.length) return CALL.pool;
@@ -1335,6 +1353,22 @@
     }
   }
 
+  /* 这通电话的开场白：在人物刚转到屏幕上的时候就定下来并送去合成。
+     接听那一刻才开会合成的话，用户要干等两三秒才有声——"字都出来了声音还没来"。
+     提前三秒开始，等真接通时音频基本已经在手上。 */
+  function callLine(id) {
+    var s = S(id);
+    if (!s) return "";
+    if (CALL.lineId !== id || !CALL.line) {
+      CALL.lineId = id;
+      CALL.line = CALL_LINES[Math.floor(Math.random() * CALL_LINES.length)](s);
+    }
+    if (window.Voice && window.Voice.prefetch) {
+      window.Voice.prefetch(CALL.line, { primary: s.primary, id: s.id });
+    }
+    return CALL.line;
+  }
+
   function callTick() {
     /* 来电中、或正跟某位通话时都不换人，别让对面那位在通话里被替换掉 */
     if (CALL.on || CALL.talking) return;
@@ -1342,6 +1376,7 @@
     if (!id) return;
     CALL.id = id;
     callShow(id, true);
+    callLine(id);
   }
 
   /* 只在专页可见时轮换：切走或页面进后台都停掉，不白烧定时器 */
@@ -1361,7 +1396,7 @@
 
     if (!CALL.id) {
       var first = callPick("");
-      if (first) { CALL.id = first; callShow(first, false); }
+      if (first) { CALL.id = first; callShow(first, false); callLine(first); }
     }
     callRotate(true);
 
@@ -1374,12 +1409,15 @@
         if (VR.on) vrStop(); else vrStart();
         return;
       }
-      var id = callPick(CALL.id);
+      /* 就呼屏幕上正显示的这一位：他的开场白早在转屏时就送去合成了，
+         接通基本能立刻出声。再随机换一个的话，那句音频就白合了。 */
+      var id = CALL.id || callPick("");
       var s = S(id);
       if (!s) return;
       CALL.id = id;
       CALL.on = true;
       callShow(id, true);
+      callLine(id);
       host.classList.add("ringing");
       ringBack();
       var sub = $("awPsSub");

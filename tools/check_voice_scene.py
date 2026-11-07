@@ -51,6 +51,9 @@ def say(ok, label, extra=""):
 
 # ============================================================ A. 回音
 SENT = "喂——听得见吗？我是西汉鎏金镶斗，这号多少年没响过了。"
+# B/C 段只用短句：断言的是"走没走远程""有没有换嗓子"，
+# 句子越短，等播放结束越稳。无人值守的浏览器没有声卡，长句可能跑得比实时慢。
+SHORT = "喂，是我，在听。"
 
 
 def env_of(path, hop=80, sr=16000):
@@ -162,9 +165,9 @@ def part_voice():
     # 第一句：真实远程合成，应当成功
     c.eval("""(function(){ window.__r1=null;
       window.Voice.say('%s', {id:'xiangdou',primary:'bronze'}).then(function(r){ window.__r1=r; });
-      return 1;})()""" % SENT.replace("'", "\\'"))
+      return 1;})()""" % SHORT.replace("'", "\\'"))
     r1 = None
-    for _ in range(60):
+    for _ in range(100):
         v = c.eval("window.__r1")
         if v is not None:
             r1 = v
@@ -201,8 +204,71 @@ def part_voice():
     c.ws.close()
 
 
+def part_latency():
+    """预取的效果：字先出来、声音随后就到，而不是"看完了等三秒才开口"。
+
+    量的是 Voice.say 到真正 play 的间隔。没预取时这段等于一次完整的
+    edge-tts 合成（实测 2~4 秒）；预取命中后应该只剩微秒级。
+    """
+    print("\n[C] 预取之后，轮到念就该出声（%s）" % BASE)
+    from cdp import CDP
+    c = CDP("about:blank")
+    c.send("Network.setCacheDisabled", {"cacheDisabled": True})
+    try:
+        c.send("Security.setIgnoreCertificateErrors", {"ignore": True})
+    except Exception:
+        pass
+    c.send("Emulation.setDeviceMetricsOverride",
+           {"width": 390, "height": 844, "deviceScaleFactor": 3, "mobile": True})
+    c.goto(BASE + "/index.html?t=%d#/alive" % int(time.time()), wait=2.6)
+    for _ in range(40):
+        if c.eval("(function(){var f=document.getElementById('flyleaf');if(f)f.remove();"
+                  "var i=document.getElementById('intro');if(i)i.style.display='none';"
+                  "document.body.classList.remove('flyleaf-on','intro-on');"
+                  "document.body.style.overflow='';return 1;})()"):
+            break
+        time.sleep(0.2)
+    ok = False
+    for _ in range(70):
+        if c.eval("typeof window.Voice==='object'&&typeof window.Voice.prefetch==='function'"):
+            ok = True
+            break
+        time.sleep(0.3)
+    say(ok, "Voice 提供 prefetch")
+    if not ok:
+        c.ws.close()
+        return
+
+    c.eval("""(function(){
+      window.__playAt=0;
+      var a=HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play=function(){
+        if(!window.__armed) window.__playAt=Date.now();
+        return a.apply(this,arguments); };
+      return 1;})()""")
+
+    text = "预取测试：这一句应该几乎不用等。"
+    c.eval("window.__armed=true; window.Voice.prefetch('%s', {id:'xiangdou',primary:'bronze'}); 1" % text)
+    time.sleep(5)                       # 给合成留时间，真实场景里这段时间被打字机盖住
+    c.eval("window.__armed=false; window.__sayAt=Date.now(); "
+           "window.Voice.say('%s', {id:'xiangdou',primary:'bronze'}); 1" % text)
+    dt = None
+    for _ in range(60):
+        v = c.eval("window.__playAt")
+        if v:
+            dt = v - c.eval("window.__sayAt")
+            break
+        time.sleep(0.2)
+    say(dt is not None, "确实出声了")
+    if dt is not None:
+        print("        say → play：%d ms" % dt)
+        say(dt < 400, "预取命中后几乎零等待（<400ms）", "实测 %d ms" % dt)
+    c.ws.close()
+
+
 if __name__ == "__main__":
     part_echo()
     part_voice()
+    part_latency()
     print("\n通过 %d 项，失败 %d 项" % (PASS, FAIL))
     sys.exit(1 if FAIL else 0)

@@ -167,14 +167,40 @@
     return "/api/tts";                            /* 线上：同域，nginx 转给桥 */
   }
 
-  function sayRemote(body, opts, seq, timeout) {
-    if (typeof fetch !== "function" || typeof URL === "undefined") return Promise.resolve(false);
+  /* ---------- 合成结果缓存 ----------
+     现场合成要 2~4 秒（edge-tts 建连 + 出声），而字是流式一个个蹦出来的。
+     只要提前把这段文字送去合成，等轮到播的时候音频已经在手上，
+     用户就不会经历"字都看完了，声音半天不来"。
+     一场对话里复用同一批句子，缓存 24 条（约 700KB），够用又不撑内存。 */
+  var TCACHE = {};
+  var TORDER = [];
+  var TMAX = 24;
+
+  function tkey(opts, body) {
+    return (opts.id || "") + "|" + (opts.primary || "") + "|" +
+           (opts.scene || "dialog") + "|" + body;
+  }
+  function tget(k) { return TCACHE[k] || null; }
+  function tput(k, blob) {
+    if (!blob || !blob.size) return;
+    if (!TCACHE[k]) {
+      TORDER.push(k);
+      while (TORDER.length > TMAX) {
+        var old = TORDER.shift();
+        if (old !== k) delete TCACHE[old];
+      }
+    }
+    TCACHE[k] = blob;
+  }
+
+  /* 只负责把音频拿回来，不播。say 和 prefetch 共用这一条。 */
+  function fetchBlob(body, opts, timeout) {
+    if (typeof fetch !== "function" || typeof URL === "undefined") return Promise.resolve(null);
     var ctl = null;
     try { ctl = new AbortController(); } catch (e) {}
     var timer = setTimeout(function () {
       if (ctl) { try { ctl.abort(); } catch (e) {} }
     }, timeout || 9000);
-    var stop = function (v) { clearTimeout(timer); return v; };
     return fetch(ttsURL(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -186,8 +212,32 @@
       }),
       signal: ctl ? ctl.signal : undefined
     }).then(function (r) {
+      clearTimeout(timer);
       return r.ok ? r.blob() : null;
-    }).then(function (blob) {
+    }, function (e) {
+      clearTimeout(timer);
+      return null;
+    });
+  }
+
+  /* 提前合成，不播。界面负责在文字刚出现时调它，把 2~4 秒藏在打字机后面。 */
+  function prefetch(text, opts) {
+    opts = opts || {};
+    if (!enabled()) return;
+    var body = clean(text);
+    if (!body) return;
+    var k = tkey(opts, body);
+    if (tget(k)) return;
+    fetchBlob(body, opts, 8000).then(function (b) { tput(k, b); }, function () {});
+  }
+
+  function sayRemote(body, opts, seq, timeout) {
+    if (typeof fetch !== "function" || typeof URL === "undefined") return Promise.resolve(false);
+    var k = tkey(opts, body);
+    var hit = tget(k);
+    var got = hit ? Promise.resolve(hit)
+                  : fetchBlob(body, opts, timeout).then(function (b) { tput(k, b); return b; });
+    return got.then(function (blob) {
       if (!blob || !blob.size) return false;
       if (seq !== saySeq) return false;           /* 已经换了一句，这条作废 */
       var url = URL.createObjectURL(blob);
@@ -209,7 +259,7 @@
           if (p && p.catch) p.catch(function () { fin(false); });
         } catch (e) { fin(false); }
       });
-    }).then(stop, function () { return stop(false); });
+    });
   }
 
   /* 系统语音兜底：服务端不可用（桥没起 / 没装 edge-tts / 断网）时用 */
@@ -381,6 +431,7 @@
     version: VERSION,
     tell: tell,
     say: say,
+    prefetch: prefetch,
     stop: stop,
     enabled: enabled,
     setEnabled: setEnabled,
