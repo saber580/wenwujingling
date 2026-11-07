@@ -1,0 +1,87 @@
+/* =============================================================================
+   AI 工坊 · 两列大面板排布（仅电脑端 >= 1024px）
+   面板底色、边框、圆角、阴影、链接色全部沿用本站其它下拉（red-v2.css）的米金黄底，
+   只把 13 个入口摊成两列，并把「文物溯源视频讲解」排到第一位（不做特殊强调）。
+   其它下拉、手机端、页面背景与所有链接功能一律不动。
+   ============================================================================= */
+
+@media (min-width: 1024px) {
+
+  /* .nav-drop 本体默认 display:none，只在展开态改成 grid，避免面板常显 */
+  .rh-topbar .nav-dd[data-nav="poster"].open > .nav-drop,
+  .rh-topbar .nav-dd[data-nav="poster"]:hover > .nav-drop {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+    row-gap: 6px;
+
+    width: min(660px, 80vw);
+    min-width: 0;
+    left: auto;
+    right: 0;
+    transform: none;
+    top: calc(100% + 2px);
+
+    /* 与其它下拉同款米金纸底，不再是纯白 */
+    background: linear-gradient(180deg, #FFF9EC, #F8E8CB);
+    border: 1px solid rgba(140, 12, 18, .16);
+    border-radius: 6px;
+    box-shadow: 0 20px 44px rgba(70, 0, 6, .34);
+    padding: 22px 26px 26px;
+    z-index: 60;
+  }
+
+  /* 顶栏底部那条 7px 云雷纹横带会压在面板上沿，展开时收起它 */
+  .rh-topbar:has(.nav-dd[data-nav="poster"]:hover)::after,
+  .rh-topbar:has(.nav-dd[data-nav="poster"].open)::after {
+    display: none;
+  }
+
+  /* 面板与顶栏之间的透明桥仍在（.nav-drop::before），hover 不会断档 */
+
+  .rh-topbar .nav-dd[data-nav="poster"] .nav-drop a {
+    color: #3E1B15;
+    font-size: 14.5px;
+    font-weight: 700;
+    letter-spacing: .6px;
+    white-space: nowrap;
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    transition: background .2s ease, color .2s ease;
+  }
+
+  .rh-topbar .nav-dd[data-nav="poster"] .nav-drop a::after {
+    content: "\2191";            /* ↑ 旋转 90° 变右箭头，组件原特征 */
+    color: #A50F17;
+    font-weight: 700;
+    display: inline-flex;
+    flex: none;
+    margin-left: auto;
+    rotate: 90deg;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: .2s ease;
+  }
+
+  .rh-topbar .nav-dd[data-nav="poster"] .nav-drop a:is(:hover, :focus-visible) {
+    background: #FFE3C4;
+    color: #A50F17;
+  }
+
+  .rh-topbar .nav-dd[data-nav="poster"] .nav-drop a:is(:hover, :focus-visible)::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rh-topbar .nav-dd[data-nav="poster"] .nav-drop a,
+  .rh-topbar .nav-dd[data-nav="poster"] .nav-drop a::after {
+    transition: none;
+  }
+}

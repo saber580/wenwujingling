@@ -315,9 +315,9 @@ function viewHome() {
             const st = STATIONS.find(x => x.id === m.id);
             const got = st.spiritIds.filter(isCaptured).length;
             const short = (st.name.split("·")[1] || st.name).trim();
-            return `<div class="map-mark${got >= st.spiritIds.length ? " done" : ""}" style="left:${m.x}%;top:${m.y}%"
+            return `<div class="map-mark uiverse-pin${got >= st.spiritIds.length ? " done" : ""}" style="left:${m.x}%;top:${m.y}%"
                       onclick="event.stopPropagation();location.hash='#/station/${st.id}'" title="${st.name}">
-              <i></i><span>${short} ${got}/${st.spiritIds.length}</span>
+              <span class="pin-label"><span class="pin-sign" data-icon="🏛">${short} ${got}/${st.spiritIds.length}</span></span>
             </div>`;
           }).join("")}
         </div>

@@ -1407,38 +1407,48 @@
       });
       return out;
     }
-    /* 逐个候选试载：命中 loadedmetadata 就用，error 就换下一个，2.4s 没响应也换 */
-    function probeVideo(i, cb) {
-      if (okUrl[i]) return cb(okUrl[i]);
-      var list = videoCands(i), k = 0;
-      (function next() {
-        if (k >= list.length) return cb(null);
-        var url = list[k], v = document.createElement("video"), done = false;
-        var timer = setTimeout(function () { if (!done) { done = true; cleanup(); k++; next(); } }, 2400);
-        function cleanup() {
-          clearTimeout(timer);
-          v.onloadedmetadata = v.onerror = null;
-          v.removeAttribute("src");
-        }
-        v.onloadedmetadata = function () {
-          if (done) return;
-          done = true; cleanup(); okUrl[i] = url; cb(url);
-        };
-        v.onerror = function () {
-          if (done) return;
-          done = true; cleanup(); k++; next();
-        };
-        v.preload = "metadata";
-        v.src = url;
-      })();
+    /* 候选地址：首选 CARDS[i].video.mp4，后面是编号 / 清洗标题的备选。
+       旧版用隐藏 <video> 逐个「探针」试载，手机端它常常既不 loadedmetadata
+       也不 error，只靠 2.4s 超时一个一个换：用户按播放键时探针还没回来，
+       startPlay 直接 return 等异步回调，而回调早脱离了用户手势 ——
+       移动端会同时拒绝 video.play() 和 requestFullscreen()，表现为「按了没反应、
+       也不全屏」。现在改成：按下当场挂 src 并起播，加载失败由真 video 的
+       error 事件换下一个候选（那时播放授权已经拿到）。 */
+    var cands = [];               // 当前这盘带的候选地址
+    var candK = 0;
+    var started = false;          // 是否已按下放映（防止换源时 error 回调误触发）
+
+    function noVideo() {
+      var c = CARDS[inTv] || {};
+      started = false;
+      if (video) {
+        video.hidden = true;
+        video.removeAttribute("src");
+        try { video.load(); } catch (e) {}
+      }
+      if (gate) gate.hidden = true;
+      if (bar) bar.hidden = true;
+      if (note) {
+        note.hidden = false;
+        if (noteTitle) noteTitle.textContent = c.title + " · 卡带已入机";
+        if (noteSub) noteSub.innerHTML = "还没找到影像<br>把 <b>" +
+          esc(c.video || ("0" + (inTv + 1)).slice(-2)) + ".mp4</b> 放进 文物精灵的起源视频/";
+      }
+      if (document.fullscreenElement && document.exitFullscreen) {
+        try { document.exitFullscreen(); } catch (e) {}
+      }
     }
-    var armedUrl = null;          // 已探到、等用户按播放的那支片
-    var wantPlay = false;         // 按得比探针快：探到就直接放
+
     function playVideo(i) {
-      var c = CARDS[i] || {};
       inTv = i;
-      armedUrl = null;
-      wantPlay = false;
+      started = false;
+      candK = 0;
+      cands = videoCands(i);
+      /* 这一盘以前成功播过：把那个地址提到最前，换盘回来不必再试错 */
+      if (okUrl[i]) {
+        var at = cands.indexOf(okUrl[i]);
+        if (at > 0) { cands.splice(at, 1); cands.unshift(okUrl[i]); }
+      }
       tv.classList.add("playing");
       if (ejectBtn) ejectBtn.hidden = false;
       if (note) note.hidden = true;
@@ -1449,23 +1459,6 @@
         video.removeAttribute("src");
         try { video.load(); } catch (e) {}
       }
-      probeVideo(i, function (url) {
-        if (inTv !== i) return;                          // 期间已经换片或退带
-        if (!url) {
-          if (note) {
-            note.hidden = false;
-            if (noteTitle) noteTitle.textContent = c.title + " · 卡带已入机";
-            if (noteSub) noteSub.innerHTML = "还没找到影像<br>把 <b>" +
-              esc(c.video || ("0" + (i + 1)).slice(-2)) + ".mp4</b> 放进 文物精灵的起源视频/";
-          }
-          return;
-        }
-        /* 先停在启动键那一屏，等观众按下才真的放映 */
-        armedUrl = url;
-        if (note) note.hidden = true;
-        if (gate) gate.hidden = false;
-        if (wantPlay) startPlay();
-      });
     }
     /* 启动键：按下才第一次真正加载影片 */
     /* 全屏只能由用户手势触发：必须在 click 的同一个任务里调用，不能等探针回调 */
@@ -1477,20 +1470,27 @@
       try { var p = o.lock("landscape"); if (p && p.catch) p.catch(function () {}); } catch (e) {}
     }
 
+    /* iPhone Safari 不支持元素全屏，只认视频自己的 webkitEnterFullscreen；
+       它对「还没有 src 的 video」无效，所以 startPlay 里必须先挂片再调 goBig。 */
+    function videoFullscreen() {
+      if (!video || !video.webkitEnterFullscreen) return;
+      try { video.webkitEnterFullscreen(); } catch (e) {}
+    }
+
     function goBig() {
       if (document.fullscreenElement || document.webkitFullscreenElement) return;
       try {
         if (screen.requestFullscreen) {
           var p = screen.requestFullscreen();
-          if (p && p.then) p.then(tryLandscape, function () {});
+          if (p && p.then) p.then(tryLandscape, videoFullscreen);
           else tryLandscape();
         } else if (screen.webkitRequestFullscreen) {
           screen.webkitRequestFullscreen();
           tryLandscape();
-        } else if (video && video.webkitEnterFullscreen) {
-          video.webkitEnterFullscreen();               // iOS Safari 只认视频自己全屏
+        } else {
+          videoFullscreen();
         }
-      } catch (err) {}
+      } catch (err) { videoFullscreen(); }
     }
 
     /* 退出全屏把方向锁解掉，否则整个页面被锁在横屏 */
@@ -1502,24 +1502,30 @@
     document.addEventListener("fullscreenchange", onFsChange);
     document.addEventListener("webkitfullscreenchange", onFsChange);
 
+    /* 启动键：按下这一下必须把「挂片 / 全屏 / 起播」全部做完，
+       三件事都留在同一个用户手势里，移动端才肯放行。 */
     function startPlay() {
-      if (inTv < 0 || !video) return;
-      goBig();                                         // 按下即最大放映
-      if (!armedUrl) { wantPlay = true; return; }      // 还没探到，等探针回来自动放
-      var url = armedUrl;
-      armedUrl = null;
+      if (inTv < 0 || !video || started) return;
+      var url = cands[candK];
+      if (!url) { noVideo(); return; }
+      started = true;
       if (gate) gate.hidden = true;
-      video.src = url;
+      if (note) note.hidden = true;
       video.hidden = false;
+      video.src = url;
       if (bar) bar.hidden = false;
       if (fill) fill.style.width = "0%";
+      goBig();                                       // 按下即最大放映
       var p = video.play();
-      if (p && p.catch) p.catch(function () {});
+      if (p && p.catch) p.catch(function () {});     // 万一仍被拒，点画面可重试
     }
     function togglePlay() {
       if (!video || video.hidden) return;
-      if (video.paused) { var p = video.play(); if (p && p.catch) p.catch(function () {}); }
-      else video.pause();
+      if (video.paused) {
+        goBig();                                     // 顺手把被拒的全屏补上
+        var p = video.play();
+        if (p && p.catch) p.catch(function () {});
+      } else video.pause();
     }
     function eject() {
       var i = inTv;
@@ -1527,8 +1533,9 @@
       /* 全屏里退带就把人放回页面，不然只剩一块空屏幕 */
       if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
       else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
-      armedUrl = null;
-      wantPlay = false;
+      cands = [];
+      candK = 0;
+      started = false;
       if (gate) gate.hidden = true;
       tv.classList.remove("playing");
       if (video) {
@@ -1583,6 +1590,19 @@
     if (playBtn) playBtn.addEventListener("click", togglePlay);
     if (video) {
       video.addEventListener("click", togglePlay);
+      /* 这个地址放不出来（文件名/格式不对）→ 换下一个候选接着放。
+         此时播放授权已经拿到，换源后继续 play() 不会被移动端拦下。 */
+      video.addEventListener("error", function () {
+        if (inTv < 0 || !started) return;
+        candK++;
+        if (candK >= cands.length) { noVideo(); return; }
+        video.src = cands[candK];
+        var p = video.play();
+        if (p && p.catch) p.catch(function () {});
+      });
+      video.addEventListener("loadedmetadata", function () {
+        if (inTv >= 0 && cands[candK]) okUrl[inTv] = cands[candK];
+      });
       video.addEventListener("timeupdate", function () {
         var d = video.duration || 0;
         if (fill && d) fill.style.width = (video.currentTime / d * 100).toFixed(2) + "%";

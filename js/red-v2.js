@@ -136,8 +136,10 @@
       const got = (st.spiritIds || []).filter(isGot).length;
       const totalSt = (st.spiritIds || []).length;
       const ok = totalSt > 0 && got >= totalSt;
-      return '<a class="rh-mark' + (ok ? " done" : "") + '" style="left:' + m.x + '%;top:' + m.y + '%" href="#/station/' + esc(st.id) + '" title="' + esc(st.name) + '">' +
-        "<i></i><span>" + esc(stationShort(st)) + "</span></a>";
+      /* 站点标记：Uiverse SnyDeTreves/white-newt-65「Map card」形制
+         （图钉 + 悬停下压 + 标签牌），类名避开组件原 .map-city 与站内城市名重名 */
+      return '<a class="rh-mark uiverse-pin' + (ok ? " done" : "") + '" style="left:' + m.x + '%;top:' + m.y + '%" href="#/station/' + esc(st.id) + '" title="' + esc(st.name) + '">' +
+        '<span class="pin-label"><span class="pin-sign" data-icon="🏛">' + esc(stationShort(st)) + "</span></span></a>";
     }).join("");
 
     const stationRows = (typeof STATIONS === "undefined" ? [] : STATIONS).map(function (st, i) {

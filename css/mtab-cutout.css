@@ -1,0 +1,122 @@
+/* =========================================================
+   手机端底部标签栏 · CSS Only Cut-Out Tab Navigation
+   来源：freefrontend.com/css-tab-bars/#css-only-cut-out-tab-navigation-l
+         CodePen keyframers / djWOwz (David Khourshid & Stephen Shaw)
+   ---------------------------------------------------------
+   形制照搬原件：底部一条圆角横条，当前项位置「挖」出一个圆形
+   缺口，选中图标浮进圆点并上移；换项时缺口平滑滑到新位置。
+   本站适配：
+   - 原件 3 项 -> 本站 5 项（每份 20%）
+   - 原件纯白 -> 站内米金黄底（与其它下拉、面板同色系）
+   - 原件靠 radio + 兄弟选择器驱动 -> 改用 radio + :has() 驱动 --mtab-x，
+     不去碰站点自己的 #app 容器；@property 让 --mtab-x 可插值，
+     于是「挖空位置」和「圆点位置」由同一个值同步平滑移动。
+   - 老浏览器（不支持 :has / @property）由 mobile-nav.js 写入 --mtab-x 兜底。
+   只在 <=860px 生效；桌面一行不动。
+   ========================================================= */
+
+@property --mtab-x {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@media (max-width: 860px) {
+
+  /* 栏变高了，内容底部多留一点，别被压住 */
+  body.mnav-on{padding-bottom:calc(108px + env(safe-area-inset-bottom))}
+
+  .mtab.ui-nav{
+    --cut:62px;                       /* 圆形缺口直径 */
+    --bar:62px;                       /* 横条高度 */
+    --mtab-x:0;                            /* 当前项序号 0..4 */
+    position:fixed;left:10px;right:10px;
+    bottom:calc(9px + env(safe-area-inset-bottom));
+    height:calc(var(--cut) / 2 + var(--bar));
+    z-index:59;
+    display:flex;align-items:stretch;
+    padding:0;margin:0;
+    background:transparent;border:0;box-shadow:none;
+    overflow:visible;border-radius:20px;
+    will-change:auto;
+    transition:--mtab-x .42s cubic-bezier(.5,0,.5,1);
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* 原件的 radio 组：收进栏内部，纯 CSS 决定 --mtab-x */
+  .mtab.ui-nav > .mtab-r{
+    position:absolute;width:1px;height:1px;opacity:0;
+    margin:0;padding:0;pointer-events:none;
+  }
+  .mtab.ui-nav:has(> .mtab-r:nth-child(2):checked){--mtab-x:1}
+  .mtab.ui-nav:has(> .mtab-r:nth-child(3):checked){--mtab-x:2}
+  .mtab.ui-nav:has(> .mtab-r:nth-child(4):checked){--mtab-x:3}
+  .mtab.ui-nav:has(> .mtab-r:nth-child(5):checked){--mtab-x:4}
+
+  /* 米金横条：顶边用 radial-gradient 掩码真挖出半圆缺口 */
+  .mtab.ui-nav > .ui-bg{
+    --cx:calc(var(--mtab-x) * 20% + 10%);
+    --r:calc(var(--cut) / 2 + 1px);   /* 洞比圆点大一圈，露出 U 形弧 */
+    position:absolute;left:0;right:0;bottom:0;height:var(--bar);
+    background:linear-gradient(180deg,#FFF9EC 0%,#F8E8CB 100%);
+    border-top:1px solid rgba(255,255,255,.92);
+    border-radius:18px;
+    -webkit-mask-image:radial-gradient(circle var(--r) at var(--cx) 0,
+      transparent 0 calc(var(--r) - 1px),#000 var(--r));
+    mask-image:radial-gradient(circle var(--r) at var(--cx) 0,
+      transparent 0 calc(var(--r) - 1px),#000 var(--r));
+    filter:drop-shadow(0 -4px 12px rgba(88,28,10,.22));
+    pointer-events:none;z-index:1;
+  }
+
+  /* 圆点：跟着 --mtab-x 平移，正好坐进上面挖出的缺口 */
+  .mtab.ui-nav > .ui-cutout-wrap{
+    position:absolute;inset:0;z-index:2;pointer-events:none;
+    transform:translateX(calc(var(--mtab-x) * 20%));
+  }
+  .mtab.ui-nav .ui-cutout{
+    position:absolute;top:0;
+    left:calc((20% - var(--cut)) / 2);
+    width:var(--cut);height:var(--cut);
+    border-radius:50%;
+    /* 洞底铺站内朱红：缺口的 U 形弧在任何页面都是同一个颜色，
+       不会随页面图片忽深忽浅（原件这里露的是纯色页面背景） */
+    background:linear-gradient(180deg,transparent 0 50%,#8B0C13 50% 100%);
+  }
+  .mtab.ui-nav .ui-dot{
+    position:absolute;inset:0;border-radius:50%;
+    transform:scale(.82);              /* 原件 scale(.85)：圆点缩进洞里 */
+    background:radial-gradient(circle at 50% 30%,#FFFDF6 0%,#FBEFD3 58%,#F2DBAF 100%);
+    border:1px solid rgba(255,255,255,.95);
+    box-shadow:0 5px 12px rgba(88,28,10,.20),inset 0 1px 0 #fff;
+  }
+
+  /* 五个标签：图标在上、文字在下；选中项图标浮进圆点 */
+  .mtab.ui-nav > .ui-label{
+    flex:1 1 0;min-width:0;position:relative;z-index:3;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    padding:0 0 8px;cursor:pointer;
+    color:#8A6A3E;font-family:var(--rh-kai);font-size:10.5px;letter-spacing:1px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mtab.ui-nav > .ui-label .mt-ic{
+    width:22px;height:22px;display:block;margin-bottom:2px;
+    color:#8A6A3E;
+    transition:transform .42s cubic-bezier(.5,0,.5,1),color .28s;
+  }
+  .mtab.ui-nav > .ui-label > span{
+    line-height:1.1;white-space:nowrap;transition:color .28s;
+  }
+  .mtab.ui-nav > .ui-label.on{color:#8B0C13;font-weight:700}
+  .mtab.ui-nav > .ui-label.on .mt-ic{
+    transform:translateY(-28px);
+    color:#8B0C13;
+    filter:drop-shadow(0 2px 5px rgba(140,12,18,.34));
+  }
+  .mtab.ui-nav > .ui-label:not(.on):active .mt-ic{transform:translateY(-5px)}
+
+  @media (prefers-reduced-motion:reduce){
+    .mtab.ui-nav,.mtab.ui-nav > .ui-cutout-wrap,
+    .mtab.ui-nav > .ui-label .mt-ic{transition-duration:.01ms}
+  }
+}

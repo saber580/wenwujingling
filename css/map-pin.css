@@ -1,0 +1,186 @@
+/* 首页「河北地图」站点标记 —— Uiverse.io by SnyDeTreves / white-newt-65「Map card」
+   https://uiverse.io/SnyDeTreves/white-newt-65
+
+   沿用原件的形制：图钉（::after 的 📍）+ 落点圆点（::before 的 •）、
+   hover 时图钉 clip-path 下压、标签牌淡入、data-icon 从地里长出来的 grow 动画。
+   工程适配：
+   - 组件原类名 .map-city 与站内「城市名文字」重名，统一换成 .uiverse-pin /
+     .pin-label / .pin-sign；只作用于站点标记，底图 / 城市名 / 点位 / 点击跳转不动。
+   - 原件标签仅 hover 显示（纯 CSS demo），本站 12 个站点要一眼看清且手机无 hover，
+     因此标签常显，hover 时补上原件的 fadein + grow 动效。
+   - 原件是绿底 #00c080 + 黑底地图，这里按站内朱红 / 米金配色；
+     --city-* 变量名与定位公式沿用原文，尺寸按 430px 底图收了一档。
+   - 同时覆盖首页（red-v2.js 的 .rh-mark）与旧模板（app.js 的 .map-mark）。 */
+
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin {
+  --city-radius: 8px;
+  --city-sign-color-back: #8F0D16;
+  --city-sign-color-font: #FFF6E6;
+  --city-pin-size-font: 16px;
+  display: block;
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  text-decoration: none;
+  z-index: 3;
+}
+
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin:hover,
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin:focus-visible {
+  z-index: 20;
+}
+
+/* 落点圆点：原件的 "•"，改用真圆以便保留站内「未点亮会呼吸」的提示 */
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--city-sign-color-back);
+  border: 2px solid var(--city-sign-color-font);
+  box-shadow: 0 0 0 3px rgba(143, 13, 22, .20), 0 2px 5px rgba(60, 20, 10, .38);
+}
+
+/* 图钉：原件的 📍，clip-path 与 hover 下压完全照搬 */
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin::after {
+  content: "📍";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -78%);
+  font-size: var(--city-pin-size-font);
+  line-height: 1;
+  text-align: center;
+  clip-path: inset(-.5em 0 0 0);
+  filter: drop-shadow(0 2px 2px rgba(60, 20, 10, .38));
+  transition: transform 300ms ease-out, clip-path 300ms ease-out;
+  z-index: 2;
+}
+
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin:hover::after,
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin:focus-visible::after {
+  clip-path: inset(-.5em 0 .5em 0);
+  transform: translate(-50%, calc(-78% + .5em));
+}
+
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin:not(.done)::before {
+  animation: uiversePinPulse 1.9s ease-out infinite;
+}
+
+/* 已点亮：改用站内玉色，和未点亮的朱红一眼可分 */
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin.done {
+  --city-sign-color-back: #3F7C5A;
+}
+
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin.done::before {
+  box-shadow: 0 0 0 3px rgba(63, 124, 90, .24), 0 2px 5px rgba(60, 20, 10, .30);
+  animation: none;
+}
+
+/* 标签牌：原件的 .map-city__label / .map-city__sign */
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin .pin-label {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 11px);
+  display: block;
+  margin: 0;
+  padding: 0;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 104px;
+  text-align: center;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  z-index: 2;
+}
+
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin .pin-sign {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: .3em;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: .18em .44em;
+  overflow: hidden;
+  background-color: var(--city-sign-color-back);
+  border: .12em solid var(--city-sign-color-font);
+  border-radius: .2rem;
+  box-shadow: 0 0 3px rgba(0, 0, 0, .40);
+  color: var(--city-sign-color-font);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: .2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin .pin-sign::before {
+  content: attr(data-icon);
+  display: none;
+}
+
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin:hover .pin-sign::before,
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin:focus-visible .pin-sign::before {
+  display: inline-block;
+  animation: uiverseGrow 500ms ease-in forwards;
+}
+
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin:hover .pin-label,
+:is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin:focus-visible .pin-label {
+  animation: uiverseFadein 300ms ease-out forwards;
+}
+
+/* 原件的 fadein 用 top 动画，会跟本站的绝对定位打架，这里改成纯位移 */
+@keyframes uiverseFadein {
+  0%   { opacity: 0; transform: translate(-50%, -6px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* 原件的 grow：图标从地下冒出来（逐帧照搬） */
+@keyframes uiverseGrow {
+  0%   { transform: translate(0, 200%); }
+  10%  { transform: translate(5%, 180%); }
+  20%  { transform: translate(-10%, 160%); }
+  30%  { transform: translate(15%, 140%); }
+  40%  { transform: translate(-5%, 120%); }
+  50%  { transform: translate(10%, 100%); }
+  60%  { transform: translate(-15%, 80%); }
+  70%  { transform: translate(5%, 60%); }
+  80%  { transform: translate(0, 40%); }
+  90%  { transform: translate(0, 20%); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes uiversePinPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(143, 13, 22, .52), 0 2px 5px rgba(60, 20, 10, .38); }
+  100% { box-shadow: 0 0 0 12px rgba(143, 13, 22, 0), 0 2px 5px rgba(60, 20, 10, .38); }
+}
+
+@media (max-width: 640px) {
+  :is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin {
+    --city-pin-size-font: 14px;
+    width: 22px;
+    height: 22px;
+  }
+  :is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin .pin-sign {
+    font-size: 9px;
+    padding: .12em .32em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin::after { transition: none; }
+  :is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin::before,
+  :is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin .pin-label,
+  :is(.rh-marks .rh-mark, .map-layer .map-mark).uiverse-pin .pin-sign::before { animation: none; }
+}

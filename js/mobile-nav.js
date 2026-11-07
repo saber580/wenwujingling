@@ -24,6 +24,10 @@
   window.addEventListener("hashchange", fixScrollOnRoute);
 
   var MQ = window.matchMedia("(max-width: 860px)");
+  /* 老浏览器不支持 :has() 时，由脚本直接写 --mtab-x 兜底
+     注意：不能叫 --x —— 扉页 flyleaf.js 用 --x 存卡片的 px 位移，
+     全局 @property 注册成 <number> 会让带 px 的值失效，牌阵会塌成两叠 */
+  var HAS_SELECTOR = !!(window.CSS && CSS.supports && CSS.supports("selector(:has(*))"));
   var built = false, mask = null, sheet = null, sheetBody = null, sheetTitle = null, curKey = "";
 
   var ICONS = {
@@ -52,14 +56,29 @@
     return "";
   }
 
+  /* 当前标签 -> 同步 radio（:checked 由 CSS 驱动缺口滑动）+ 选中态。
+     点击和换路由都走这里，图标高亮与缺口永远一致。 */
+  function setActive(i) {
+    var bar = q(".mtab");
+    if (!bar) return;
+    var rs = bar.querySelectorAll(".mtab-r");
+    var ls = bar.querySelectorAll(".ui-label");
+    for (var j = 0; j < rs.length; j++) {
+      rs[j].checked = (j === i);
+      ls[j].classList.toggle("on", j === i);
+      ls[j].setAttribute("aria-current", j === i ? "page" : "false");
+    }
+    if (!HAS_SELECTOR) bar.style.setProperty("--mtab-x", String(i));
+  }
+
   function mark() {
     var k = keyForHash();
-    var btns = document.querySelectorAll(".mtab > button");
+    var btns = document.querySelectorAll(".mtab .ui-label");
+    var hit = -1;
     for (var i = 0; i < btns.length; i++) {
-      var on = btns[i].getAttribute("data-key") === k;
-      btns[i].classList.toggle("on", on);
-      btns[i].setAttribute("aria-current", on ? "page" : "false");
+      if (btns[i].getAttribute("data-key") === k) hit = i;
     }
+    if (hit >= 0) setActive(hit);
   }
 
   function closeSheet() {
@@ -67,6 +86,7 @@
     sheet.classList.remove("on");
     mask.classList.remove("on");
     document.body.style.overflow = "";
+    mark();                       /* 抽屉收起后，缺口回到真实所在页 */
   }
 
   function openSheet(key, label, srcSel) {
@@ -94,20 +114,44 @@
       { key: "me",     label: "我的",   icon: "me",      act: "auth" }
     ];
 
+    /* ---- Cut-Out Tab Navigation 结构 ----
+       原件的 radio 组 + .ui-bg（挖空横条）+ .ui-cutout/.ui-dot（圆点）
+       + 若干 label.ui-label。按钮的点击行为完全沿用下面原有分支。 */
     var bar = document.createElement("nav");
-    bar.className = "mtab";
+    bar.className = "mtab ui-nav";
     bar.setAttribute("aria-label", "主导航");
 
-    TABS.forEach(function (t) {
-      var b = document.createElement("button");
-      b.type = "button";
+    TABS.forEach(function (t, i) {
+      var r = document.createElement("input");
+      r.type = "radio";
+      r.name = "ww-mtab-choice";
+      r.id = "ww-mtab-r" + (i + 1);
+      r.className = "mtab-r";
+      r.tabIndex = -1;
+      if (i === 0) r.checked = true;
+      bar.appendChild(r);
+    });
+
+    var bg = document.createElement("div");
+    bg.className = "ui-bg";
+    bar.appendChild(bg);
+
+    var wrap = document.createElement("div");
+    wrap.className = "ui-cutout-wrap";
+    wrap.innerHTML = '<div class="ui-cutout"><div class="ui-dot"></div></div>';
+    bar.appendChild(wrap);
+
+    TABS.forEach(function (t, i) {
+      var b = document.createElement("label");
+      b.className = "ui-label";
+      b.setAttribute("for", "ww-mtab-r" + (i + 1));
       b.setAttribute("data-key", t.key);
       b.innerHTML = svg(t.icon) + "<span>" + t.label + "</span>";
       b.addEventListener("click", function () {
+        setActive(i);               /* 缺口立刻滑到手指点的那一项 */
         if (t.act === "link") {
           var a = q(t.sel);
-          if (a) a.click();
-          mark();
+          if (a) a.click();         /* 换页后 hashchange -> mark() 会校正 */
         } else if (t.act === "sheet") {
           openSheet(t.key, t.label, t.sel);
         } else if (t.act === "auth") {
