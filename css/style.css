@@ -2317,3 +2317,6 @@ body.flyleaf-on #intro{display:none!important}
    底部切角标签栏(93px 高)会盖住最后一屏,这里统一让开。 */
 body[data-page="biz"] .wj-tech-pill{display:none}
 @media(max-width:760px){body[data-page="biz"]{padding-bottom:126px}}
+
+/* 档案包(data-deep.js)加载中的占位:只在用户抢在预取之前点进图鉴时出现 */
+.pg-wait{padding:88px 20px;text-align:center;color:#8a7a63;font-size:13.5px;letter-spacing:1.5px}

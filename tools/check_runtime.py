@@ -7,6 +7,10 @@ def rd(p): return open(os.path.join(ROOT, p), encoding="utf-8").read()
 import re as _re
 _HTML = rd("index.html")
 SITES = [_s.split("?")[0] for _s in _re.findall(r'<script[^>]*src="([^"]+)"', _HTML)]
+# 档案包(data-deep.js)是运行时按需注入的,不在 index.html 的 script 标签里;
+# 这里手动接在 data.js 后面,否则 SPIRITS 缺 comic/knowledge/quiz/history。
+if "js/data.js" in SITES and "js/data-deep.js" not in SITES:
+    SITES.insert(SITES.index("js/data.js") + 1, "js/data-deep.js")
 JS_ALL = "\n".join(rd(_s) for _s in SITES if _s.startswith("js/") and _s.endswith(".js")
                     and os.path.exists(os.path.join(ROOT, _s)))
 CSS_ALL = "\n".join(rd("css/" + _f) for _f in sorted(os.listdir(os.path.join(ROOT, "css")))

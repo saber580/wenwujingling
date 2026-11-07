@@ -145,6 +145,18 @@
     return Math.log(1 + (DOCS.length - df + 0.5) / (df + 0.5));
   }
 
+  /* 档案包(data-deep.js)异步补齐字段后,索引必须重建一次:
+     首次 build 时 SPIRITS 只有简介与别名,问答/考点/来历还没到,
+     不重建就会检索不到这些段落,回答质量会明显下降。 */
+  function rebuild() {
+    DOCS = [];
+    POST = Object.create(null);
+    DF = Object.create(null);
+    AVG_LEN = 0;
+    BUILT = false;
+    return build();
+  }
+
   /* ---------------- 检索 ---------------- */
   /* q: 查询串；k: 返回条数；opt.sid: 只看某只精灵（可为空） */
   function search(q, k, opt) {
@@ -912,8 +924,9 @@
 
   build();
   window.KB = {
-    version: "kb2",
+    version: "kb3",
     build: build,
+    rebuild: rebuild,
     search: search,
     searchSpirits: searchSpirits,
     evidence: evidence,

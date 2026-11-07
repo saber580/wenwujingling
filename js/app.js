@@ -156,6 +156,17 @@ function render() {
   // 高亮顶部栏目(首页→我的精灵 / 图鉴 / 其他 / AI 栏目)
   const navKey = page === "" ? "mine" : (page === "codex" ? "codex" : (page === "poster" || page === "restore" || page === "tea" || page === "dye" || page === "ident" ? page : (page === "museums" || page === "creative" || page === "biz" ? "more" : "")));
   $$(".topnav .nav-item").forEach(a => a.classList.toggle("active", a.dataset.nav === navKey));
+  /* 图鉴 / 精灵详情 / 茶话会要用档案包(data-deep.js)里的自述、问答与来历。
+     用户手快先点进来时档案可能还在路上,这里等它一下;失败就照常渲染,绝不死循环。 */
+  const NEED_DEEP = { codex: 1, spirit: 1, tea: 1 };
+  if (NEED_DEEP[page] && typeof window.deepReady === "function" &&
+      !window.deepReady() && !window.__deepGaveUp) {
+    app.innerHTML = '<div class="pg-wait">正在铺开文物档案…</div>';
+    if (typeof window.loadDeep === "function") {
+      window.loadDeep().then(render).catch(function () { window.__deepGaveUp = 1; render(); });
+    } else { window.__deepGaveUp = 1; render(); }
+    return;
+  }
   if (page === "station") app.innerHTML = viewStation(param);
   else if (page === "spirit") app.innerHTML = viewSpirit(param);
   else if (page === "codex") app.innerHTML = viewCodex();
