@@ -2229,6 +2229,7 @@ const DYE = {
   zone: null, mask: null, visited: null, stack: null, fillIdx: null,
   cvW: 0, cvH: 0, cnt: 0, total: 0,
   ink: "#c0392b", brush: 30, tool: "brush",
+  undo: [],
   done: false, autoTimer: null, raf: 0,
   painting: false, moved: false, lastX: 0, lastY: 0, downX: 0, downY: 0
 };
@@ -2283,7 +2284,7 @@ function viewDye() {
       <b>🖌 怎么玩(真彩画板 · 自己上色)</b>
       <ol>
         <li><b>蘸色</b>:下面一排是十二种传统色(朱红 / 赭石 / 石青 / 石绿 / 赤金…),点一下就蘸上了;想更准,点「🎨」自己调一个。</li>
-        <li><b>轻点 = 填一块,按住 = 涂一笔</b>:轻点处一整片封闭区域会用当前颜色填满(数字油画那样);按住拖动就是笔刷,细 / 中 / 粗三档。</li>
+        <li><b>轻点 = 填一块,按住 = 涂一笔</b>:轻点处一整片封闭区域会用当前颜色填满,像数字油画(背景那一大片也算一块,点错了按「↶ 撤销」);按住拖动就是笔刷,细 / 中 / 粗三档。</li>
         <li><b>涂错了就擦</b>:切到「🧽 橡皮」,擦掉的只是你涂的颜色,线稿一根都不会少。</li>
         <li><b>照着画、画完带走</b>:右边(手机上在画布右上角)常驻缩小版原图,点一下放大;满意了就「💾 保存作品」,「✨ 一键赋彩」可以先偷看 AI 填满的样子。</li>
       </ol>
@@ -2317,6 +2318,7 @@ function viewDye() {
             <button type="button" data-b="30" onclick="dyeBrushSize(30)">中</button>
             <button type="button" data-b="52" onclick="dyeBrushSize(52)">粗</button>
           </span>
+          <button type="button" class="dye-undo" id="dye-undo" onclick="dyeUndo()" title="撤销上一步" disabled>↶ 撤销</button>
         </div>
         <div class="dye-tools">
           <button type="button" class="btn ghost dye-peekbtn" onpointerdown="dyePeek(true)" onpointerup="dyePeek(false)" onpointerleave="dyePeek(false)" onpointercancel="dyePeek(false)" oncontextmenu="return false">👁 按住看原图</button>
@@ -2359,6 +2361,7 @@ function dyeLoad(i) {
   DYE.idx = ((i % n) + n) % n;
   dyeStopAuto();
   dyeRefZoom(false);
+  DYE.undo = [];
   DYE.ready = false;
   const stage = document.getElementById("dye-stage");
   if (stage) { stage.classList.add("busy"); stage.classList.remove("done"); }
@@ -2489,6 +2492,7 @@ function dyeBind(cv) {
       const dx = p[0] - DYE.downX, dy = p[1] - DYE.downY;
       if (dx * dx + dy * dy < 36) return;   // 6px 内仍按「轻点」处理
       DYE.moved = true;
+      dyeSnapshot();   // 一笔算一步，存的是落笔前的样子
     }
     dyeSeg(DYE.lastX, DYE.lastY, p[0], p[1]);
     DYE.lastX = p[0]; DYE.lastY = p[1];
@@ -2577,6 +2581,7 @@ function dyeFillAt(x, y) {
     }
   }
   if (!n) return;
+  dyeSnapshot();
   const img = DYE.paintCtx.getImageData(0, 0, W, H);
   const d = img.data;
   const cr = parseInt(DYE.ink.slice(1, 3), 16), cg = parseInt(DYE.ink.slice(3, 5), 16), cb = parseInt(DYE.ink.slice(5, 7), 16);
@@ -2589,6 +2594,37 @@ function dyeFillAt(x, y) {
   DYE.paintCtx.putImageData(img, 0, 0);
   dyeRender();
   dyeProgress();
+}
+/* 撤销：点背景不小心涂满一整片、或者一笔画歪了，都能退回去。
+   只留最近 6 步 —— 每步一张 ImageData（1.2M 像素 ≈ 4.8MB），再多就吃内存了。 */
+function dyeSnapshot() {
+  if (!DYE.ready || !DYE.paintCtx) return;
+  try {
+    const img = DYE.paintCtx.getImageData(0, 0, DYE.cvW, DYE.cvH);
+    DYE.undo.push({ img: img, mask: DYE.mask.slice(), cnt: DYE.cnt });
+    if (DYE.undo.length > 6) DYE.undo.shift();
+  } catch (e) { return; }
+  dyeUndoBtn();
+}
+function dyeUndoBtn() {
+  const b = document.getElementById("dye-undo");
+  if (b) b.disabled = !DYE.undo.length;
+}
+function dyeUndo() {
+  const s = DYE.undo.pop();
+  if (!s || !DYE.ready) return;
+  DYE.paintCtx.putImageData(s.img, 0, 0);
+  DYE.mask.set(s.mask);
+  DYE.cnt = s.cnt;
+  const pct = DYE.total ? DYE.cnt / DYE.total : 0;
+  DYE.done = pct >= 0.62;
+  const stage = document.getElementById("dye-stage");
+  if (stage) stage.classList.toggle("done", DYE.done);
+  const tip = document.getElementById("dye-done");
+  if (tip) tip.classList.toggle("show", DYE.done);
+  dyePaint();
+  dyeProgress();
+  dyeUndoBtn();
 }
 function dyeProgress() {
   const pct = DYE.total ? DYE.cnt / DYE.total : 0;
@@ -2636,6 +2672,7 @@ function dyeBrushSize(b) {
 function dyeReset() {
   if (!DYE.ready) return;
   dyeStopAuto();
+  dyeSnapshot();
   DYE.paintCtx.clearRect(0, 0, DYE.cvW, DYE.cvH);
   DYE.mask.fill(0);
   DYE.cnt = 0; DYE.done = false;
@@ -2652,6 +2689,7 @@ function dyeStopAuto() {
 /* 一键赋彩:拿原图该处的颜色随机刷满,当作「AI 给的参考答案」 */
 function dyeAuto() {
   if (!DYE.ready || DYE.autoTimer) return;
+  dyeSnapshot();
   let step = 0;
   DYE.autoTimer = setInterval(() => {
     if (!DYE.ready) { dyeStopAuto(); return; }

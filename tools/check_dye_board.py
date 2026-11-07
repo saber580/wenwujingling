@@ -163,6 +163,23 @@ new = px(c, 0.5, 0.42)
 say(old != new, "按住拖能涂出一笔", "%s → %s" % (old, new))
 say(pct(c) > p1, "涂完进度往前走", "%.0f%%" % pct(c))
 
+# ---- 4b. 撤销：误点背景涂满整片也能退回来 ----
+# 到这一步栈里有两步：填充前、落笔前。连撤两次应该回到白纸。
+c.eval("dyeUndo()")
+time.sleep(0.3)
+c.eval("dyeUndo()")
+time.sleep(0.4)
+say(pct(c) == 0, "撤销能一步步退回白纸", "%.0f%%" % pct(c))
+say(c.eval("!!document.getElementById('dye-undo').disabled"), "撤到底后按钮置灰")
+c.eval("dyeInk('#3b6ea5')")
+time.sleep(0.15)
+tap(c, r, 0.5, 0.55)
+before_undo = pct(c)
+c.eval("dyeUndo()")
+time.sleep(0.4)
+say(before_undo > 0 and pct(c) == 0, "撤销把整片填充退干净",
+    "%.0f%% → %.0f%%" % (before_undo, pct(c)))
+
 # ---- 5. 橡皮擦回去 ----
 c.eval("dyeTool('eraser')")
 time.sleep(0.15)
