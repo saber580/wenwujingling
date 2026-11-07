@@ -33,6 +33,14 @@
   var voicesReady = false;
   var saySeq = 0;            /* 每说一句 +1；stop() 也 +1，作废所有在途合成 */
 
+  /* 同一场对话里不许换嗓子。
+     远程合成偶发失败（网络抖、服务端排队超时）时若当场退回系统语音，
+     就成了"上一句是它自己的声音，下一句变成机器念"——用户听得出来，人设也塌了。
+     所以只要这轮对话已经出过远程声音，后面就锁死：重试几次，仍不行就宁可不念
+     （文字还在屏幕上），也不换人。锁在 stop() 时解，即下一次打开对话重新判断。 */
+  var LOCK = { on: false, at: 0 };
+  var LOCK_MS = 120000;      /* 两分钟没再成功过，承认网真不行，允许降级并告知 */
+
   function toneFor(primary) { return TONE[primary] || DEFAULT_TONE; }
 
   function synthOK() {
@@ -134,6 +142,8 @@
     halt(!quiet);
     saySeq++;                      /* 关闭抽屉时，正在合成的那一句不能再开口 */
     killAudio();
+    LOCK.on = false;               /* 换一场对话，重新判断能不能用远程嗓子 */
+    LOCK.at = 0;
     if (synthOK()) { try { speechSynthesis.cancel(); } catch (e) {} }
     if (quiet) return;
     try {
@@ -157,13 +167,13 @@
     return "/api/tts";                            /* 线上：同域，nginx 转给桥 */
   }
 
-  function sayRemote(body, opts, seq) {
+  function sayRemote(body, opts, seq, timeout) {
     if (typeof fetch !== "function" || typeof URL === "undefined") return Promise.resolve(false);
     var ctl = null;
     try { ctl = new AbortController(); } catch (e) {}
     var timer = setTimeout(function () {
       if (ctl) { try { ctl.abort(); } catch (e) {} }
-    }, 9000);
+    }, timeout || 9000);
     var stop = function (v) { clearTimeout(timer); return v; };
     return fetch(ttsURL(), {
       method: "POST",
@@ -171,6 +181,7 @@
       body: JSON.stringify({
         id: opts.id || "",
         primary: opts.primary || "",
+        scene: opts.scene || "dialog",    /* dialog=贴话筒说话，不带展厅回音 */
         text: body
       }),
       signal: ctl ? ctl.signal : undefined
@@ -224,6 +235,17 @@
     });
   }
 
+  /* 远程合成带重试：网络抖一下就换嗓子，代价太大，先自己补一次。
+     服务端 edge-tts 正常 2~4 秒，8 秒足够；重试给短一点，别让人干等。 */
+  function sayRetry(body, opts, seq, left) {
+    return sayRemote(body, opts, seq, left > 0 ? 8000 : 6000).then(function (ok) {
+      if (ok) { LOCK.on = true; LOCK.at = Date.now(); return true; }
+      if (seq !== saySeq) return false;          /* 已被后一句顶掉，别补念 */
+      if (left > 0) return sayRetry(body, opts, seq, left - 1);
+      return false;
+    });
+  }
+
   /* 朗读一段文字，返回 Promise<boolean> */
   function say(text, opts) {
     opts = opts || {};
@@ -238,10 +260,18 @@
     }
     warmVoices();
     var seq = ++saySeq;
-    return sayRemote(body, opts, seq).then(function (ok) {
+    return sayRetry(body, opts, seq, 1).then(function (ok) {
       if (ok) return true;
       if (seq !== saySeq) return false;  /* 已被后一句顶掉，别再补念一遍 */
       if (!synthOK()) return false;
+      /* 这轮对话里已经出过它自己的嗓子 → 绝不换人。
+         宁可这一句不念（字还在屏幕上），也不能上一句是它、下一句变机器。
+         只有从没成功过，或者锁已过期（网确实不行了），才允许回落并告知界面。 */
+      if (!opts.keepStory && LOCK.on && (Date.now() - LOCK.at) < LOCK_MS) {
+        try { W.dispatchEvent(new CustomEvent("voice:mute")); } catch (e) {}
+        return false;
+      }
+      try { W.dispatchEvent(new CustomEvent("voice:fallback")); } catch (e) {}
       return sayLocal(body, opts);
     });
   }

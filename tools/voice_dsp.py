@@ -45,6 +45,13 @@ SPACE = {
 }
 DEFAULT_SPACE = dict(decay=0.85, wet=0.20, predelay=18, damp=1.00, taps=9)
 
+# 对话/电话场景：贴话筒说话，几乎没有空间反射。
+# 展厅那套 1.5 秒、0.26 湿声的参数用在句句紧接的问答上，
+# 前一句的尾巴还没散下一句就起，听感就是"在空房子里喊"——回音很重。
+# 讲故事（预生成 mp3）继续用上面的 SPACE，那里需要殿宇感；
+# 问答是"它正在跟你说话"，距离该是几十厘米，不是几十米。
+DIALOG_SPACE = dict(decay=0.26, wet=0.06, predelay=7, damp=0.85, taps=5)
+
 
 # ----------------------------------------------------------------- ffmpeg
 def ffmpeg_exe():
@@ -158,11 +165,12 @@ def _normalize(stereo):
 
 
 # --------------------------------------------------------------- 主入口
-def process_file(src, dst, material, seed):
+def process_file(src, dst, material, seed, space=None):
     dry = decode(src)
     if dry is None or len(dry) < 512:
         return False
-    space = SPACE.get(material, DEFAULT_SPACE)
+    if space is None:
+        space = SPACE.get(material, DEFAULT_SPACE)
     seed = abs(int(seed)) % 100000
 
     dry = _shelf_and_peaks(dry, SR)

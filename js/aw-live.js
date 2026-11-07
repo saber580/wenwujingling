@@ -606,6 +606,23 @@
   });
   window.addEventListener("voice:change", syncSpk);
 
+  /* 嗓子出岔子得有个交代：静默会让人以为坏了，但每句都提示又吵。
+     十二秒内只报一次，说清"是网络，不是它换人了"。 */
+  var VNOTE = { at: 0 };
+  function vnote(txt) {
+    if (!box.classList.contains("show")) return;
+    var now = Date.now();
+    if (now - VNOTE.at < 12000) return;
+    VNOTE.at = now;
+    sys(txt);
+  }
+  window.addEventListener("voice:mute", function () {
+    vnote("网络有点卡，这句没能念出来（字在上面），下一句再听");
+  });
+  window.addEventListener("voice:fallback", function () {
+    vnote("网络不稳，这句先用备用嗓子念了 —— 不是它变了个人");
+  });
+
   function put(who, txt, quiet) {
     var d = document.createElement("div");
     d.className = "aw-m " + who; d.textContent = txt;

@@ -313,11 +313,14 @@ class Handler(SimpleHTTPRequestHandler):
         text = str(req.get("text") or "").strip()[:800]
         rid = str(req.get("id") or "").strip()
         primary = str(req.get("primary") or "").strip()
+        scene = str(req.get("scene") or "dialog").strip()
+        if scene not in ("dialog", "exhibit"):
+            scene = "dialog"
         if not text:
             return self._json(400, {"ok": False, "error": "文本为空"})
         try:
             import tts_service
-            data = tts_service.tts_bytes(rid, text, primary)
+            data = tts_service.tts_bytes(rid, text, primary, scene=scene)
         except Exception as e:
             sys.stderr.write("  [tts] %s\n" % str(e)[:160])
             data = None

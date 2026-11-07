@@ -105,8 +105,12 @@ def synth_edge(text, v):
                 pass
 
 
-def polish(raw, v, rid):
-    """套离线生成时那套卷积混响 / 频响塑形；缺依赖就退回干声。"""
+def polish(raw, v, rid, space=None):
+    """套离线生成时那套卷积混响 / 频响塑形；缺依赖就退回干声。
+
+    space=None 时按材质用展厅参数（和预生成 mp3 一致）；
+    传 voice_dsp.DIALOG_SPACE 则是"贴着话筒说话"的近场处理。
+    """
     try:
         import voice_dsp
     except Exception:
@@ -119,8 +123,11 @@ def polish(raw, v, rid):
         os.close(fd)
         with open(a, "wb") as f:
             f.write(raw)
+        if space is None:
+            space = voice_dsp.SPACE.get(voice_dsp.material_of(v["material"]),
+                                        voice_dsp.DEFAULT_SPACE)
         ok = voice_dsp.process_file(a, b, voice_dsp.material_of(v["material"]),
-                                    seed=_h(rid or "default", "s"))
+                                    seed=_h(rid or "default", "s"), space=space)
         if ok and os.path.getsize(b) > 600:
             with open(b, "rb") as f:
                 return f.read()
@@ -136,10 +143,14 @@ def polish(raw, v, rid):
     return raw
 
 
-def tts_bytes(rid, text, primary=""):
-    """合成并缓存；同一件文物同一句话只合一次。"""
+def tts_bytes(rid, text, primary="", scene="dialog"):
+    """合成并缓存；同一件文物同一句话只合一次。
+
+    scene="dialog"（默认）—— 问答里现说的话，近场、不带殿宇回音；
+    scene="exhibit"       —— 与预生成 mp3 同一套展厅空间，留给将来可能的用途。
+    """
     v = voice_of(rid, primary)
-    key = hashlib.md5((v["voice"] + v["rate"] + v["pitch"] + "|" + text).encode("utf-8")).hexdigest()
+    key = hashlib.md5((v["voice"] + v["rate"] + v["pitch"] + scene + "|" + text).encode("utf-8")).hexdigest()
     with _lock:
         hit = _cache.get(key)
     if hit is not None:
@@ -147,7 +158,14 @@ def tts_bytes(rid, text, primary=""):
     raw = synth_edge(text, v)
     if not raw:
         return None
-    data = polish(raw, v, rid)
+    space = None
+    if scene == "dialog":
+        try:
+            import voice_dsp
+            space = voice_dsp.DIALOG_SPACE
+        except Exception:
+            space = None
+    data = polish(raw, v, rid, space=space)
     with _lock:
         _cache[key] = data
         _order.append(key)

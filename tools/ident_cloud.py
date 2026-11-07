@@ -758,7 +758,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if len(text) > 800:
             text = text[:800]
-        data = tts_bytes(rid, text, primary)
+        data = tts_bytes(rid, text, primary, scene=(str(req.get("scene") or "dialog").strip() or "dialog"))
         if not data:
             self._json({"ok": False, "error": "语音合成不可用"}, 503)
             return
