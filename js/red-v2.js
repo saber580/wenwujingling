@@ -420,7 +420,51 @@
   }
 
   /* ---------------- 票券墙（造型取自 uiverse.io/cards 的 TICKET 卡） ----------------
-     每张票：抬头 TICKET → 名字 → 撕票虚线 → 精灵 → 编号/条码，正好是「上名字、下精灵」 */
+     每张票：抬头 TICKET → 名字 → 撕票虚线 → 精灵 → 编号/条码，正好是「上名字、下精灵」。
+     每张票下方垫一个发光的「井」（SVG 金盒，取自 uiverse great-starfish 的 bounce 动画），
+     七张票七种井色；票浮在井上，随井一起上下漂浮，hover 时共同抬升。 */
+  const WELL_COLORS = [
+    "#e8b513",  // 五铢钱 · 铜金
+    "#4f9fe8",  // 青花瓷 · 青蓝
+    "#43d0b0",  // 玉坠 · 青玉
+    "#f2a33a",  // 金器 · 橙金（与铜金拉开）
+    "#b8c6e0",  // 银器 · 亮银
+    "#c58fe0",  // 宣纸 · 紫檀（与金黄彻底区分）
+    "#e2643f"   // 象棋 · 朱红
+  ];
+  function wellSvg(c) {
+    /* 井口金盒：描边 + 金面走 var(--well)，粒子走 var(--well-bright)，深色底座不变 */
+    return '<span class="tk-well" aria-hidden="true">' +
+      '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">' +
+        '<g>' +
+          '<polygon class="w-bounce" transform="rotate(45 100 100)" stroke-width="1" stroke="var(--well)" fill="none" points="70,70 148,50 130,130 50,150"></polygon>' +
+          '<polygon class="w-bounce2" transform="rotate(45 100 100)" stroke-width="1" stroke="var(--well)" fill="none" points="70,70 148,50 130,130 50,150"></polygon>' +
+          '<polygon transform="rotate(45 100 100)" stroke-width="2" fill="#414750" points="70,70 150,50 130,130 50,150"></polygon>' +
+          '<polygon stroke-width="2" fill="url(#wg1' + c + ')" points="100,70 150,100 100,130 50,100"></polygon>' +
+          '<defs><linearGradient id="wg1' + c + '" y2="100%" x2="10%" y1="0%" x1="0%">' +
+            '<stop stop-color="#1e2026" offset="20%"></stop><stop stop-color="#414750" offset="60%"></stop>' +
+          '</linearGradient></defs>' +
+          '<polygon transform="translate(20, 31)" stroke-width="2" fill="var(--well)" points="80,50 80,75 80,99 40,75"></polygon>' +
+          '<polygon transform="translate(20, 31)" stroke-width="2" fill="url(#wg2' + c + ')" points="40,-40 80,-40 80,99 40,75"></polygon>' +
+          '<defs><linearGradient id="wg2' + c + '" y2="100%" x2="0%" y1="-17%" x1="10%">' +
+            '<stop stop-color="var(--well)" stop-opacity="0" offset="20%"></stop>' +
+            '<stop class="w-stop" stop-color="var(--well)" stop-opacity="0.5" offset="100%"></stop>' +
+          '</linearGradient></defs>' +
+          '<polygon transform="rotate(180 100 100) translate(20, 20)" stroke-width="2" fill="var(--well)" points="80,50 80,75 80,99 40,75"></polygon>' +
+          '<polygon transform="rotate(0 100 100) translate(60, 20)" stroke-width="2" fill="url(#wg3' + c + ')" points="40,-40 80,-40 80,85 40,110.2"></polygon>' +
+          '<defs><linearGradient id="wg3' + c + '" y2="100%" x2="10%" y1="0%" x1="0%">' +
+            '<stop stop-color="var(--well)" stop-opacity="0" offset="20%"></stop>' +
+            '<stop class="w-stop" stop-color="var(--well)" stop-opacity="0.5" offset="100%"></stop>' +
+          '</linearGradient></defs>' +
+          '<polygon class="w-part" transform="rotate(45 100 100) translate(80, 95)" stroke-width="2" fill="var(--well-bright)" points="5,0 5,5 0,5 0,0"></polygon>' +
+          '<polygon class="w-part" transform="rotate(45 100 100) translate(80, 55)" stroke-width="2" fill="var(--well-bright)" points="6,0 6,6 0,6 0,0"></polygon>' +
+          '<polygon class="w-part" transform="rotate(45 100 100) translate(70, 80)" stroke-width="2" fill="#fff" points="2,0 2,2 0,2 0,0"></polygon>' +
+          '<polygon stroke-width="2" fill="#292d34" points="29.5,99.8 100,142 100,172 29.5,130"></polygon>' +
+          '<polygon transform="translate(50, 92)" stroke-width="2" fill="#1f2127" points="50,50 120.5,8 120.5,35 50,80"></polygon>' +
+        '</g>' +
+      '</svg>' +
+    '</span>';
+  }
   function buildFan() {
     const wrap = $("#rhCards");
     if (!wrap) return;
@@ -429,18 +473,22 @@
       const short = SHORT_NAME[s.id] || s.name;
       const long = short.length > 5 ? " long" : "";
       const era = SHORT_ERA[s.id] || s.era || "";
-      return '<button type="button" class="rh-fancard rh-ticket" data-i="' + i + '" aria-label="' + esc(s.name) + '">' +
-        '<span class="notes" aria-hidden="true">\u266a\u266a\u266a\u266a</span>' +
-        '<span class="notes" aria-hidden="true">\u266a\u266a\u266a\u266a\u266a</span>' +
-        '<span class="notes" aria-hidden="true">\u266a\u266a\u266a\u266a</span>' +
-        '<span class="header">TICKET<span class="symbol" aria-hidden="true">\u2701</span></span>' +
-        '<span class="body">' +
-          '<span class="tk-name' + long + '">' + esc(short) + "</span>" +
-          '<span class="tk-art fc-art"><img src="精灵/透明/' + esc(s.id) + '.webp" alt="' + esc(s.name) + '" draggable="false"></span>' +
-        "</span>" +
-        '<span class="footer"><span class="era">' + esc(era) + '</span><span class="barcode" aria-hidden="true"></span><span class="tk-no">NO.' + pad2(i + 1) + "</span></span>" +
-        '<span class="bg" aria-hidden="true"></span>' +
-        "</button>";
+      const well = WELL_COLORS[i % WELL_COLORS.length];
+      return '<span class="tk-cell" style="--well:' + well + '">' +
+        '<button type="button" class="rh-fancard rh-ticket" data-i="' + i + '" aria-label="' + esc(s.name) + '">' +
+          '<span class="notes" aria-hidden="true">\u266a\u266a\u266a\u266a</span>' +
+          '<span class="notes" aria-hidden="true">\u266a\u266a\u266a\u266a\u266a</span>' +
+          '<span class="notes" aria-hidden="true">\u266a\u266a\u266a\u266a</span>' +
+          '<span class="header">TICKET<span class="symbol" aria-hidden="true">\u2701</span></span>' +
+          '<span class="body">' +
+            '<span class="tk-name' + long + '">' + esc(short) + "</span>" +
+            '<span class="tk-art fc-art"><img src="精灵/透明/' + esc(s.id) + '.webp" alt="' + esc(s.name) + '" draggable="false"></span>' +
+          "</span>" +
+          '<span class="footer"><span class="era">' + esc(era) + '</span><span class="barcode" aria-hidden="true"></span><span class="tk-no">NO.' + pad2(i + 1) + "</span></span>" +
+          '<span class="bg" aria-hidden="true"></span>' +
+        "</button>" +
+        wellSvg(i) +
+      "</span>";
     }).join("");
     fanCards = $$(".rh-fancard", wrap);
     fanCards.forEach(function (card) {

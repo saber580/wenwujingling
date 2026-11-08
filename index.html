@@ -361,13 +361,60 @@
   max-width:min(1180px,95%);margin:0 auto;padding:0;
   perspective:1000px;perspective-origin:50% 42%;
 }
+/* —— 槽位：井在底、票浮在井上，整体随井一起漂浮 —— */
+.rh-fanbar .rh-cards .tk-cell{
+  --well:#d3a410;--well-bright:#ffe4a1;
+  --float-d:4s;--float-delay:0s;
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  width:100%;max-width:142px;
+  padding-bottom:96px;   /* 给井完整留出空间（井高约 86 + 10 空隙） */
+  animation:tkFloat var(--float-d) ease-in-out infinite;
+  animation-delay:var(--float-delay);
+  will-change:transform;
+}
+.rh-fanbar .rh-cards .tk-cell:nth-child(2){--float-d:4.6s;--float-delay:.4s}
+.rh-fanbar .rh-cards .tk-cell:nth-child(3){--float-d:3.8s;--float-delay:.9s}
+.rh-fanbar .rh-cards .tk-cell:nth-child(4){--float-d:4.4s;--float-delay:1.3s}
+.rh-fanbar .rh-cards .tk-cell:nth-child(5){--float-d:4.1s;--float-delay:.6s}
+.rh-fanbar .rh-cards .tk-cell:nth-child(6){--float-d:4.8s;--float-delay:1.7s}
+.rh-fanbar .rh-cards .tk-cell:nth-child(7){--float-d:3.9s;--float-delay:.2s}
+/* 井：发光金盒，完整垫在票正下方 */
+.rh-fanbar .tk-well{
+  position:absolute;left:50%;bottom:0;z-index:1;
+  width:68%;max-width:92px;aspect-ratio:1;
+  transform:translateX(-50%);
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.42))
+         drop-shadow(0 0 10px var(--well))
+         drop-shadow(0 0 22px var(--well))
+         drop-shadow(0 0 40px var(--well));
+  pointer-events:none;
+}
+.rh-fanbar .tk-well svg{display:block;width:100%;height:100%;overflow:visible}
+/* 井内 bounce 与粒子（复用 uiverse 节奏） */
+.rh-fanbar .tk-well .w-bounce{animation:tkBounce 4s ease-in-out infinite;translate:0 36px}
+.rh-fanbar .tk-well .w-bounce2{animation:tkBounce2 4s ease-in-out infinite;translate:0 46px;animation-delay:.5s}
+.rh-fanbar .tk-well .w-part{animation:tkPart 4s ease-in-out infinite}
+.rh-fanbar .tk-well .w-stop{animation:tkUmbral 4s infinite}
+@keyframes tkFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes tkBounce{0%,100%{translate:0 36px}50%{translate:0 46px}}
+@keyframes tkBounce2{0%,100%{translate:0 46px}50%{translate:0 56px}}
+@keyframes tkPart{0%,100%{translate:0 16px}50%{translate:0 6px}}
+@keyframes tkUmbral{0%,100%{stop-color:var(--well);stop-opacity:.18}50%{stop-color:var(--well);stop-opacity:.52}}
+/* hover：槽位整体抬升，井更亮、票也一起上浮 */
+.rh-fanbar .rh-cards .tk-cell:hover{animation-play-state:paused}
+.rh-fanbar .rh-cards .tk-cell:hover .tk-well{
+  filter:drop-shadow(0 12px 18px rgba(0,0,0,.48)) drop-shadow(0 0 18px var(--well-bright)) drop-shadow(0 0 34px var(--well-bright));
+  width:76%;max-width:104px;
+  transition:width .3s cubic-bezier(.2,.8,.3,1),filter .3s;
+}
 /* —— 票本体 —— */
 .rh-fanbar .rh-fancard.rh-ticket{
   --perf:5px;         /* 上下齿孔半径 */
   --cut:58px;         /* 左右撕票口高度 */
   --ty:0px;--rx:0deg;--ry:0deg;--sc:1;
   --mx:50%;--my:50%;--gl:0;
-  position:relative;left:auto;right:auto;top:auto;bottom:auto;
+  position:relative;left:auto;right:auto;top:auto;bottom:auto;z-index:2;
   display:flex;flex-direction:column;align-items:stretch;
   width:100%;max-width:142px;aspect-ratio:.64;height:auto;
   margin:0;padding:10px 8px 8px;box-sizing:border-box;
@@ -484,8 +531,10 @@
 /* 窄屏：一行改横滑，票不变形 */
 @media (max-width:760px){
   .rh-fanbar .rh-cards{display:flex;overflow-x:auto;gap:8px;justify-content:flex-start;
-    max-width:100%;padding:2px 12px 8px;scrollbar-width:none;-ms-overflow-style:none}
+    max-width:100%;padding:2px 12px 12px;scrollbar-width:none;-ms-overflow-style:none}
   .rh-fanbar .rh-cards::-webkit-scrollbar{display:none}
+  .rh-fanbar .rh-cards .tk-cell{flex:0 0 92px;max-width:none;padding-bottom:68px}
+  .rh-fanbar .rh-ticket .tk-well{width:72%;max-width:66px}
   .rh-fanbar .rh-fancard.rh-ticket{flex:0 0 92px;max-width:none;aspect-ratio:.62}
   .rh-fanbar .rh-ticket .tk-name{font-size:11.5px}
   .rh-fanbar .rh-ticket .header{font-size:8px;letter-spacing:.12em;text-indent:.12em}
@@ -905,7 +954,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
   <script src="js/cloud-ai.js?v=ca15"></script>
   <script src="js/bg-paint.js?v=bp8"></script>
   <script src="js/flyleaf.js?v=fl3"></script>
-  <script src="js/red-v2.js?v=red33"></script>
+  <script src="js/red-v2.js?v=red34"></script>
 <script src="js/guide.js?v=gi2"></script>
 <script src="js/red-inner.js?v=ri8"></script>
 
