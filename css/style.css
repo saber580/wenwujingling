@@ -312,33 +312,25 @@ h1,h2,h3{margin:0}
 .sa-cabinet::before{content:"";position:absolute;left:0;right:0;top:0;height:44px;
   background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,0));pointer-events:none;border-radius:12px 12px 0 0}
 /* 书脊阵列：间距节奏仿 DaisyUI 列表(gap + 视觉分隔)，书脊间留出「书与书」的呼吸感 */
-.sa-books{display:flex;align-items:flex-end;gap:14px;padding:0 4px;min-height:200px;
+.sa-books{display:flex;align-items:flex-end;gap:14px;padding:0 4px;min-height:284px;
   position:relative}
 
 /* 每个书位:书脊 + 抽出的封面书,同格原位 */
-.sa-slot{position:relative;flex:0 0 auto;align-self:flex-end;width:52px}
-/* 书脊:窄竖条,竖排书名,带厚度/高光,像立在架子上 */
-.sa-spine{position:relative;display:block;width:52px;min-height:150px;margin:0;padding:12px 7px 18px;
-  border:none;border-radius:3px 3px 0 0;cursor:pointer;
-  background:linear-gradient(90deg,#a06f2b,#c3944a 42%,#e0bd77 92%);
-  color:#2b1a08;box-shadow:-3px 0 0 rgba(0,0,0,.22) inset,2px 0 0 rgba(255,255,255,.28) inset,
-  0 -1px 2px rgba(0,0,0,.15);text-align:center;
+.sa-slot{position:relative;flex:0 0 auto;align-self:flex-end;width:46px}
+/* 书脊:窄竖条,用生图生成的书脊侧图做背景(仿古线装书),像立在架子上。
+   宽 46×高 272 接近书脊侧图 1:6 的天然比例，cover 不变形、书名完整 */
+.sa-spine{position:relative;display:block;width:46px;height:272px;margin:0;padding:0;
+  border:none;border-radius:4px 4px 0 0;cursor:pointer;
+  background:url(../shiyilu/spine-01.webp) center/cover no-repeat,#7a4a20;
+  color:#2b1a08;box-shadow:-3px 0 0 rgba(0,0,0,.28) inset,2px 0 0 rgba(255,255,255,.22) inset,
+  0 -1px 2px rgba(0,0,0,.18),0 6px 14px -8px rgba(0,0,0,.5);text-align:center;
   transition:transform .22s ease,filter .22s ease}
-.sa-spine::before{content:"";position:absolute;left:4px;top:6px;bottom:6px;width:3px;
-  background:rgba(255,255,255,.35);border-radius:2px}
-.sa-spine::after{content:"";position:absolute;right:4px;top:6px;bottom:6px;width:2px;
-  background:rgba(0,0,0,.18);border-radius:2px}
-.sa-spine:hover{transform:translateY(-5px);filter:brightness(1.08);
-  box-shadow:-3px 0 0 rgba(0,0,0,.22) inset,2px 0 0 rgba(255,255,255,.32) inset,
-    0 8px 16px -6px rgba(0,0,0,.35)}
-.sa-spine-t{display:block;writing-mode:vertical-rl;font-size:12px;line-height:1.3;
-  letter-spacing:3px;font-weight:700;max-height:120px;overflow:hidden;margin:0 auto;color:#2b1a08}
-/* 书脊顶部一道淡化「卷号」——仿 DaisyUI 淡序号(opacity 低)，像图书馆藏书签 */
-.sa-spine-t::before{content:attr(data-no);display:block;writing-mode:vertical-rl;
-  font-size:11px;font-weight:600;letter-spacing:2px;color:rgba(43,26,8,.55);
-  margin-bottom:9px;font-variant-numeric:tabular-nums}
-.sa-spine-s{display:block;position:absolute;bottom:6px;left:0;right:0;font-size:9px;
-  letter-spacing:1px;color:rgba(43,26,8,.75)}
+.sa-spine:hover{transform:translateY(-5px);filter:brightness(1.06);
+  box-shadow:-3px 0 0 rgba(0,0,0,.28) inset,2px 0 0 rgba(255,255,255,.26) inset,
+    0 10px 20px -8px rgba(0,0,0,.55)}
+/* 书名/卷号已印在书脊侧图里，文字标签只留无障碍语义，视觉上收起 */
+.sa-spine-t,.sa-spine-s{position:absolute;width:1px;height:1px;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
 
 /* 抽出的封面书:未抽出时藏起,抽出时「落在木板上、向前抽出 + 轻微倾斜」浮现。
    定位基准是 .sa-books(相对整排书),bottom:0 让书底正好贴在木板顶,
@@ -360,7 +352,7 @@ h1,h2,h3{margin:0}
   transform:translateY(0) rotate(-3deg) scale(1)}
 .sa-slot.out .sa-book:hover{transform:translateY(-4px) rotate(-4deg) scale(1.03)}
 /* 待上架占位书脊:灰扑扑、比真书矮一截,虚线描边表「虚位以待」 */
-.sa-slot.sa-empty .sa-ghost{display:block;position:relative;width:52px;min-height:120px;
+.sa-slot.sa-empty .sa-ghost{display:block;position:relative;width:46px;min-height:238px;
   border-radius:3px 3px 0 0;background:linear-gradient(90deg,#3a2a16,#4a371f 50%,#3a2a16);
   box-shadow:-3px 0 0 rgba(0,0,0,.25) inset,2px 0 0 rgba(255,255,255,.06) inset;
   outline:1px dashed rgba(220,190,130,.2);outline-offset:-4px;cursor:default}
@@ -467,15 +459,15 @@ h1,h2,h3{margin:0}
 @media (max-width:768px){
   .sa-shelf{padding:14px 12px 16px;border-radius:16px}
   .sa-cabinet{padding:18px 12px 0}
-  .sa-books{min-height:150px;gap:7px}
-  .sa-slot{width:40px}
-  .sa-spine{width:40px;min-height:118px;padding:10px 5px 16px}
+  .sa-books{min-height:210px;gap:7px}
+  .sa-slot{width:34px}
+  .sa-spine{width:34px;height:206px;padding:0}
   .sa-spine-t{font-size:10px;max-height:92px;letter-spacing:2px}
   .sa-spine-s{font-size:8px}
   .sa-book{width:128px}
   .sa-book-name{font-size:10.5px}
   .sa-book-open{font-size:10px}
-  .sa-slot.sa-empty .sa-ghost{width:40px;min-height:96px}
+  .sa-slot.sa-empty .sa-ghost{width:34px;min-height:176px}
   .sa-shelf-in{gap:12px}
   .sa-info{text-align:center}
   .sa-info h3{font-size:17px;margin:8px 0 6px}
