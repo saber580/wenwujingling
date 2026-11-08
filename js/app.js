@@ -1941,96 +1941,111 @@ function relicClockPick(id) {
 const SHIYILU = {
   author: "拾遗录",
   home: "https://www.xiaohongshu.com/user/profile/69f16bd40000000001007800",
-  /* 第 8 话一整话 8 页(封面 + 6 页正篇 + 文物小讲堂),按原作顺序排 */
-  ep: [
-    { f: "shiyilu/ep08-1.webp", t: "封面", cap: "第 8 话 · 最惨的文物——沧州铁狮子" },
-    { f: "shiyilu/ep08-2.webp", cap: "第 2 页" },
-    { f: "shiyilu/ep08-3.webp", cap: "第 3 页" },
-    { f: "shiyilu/ep08-4.webp", cap: "第 4 页" },
-    { f: "shiyilu/ep08-5.webp", cap: "第 5 页" },
-    { f: "shiyilu/ep08-6.webp", cap: "第 6 页" },
-    { f: "shiyilu/ep08-7.webp", cap: "结尾 · 来都来了,一起合个影吧" },
-    { f: "shiyilu/ep08-8.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:后周广顺三年铸,河北四宝之一" }
-  ],
-  works: [
-    { f: "shiyilu/covers/c00.webp", t: "鸮卣:古代职场双面人" },
-    { f: "shiyilu/covers/c01.webp", t: "文物来现代上班也是草台班子" },
-    { f: "shiyilu/covers/c02.webp", t: "文物拟人③ · 古代镇墓兽,现代打工猪猪侠" },
-    { f: "shiyilu/covers/c03.webp", t: "妇好:3000 年前的女性力量" },
-    { f: "shiyilu/covers/c04.webp", t: "文物混成国宝的代价竟是失业" },
-    { f: "shiyilu/covers/c05.webp", t: "当陶鹰鼎知道自己很受欢迎" },
-    { f: "shiyilu/covers/c06.webp", t: "陶鹰鼎还是没逃过当鸡食盆" },
-    { f: "shiyilu/covers/c07.webp", t: "文物拟人② · 当商代青铜器变成了打工人" },
-    { f: "shiyilu/covers/c08.webp", t: "陶鹰鼎:咋走哪都有人叫我鸡食盆" },
-    { f: "shiyilu/covers/c09.webp", t: "陶鹰鼎:可曾听说过什么鸡食盆" },
-    { f: "shiyilu/covers/c10.webp", t: "文物拟人① · 宋瓷变成猫猫后" },
-    { f: "shiyilu/covers/c11.webp", t: "国博人气文物陶鹰鼎,用途至今仍是谜" }
+  /* 每一「本」是一话:cover 是书脊/封面用的第一页,ep 是整话内页 */
+  books: [
+    {
+      id: "tielion",
+      title: "最惨的文物——沧州铁狮子",
+      sub: "第 8 话",
+      cover: "shiyilu/ep08-1.webp",
+      desc: "本名「镇海吼」,后周广顺三年铸,距今一千多年,河北四宝之一。露天站了一千年,被风雨、被盗、被\"好心\"修复过,所以画里的它一开口就在喊拔管。",
+      ep: [
+        { f: "shiyilu/ep08-1.webp", t: "封面", cap: "第 8 话 · 最惨的文物——沧州铁狮子" },
+        { f: "shiyilu/ep08-2.webp", cap: "第 2 页" },
+        { f: "shiyilu/ep08-3.webp", cap: "第 3 页" },
+        { f: "shiyilu/ep08-4.webp", cap: "第 4 页" },
+        { f: "shiyilu/ep08-5.webp", cap: "第 5 页" },
+        { f: "shiyilu/ep08-6.webp", cap: "第 6 页" },
+        { f: "shiyilu/ep08-7.webp", cap: "结尾 · 来都来了,一起合个影吧" },
+        { f: "shiyilu/ep08-8.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:后周广顺三年铸,河北四宝之一" }
+      ]
+    }
   ]
 };
+/* 兼容旧引用:saZoom / 阅读器里仍按「当前翻开的那本书」取页 */
+let SA_BOOK = null;
+function saBook() { return SA_BOOK || SHIYILU.books[0]; }
 function viewShiyilu() {
-  const ep = SHIYILU.ep;
-  /* 每一页就是一个「书页」,不是流式列表 —— 一次只露一页,左右翻 */
-  const leaves = ep.map(function (p, i) {
+  /* 书架每一格:一个书位,内含「书脊」(没抽出时)和「抽出的书」(抽出时原位显示) */
+  const slots = SHIYILU.books.map(function (b, i) {
+    const n = b.ep.length;
+    return '<div class="sa-slot" data-i="' + i + '">'
+      + '<button type="button" class="sa-spine" onclick="saPull(' + i + ')"'
+      + ' title="抽出《' + b.title + '》" aria-label="抽出 ' + b.title + '">'
+      + '<span class="sa-spine-t">' + b.title + "</span>"
+      + '<span class="sa-spine-s">' + b.sub + "</span></button>"
+      + '<figure class="sa-book" onclick="saOpen(' + i + ')" role="button" tabindex="0"'
+      + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();saOpen(' + i + ');}"'
+      + ' title="翻开这本书" aria-label="翻开 ' + b.title + '">'
+      + '<img src="' + b.cover + '" alt="' + b.title + ' 封面">'
+      + '<span class="sa-book-ep">' + b.sub + '</span>'
+      + '<span class="sa-book-name">' + b.title + "</span>"
+      + '<span class="sa-book-open">翻开 · 共 ' + n + ' 页</span>'
+      + "</figure>"
+      + "</div>";
+  }).join("");
+  /* 待上架占位书脊:让书架看起来是「一排书」,而不是空柜子 */
+  const empty = [];
+  for (let k = 0; k < 6; k++) {
+    empty.push('<div class="sa-slot sa-empty" title="待上架 · 作者还在画">'
+      + '<span class="sa-spine sa-ghost" aria-hidden="true"></span></div>');
+  }
+  const emptyStr = empty.join("");
+  const info = SHIYILU.books.map(function (b, i) {
+    return '<div class="sa-info" data-i="' + i + '">'
+      + '<span class="sa-ep">' + b.sub + ' · 全话收录</span>'
+      + '<h3>' + b.title + "</h3>"
+      + "<p>" + b.desc + "</p>"
+      + '<ul class="sa-meta">'
+      + '<li><b>' + b.ep.length + '</b> 页</li>'
+      + '<li>手机可左右滑</li>'
+      + '<li>点封面再进阅读器</li>'
+      + "</ul>"
+      + "</div>";
+  }).join("");
+  const ep0 = SHIYILU.books[0].ep;
+  /* 阅读器里的书页先按第一本铺好占位,saOpen 时会按当前书重建 */
+  const leaves = ep0.map(function (p, i) {
     return '<figure class="sa-leaf-p' + (i === 0 ? " cur" : "") + (p.land ? " land" : "") + '"'
       + ' data-i="' + i + '" onclick="saZoom(' + i + ')" title="点开放大">'
-      + '<img src="' + p.f + '" alt="第 8 话 · ' + p.cap + '"' + (i > 1 ? ' loading="lazy"' : '') + '>'
+      + '<img src="' + p.f + '" alt="' + p.cap + '"' + (i > 1 ? ' loading="lazy"' : '') + '>'
       + (p.t ? '<span class="sa-ptag">' + p.t + "</span>" : "")
-      + '<span class="sa-pnum">' + (i + 1) + " / " + ep.length + "</span></figure>";
+      + '<span class="sa-pnum">' + (i + 1) + " / " + ep0.length + "</span></figure>";
   }).join("");
-  const dots = ep.map(function (_, i) {
+  const dots = ep0.map(function (_, i) {
     return '<i class="' + (i ? "" : "on") + '" onclick="saGoto(' + i + ')"></i>';
-  }).join("");
-  const works = SHIYILU.works.map(function (w) {
-    return '<figure class="sa-work" onclick="saOpenWork()" title="去小红书看这一话">'
-      + '<img src="' + w.f + '" alt="' + w.t + '" loading="lazy">'
-      + "<figcaption>" + w.t + "</figcaption></figure>";
   }).join("");
   return `
     <div class="page-head">
       <h2>🖌 拾遗录 · 文物拟人漫画</h2>
-      <p>这一栏<b>不是 AI 画的</b>。是小红书作者「${SHIYILU.author}」用一支笔画的:文物变成会抱怨、会认命的打工人。第 8 话<b>整话 ${ep.length} 页</b>已经做成一本,封面就是原作第一页,翻开一页页看——因为画里那头"最惨的狮子",正好就在你的图鉴里。AI 能让文物开口说话,可这种一笔一笔的幽默,AI 还学不来。</p>
+      <p>这一栏<b>不是 AI 画的</b>。是小红书作者「${SHIYILU.author}」用一支笔画的:文物变成会抱怨、会认命的打工人。点书架上的<b>书脊</b>把书抽出来,再点封面翻开,一页页读。AI 能让文物开口说话,可这种一笔一笔的幽默,AI 还学不来。</p>
     </div>
 
     <section class="sa-shelf">
+      <div class="sa-cabinet">
+        <div class="sa-books" id="sa-books">${slots}${emptyStr}</div>
+        <div class="sa-board" aria-hidden="true"></div>
+      </div>
       <div class="sa-shelf-in">
-        <figure class="sa-vol" onclick="saOpen(0)" role="button" tabindex="0"
-                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();saOpen(0);}"
-                title="翻开这本书" aria-label="翻开第 8 话 最惨的文物——沧州铁狮子">
-          <img src="${ep[0].f}" alt="第 8 话封面 · 最惨的文物——沧州铁狮子">
-          <span class="sa-vol-open">翻开 · 共 ${ep.length} 页</span>
-        </figure>
-        <div class="sa-info">
-          <span class="sa-ep">第 8 话 · 全话收录</span>
-          <h3>最惨的文物——沧州铁狮子</h3>
-          <p>本名「镇海吼」,后周广顺三年铸,距今一千多年,河北四宝之一。它比我们站里那只精灵更惨:露天站了一千年,被风雨、被盗、被"好心"修复过,所以画里的它一开口就在喊拔管。</p>
-          <ul class="sa-meta">
-            <li><b>${ep.length}</b> 页</li>
-            <li><b>6</b> 页正篇</li>
-            <li><b>1</b> 页文物小讲堂</li>
-            <li>手机可左右滑</li>
-          </ul>
-          <div class="sa-acts">
-            <button class="btn gold" onclick="saOpen(0)">📖 翻开这本书</button>
-            <button class="btn ghost" onclick="location.hash='#/spirit/tielion'">📜 图鉴里的沧州铁狮子</button>
-            <span class="sa-note">点画可放大,再点空白处退出</span>
-          </div>
+        <div class="sa-info-wrap">${info}</div>
+        <div class="sa-acts">
+          <button class="btn gold" id="sa-openbtn" onclick="saOpen(saCurBook())">📖 翻开这本书</button>
+          <button class="btn ghost" onclick="saPush()">↩ 塞回书架</button>
+          <span class="sa-note">点书脊抽出 → 点封面翻开,读完点「合上」</span>
         </div>
       </div>
     </section>
 
-    <h3 class="section-title">书架上还缺 11 本 <small class="muted">(站内只收了封面,点开去原作者主页看全篇)</small></h3>
-    <div class="sa-grid">${works}</div>
-
     <div class="sa-credit">
       <b>关于这一栏</b>
-      <p>以上手绘均为小红书作者「<a href="${SHIYILU.home}" target="_blank" rel="noopener">${SHIYILU.author}</a>」的原创作品,版权归原作者所有。本站仅作<b>非商业展示与学习交流</b>,不用于任何售卖;每篇的完整内容请到作者主页阅读。</p>
+      <p>以上手绘均为小红书作者「<a href="${SHIYILU.home}" target="_blank" rel="noopener">${SHIYILU.author}</a>」的原创作品,版权归原作者所有。本站仅作<b>非商业展示与学习交流</b>,不用于任何售卖;更多篇目请到作者主页阅读。</p>
     </div>
 
-    <!-- 阅读器:整屏覆盖。放在 section 之外 —— .sa-shelf/.sa-feature 这类容器
-         一旦带上 transform,position:fixed 的子孙就会改挂到它身上,悬不住整屏 -->
+    <!-- 阅读器:整屏覆盖。放在 section 之外 —— .sa-shelf 这类容器一旦带上
+         transform,position:fixed 的子孙就会改挂到它身上,悬不住整屏 -->
     <div class="sa-reader" id="sa-reader" role="dialog" aria-modal="true" aria-label="漫画阅读器">
       <div class="sa-rtop">
-        <span class="sa-rtitle">第 8 话 · 最惨的文物——沧州铁狮子</span>
+        <span class="sa-rtitle" id="sa-rtitle"></span>
         <button type="button" class="sa-rclose" onclick="saClose()">✕ 合上</button>
       </div>
       <div class="sa-stage" id="sa-stage">
@@ -2040,7 +2055,7 @@ function viewShiyilu() {
       </div>
       <div class="sa-rbot">
         <button type="button" class="sa-rbtn" onclick="saGo(-1)" aria-label="上一页">‹</button>
-        <span class="sa-rnum">第 <b id="sa-cur">1</b> / ${ep.length} 页</span>
+        <span class="sa-rnum">第 <b id="sa-cur">1</b> / <span id="sa-total">${ep0.length}</span> 页</span>
         <span class="sa-rbar"><i id="sa-hbar"></i></span>
         <span class="sa-dots" id="sa-dots">${dots}</span>
         <button type="button" class="sa-rbtn" onclick="saGo(1)" aria-label="下一页">›</button>
@@ -2053,11 +2068,67 @@ function viewShiyilu() {
       <i class="sa-zoom-x">✕</i>
     </div>`;
 }
-/* 一本书,一次只露一页 */
+/* ===== 侧面书架:点书脊抽出 → 点封面翻开 ===== */
+let saCur = -1;            /* 当前抽出来的书索引,-1 表示都塞在架上 */
+function saCurBook() { return saCur >= 0 ? saCur : 0; }
+/* 抽出一本:那本书脊隐去,同一书位里的封面书「向外抽出 + 轻微倾斜」原位浮现 */
+function saPull(i) {
+  const slots = document.querySelectorAll("#sa-books .sa-slot:not(.sa-empty)");
+  if (!slots.length) return;
+  i = Math.max(0, Math.min(SHIYILU.books.length - 1, i));
+  saCur = i;
+  Array.prototype.forEach.call(slots, function (el, k) {
+    const on = k === i;
+    el.classList.toggle("out", on);   /* 书位整体进入「抽出」态:书脊隐、封面书显 */
+  });
+  document.querySelectorAll(".sa-info-wrap .sa-info").forEach(function (el, k) {
+    el.classList.toggle("cur", k === i);
+  });
+  const ob = document.getElementById("sa-openbtn");
+  if (ob) {
+    ob.textContent = "📖 翻开《" + SHIYILU.books[i].title + "》";
+  }
+}
+/* 塞回:取消抽出,恢复到纯书脊状态 */
+function saPush() {
+  saCur = -1;
+  document.querySelectorAll("#sa-books .sa-slot:not(.sa-empty)").forEach(function (el) {
+    el.classList.remove("out");
+  });
+  document.querySelectorAll(".sa-info-wrap .sa-info").forEach(function (el) {
+    el.classList.remove("cur");
+  });
+  const ob = document.getElementById("sa-openbtn");
+  if (ob) ob.textContent = "📖 翻开这本书";
+}
+/* 阅读器:读的是「当前那本书」 */
 function saReader() { return document.getElementById("sa-reader"); }
 function saLeaves() {
   const l = document.getElementById("sa-leaf");
   return l ? l.querySelectorAll("figure") : [];
+}
+/* 按当前书重建阅读器里的书页与圆点 */
+function saBuildLeaves() {
+  const b = saBook();
+  const leaf = document.getElementById("sa-leaf");
+  const dots = document.getElementById("sa-dots");
+  if (!leaf) return;
+  leaf.innerHTML = b.ep.map(function (p, i) {
+    return '<figure class="sa-leaf-p' + (i === 0 ? " cur" : "") + (p.land ? " land" : "") + '"'
+      + ' data-i="' + i + '" onclick="saZoom(' + i + ')" title="点开放大">'
+      + '<img src="' + p.f + '" alt="' + p.cap + '"' + (i > 1 ? ' loading="lazy"' : '') + '>'
+      + (p.t ? '<span class="sa-ptag">' + p.t + "</span>" : "")
+      + '<span class="sa-pnum">' + (i + 1) + " / " + b.ep.length + "</span></figure>";
+  }).join("");
+  if (dots) {
+    dots.innerHTML = b.ep.map(function (_, i) {
+      return '<i class="' + (i ? "" : "on") + '" onclick="saGoto(' + i + ')"></i>';
+    }).join("");
+  }
+  const tt = document.getElementById("sa-total");
+  if (tt) tt.textContent = b.ep.length;
+  const rt = document.getElementById("sa-rtitle");
+  if (rt) rt.textContent = b.sub + " · " + b.title;
 }
 let saIdx = 0, saBound = 0;
 function saSetHud(i) {
@@ -2085,9 +2156,11 @@ function saGo(d) {
 }
 function saOpen(i) {
   const r = saReader(); if (!r) return;
+  SA_BOOK = SHIYILU.books[Math.max(0, Math.min(SHIYILU.books.length - 1, i || 0))];
+  saBuildLeaves();
   r.classList.add("on");
   document.body.classList.add("sa-reading");
-  saGoto(i || 0);
+  saIdx = 0; saSetHud(0);
   const btn = r.querySelector(".sa-rclose");
   if (btn && btn.focus) btn.focus({ preventScroll: true });
 }
@@ -2106,6 +2179,10 @@ function saInit() {
   const stale = document.body.querySelector(":scope > #sa-reader");
   if (stale && stale !== r) stale.remove();
   if (r.parentElement !== document.body) document.body.appendChild(r);
+  /* 书架开局:默认抽出第一本,让读者一眼看到「封面会从架子里出来」 */
+  SA_BOOK = SHIYILU.books[0];
+  saBuildLeaves();
+  saPull(0);
   saIdx = 0; saSetHud(0);
   /* 整层禁掉滚动(见 CSS touch-action),再补一道滚轮拦截:
      阅读器铺满屏幕,背后页面不该跟着动 */
@@ -2145,24 +2222,16 @@ function saInit() {
 function saZoom(i) {
   const box = document.getElementById("sa-zoom");
   if (!box) return;
-  const p = SHIYILU.ep[i] || SHIYILU.ep[0];
+  const b = saBook();
+  const p = b.ep[i] || b.ep[0];
   box.querySelector("img").src = p.f;
-  box.querySelector("span").textContent = "第 " + (i + 1) + " / " + SHIYILU.ep.length + " 页 · " + p.cap;
+  box.querySelector("span").textContent = "第 " + (i + 1) + " / " + b.ep.length + " 页 · " + p.cap;
   box.classList.add("show");
 }
 function saZoomClose(e) {
   if (e && e.target && e.target.tagName === "IMG") return;
   const box = document.getElementById("sa-zoom");
   if (box) box.classList.remove("show");
-}
-/* 站内没有授权转载其余各篇的内页,点了就诚实地送去作者主页 */
-let saWorkHinted = false;
-function saOpenWork() {
-  if (!saWorkHinted) {
-    saWorkHinted = true;
-    rsToast("其余各篇请到作者主页看原作,这就为你打开");
-  }
-  setTimeout(function () { window.open(SHIYILU.home, "_blank", "noopener"); }, 320);
 }
 
 /* ---------------- 茶话会页 ---------------- */

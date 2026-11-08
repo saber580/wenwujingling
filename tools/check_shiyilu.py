@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
-"""拾遗录 · 文物拟人漫画（第 8 话「一本书」翻页阅读器）守卫。
+"""拾遗录 · 文物拟人漫画（侧面书架 + 抽书）守卫。
 
-用户要求演进（2026-11-08）：
-    「以漫画书那种形式」「都下全了别只下一页儿」
-    →「把它做成一个个漫画书封面页就是第一页」
-    →「先把第八画做成漫画」
+用户要求演进（2026-11-08 最终形态）：
+    「以漫画书那种形式」「先把第八画做成漫画」
+    →「能不能做一个侧面的书架，点它能把这个漫画书抽出来」
+      「下边那些缺的是一本那些不要有了」
 
-所以形态改成：书架上立着一本书，封面就是原作第 1 页；点开进全屏阅读器，
-一次一页、左右翻（手机滑、桌面点箭头或按 ← →），点画可放大。
+所以形态改成：书架上竖排立着一排书脊；点书脊，书从架子里「抽出来」、
+停在半空展示封面；再点封面进全屏阅读器（一次一页、左右翻、点画放大）。
+下边那 11 本「缺的封面格子」整个删掉，只留这一本。
 
 本测试对本地服务跑（先起 server.py + 9222 调试 Chrome）：
-    1. 书架、标题、封面（ep08-1）都在
-    2. 阅读器默认不出，点「翻开」才铺满整屏（fixed 没被 transform 祖先吃掉）
-    3. 一次只露一页；页 1 是封面；翻页不越界
-    4. 整话 8 页都能加载，末页是横版，进度条满格
-    5. 放大层、合上按钮、Esc 都能用
+    1. 书架、书脊、抽出态都在；抽出来的封面是原作第 1 页
+    2. 开局默认抽出第一本；点「塞回」能收回去，再点书脊又抽出来
+    3. 点抽出封面 → 全屏阅读器铺满整屏（fixed 没被 transform 祖先吃掉）
+    4. 一次只露一页；页 1 是封面；整话 8 页能加载，末页横版，进度满格
+    5. 放大层、合上、Esc、桌面 ← → 都能用
     6. 阅读器打开时滚轮不把背后页面带走
-    7. 手机 390：不横向溢出、书架单列、图不超屏、左右滑能翻页
-    8. 其他 11 本的封面在外、署名与版权在页面上、导航有入口
+    7. 手机 390：不横向溢出、书脊完整、左右滑翻页
+    8. 下边没有「缺的封面」格子；署名与版权仍在；导航有入口
 
 用法：
     python tools/check_shiyilu.py [URL]
@@ -105,26 +106,45 @@ def swipe(c, x1, x2, y=420):
     c.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
 
 
-print("== 拾遗录 · 第 8 话漫画书 ==  %s" % BASE)
+def pulled_count(c):
+    return c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty).out').length")
+
+
+print("== 拾遗录 · 侧面书架 + 抽书 ==  %s" % BASE)
 c = CDP("about:blank")
 open_page(c)
 
-# ---- 1. 书架 ----
+# ---- 1. 书架 / 书脊 ----
 say(c.eval("!!document.querySelector('.sa-shelf')"), "书架渲染出来了")
 h2 = c.eval("(document.querySelector('.page-head h2')||{}).textContent||''")
 say("拾遗录" in h2, "页面标题带「拾遗录」", h2.strip())
-h3 = c.eval("(document.querySelector('.sa-info h3')||{}).textContent||''")
-say("沧州铁狮子" in h3, "书上写着第 8 话标题", h3.strip())
-cov = c.eval("(function(){var i=document.querySelector('.sa-vol img');"
+say(c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length") == 1,
+    "书架上有 1 本真书(书脊)",
+    c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length"))
+say(c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length") >= 3,
+    "书架上有若干「待上架」占位书脊",
+    "%d 本占位" % c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length"))
+h3 = c.eval("(document.querySelector('.sa-info.cur h3')||{}).textContent||''")
+say("沧州铁狮子" in h3, "当前书信息写着第 8 话标题", h3.strip())
+cov = c.eval("(function(){var i=document.querySelector('#sa-books .sa-book img');"
              "return i?[i.naturalWidth,i.getAttribute('src')]:[0,''];})()") or [0, ""]
-say(cov[0] > 0, "封面图加载出来了", "%s 宽 %s" % (cov[1], cov[0]))
+say(cov[0] > 0, "抽出封面图加载出来了", "%s 宽 %s" % (cov[1], cov[0]))
 say("ep08-1" in cov[1], "封面就是原作第一页", cov[1])
 
-# ---- 2. 阅读器:默认不出,翻开才铺满 ----
+# ---- 2. 抽出 / 塞回 ----
+say(pulled_count(c) == 1, "开局默认抽出第一本", "%d 本抽出" % pulled_count(c))
+c.eval("saPush()")
+time.sleep(0.45)
+say(pulled_count(c) == 0, "点「塞回」收回去", "%d 本抽出" % pulled_count(c))
+c.eval("saPull(0)")
+time.sleep(0.5)
+say(pulled_count(c) == 1, "点书脊又抽出来", "%d 本抽出" % pulled_count(c))
+
+# ---- 3. 点封面进阅读器 ----
 say(not open_reader(c), "没翻开时阅读器不显示")
 c.eval("saOpen(0)")
 time.sleep(0.5)
-say(open_reader(c), "点「翻开」打开阅读器")
+say(open_reader(c), "点抽出封面打开阅读器")
 box = json.loads(c.eval("(function(){var r=document.getElementById('sa-reader')"
                         ".getBoundingClientRect();"
                         "return JSON.stringify([Math.round(r.width),Math.round(r.height),"
@@ -133,27 +153,22 @@ box = json.loads(c.eval("(function(){var r=document.getElementById('sa-reader')"
 say(box[0] == box[2] and box[1] == box[3], "阅读器铺满整屏（fixed 没被祖先吃掉）",
     "%dx%d / 视口 %dx%d" % tuple(box))
 
-# ---- 3. 一次一页 ----
+# ---- 4. 一次一页 + 整话 8 页 ----
 say(visible_count(c) == 1, "一次只露一页", "%d 页可见" % visible_count(c))
 say("ep08-1" in cur_src(c), "开局是封面页", cur_src(c))
 say(cur(c) == 1, "页码从 1 开始", cur(c))
 say(abs(bar(c) - 12.5) < 2, "进度条开局 12.5%", "%.1f%%" % bar(c))
-c.eval("saGo(1)")
-time.sleep(0.35)
-say(cur(c) == 2 and "ep08-2" in cur_src(c), "翻到第 2 页", "%d · %s" % (cur(c), cur_src(c)))
-say(visible_count(c) == 1, "翻页后仍然只有一页在", "%d 页可见" % visible_count(c))
-
-# ---- 4. 整话 8 页 ----
 say(c.eval("document.querySelectorAll('#sa-leaf figure').length") == 8, "书里有 8 页")
 widths = []
 for i in range(8):
     c.eval("saGoto(%d)" % i)
-    for _ in range(20):
+    time.sleep(0.3)
+    for _ in range(40):
         w = c.eval("(function(){var f=document.querySelector('#sa-leaf figure.cur img');"
                    "return f?f.naturalWidth:0;})()") or 0
         if w:
             break
-        time.sleep(0.2)
+        time.sleep(0.25)
     widths.append(w)
 say(all(widths), "8 页全部加载", widths)
 w8 = c.eval("(function(){var f=document.querySelectorAll('#sa-leaf figure img')[7];"
@@ -164,7 +179,7 @@ c.eval("saGo(1)")
 time.sleep(0.3)
 say(cur(c) == 8, "末页再往后翻不会越界", cur(c))
 
-# ---- 5. 放大 / 合上 / Esc ----
+# ---- 5. 放大 / 合上 / Esc / ← → ----
 c.eval("saZoom(2)")
 time.sleep(0.4)
 say(c.eval("document.getElementById('sa-zoom').classList.contains('show')"), "点画能放大")
@@ -207,19 +222,9 @@ time.sleep(0.35)
 say(cur(c) == 2, "桌面按 → 翻页", cur(c))
 c.eval("saClose()")
 
-# ---- 7. 其他 11 本的封面 ----
-c.eval("(function(){var g=document.querySelector('.sa-grid');"
-       "if(g)g.scrollIntoView({block:'center'});})()")
-works = []
-for _ in range(30):
-    works = json.loads(c.eval(
-        "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('.sa-work img'),"
-        "function(i){return i.naturalWidth}))") or "[]")
-    if works and all(works):
-        break
-    time.sleep(0.3)
-say(len(works) == 12 and all(v > 0 for v in works), "架上其余 12 张封面都加载",
-    "%d 张,最小宽 %s" % (len(works), min(works) if works else 0))
+# ---- 7. 下边没有「缺的封面」格子 ----
+say(c.eval("!document.querySelector('.sa-grid') && !document.querySelector('.sa-work')"),
+    "下边没有「缺的封面」格子了")
 
 credit = c.eval("(document.querySelector('.sa-credit')||{}).textContent||''")
 say("拾遗录" in credit and "版权" in credit, "页面上写了署名与版权说明")
@@ -229,15 +234,16 @@ say(c.eval("!!document.querySelector('.sa-credit a[href*=xiaohongshu]')"), "留�
 open_page(c, 390, 844, 2, True)
 say(c.eval("document.documentElement.scrollWidth") <= 391, "手机端不横向溢出",
     "%d / %d" % (c.eval("document.documentElement.scrollWidth"), c.eval("innerWidth")))
-cols = c.eval("(function(){var g=document.querySelector('.sa-shelf-in');"
-              "return getComputedStyle(g).gridTemplateColumns.split(' ').length})()")
-say(cols == 1, "手机上封面与介绍上下排", "%d 列" % cols)
-say(c.eval("(function(){var r=document.querySelector('.sa-vol').getBoundingClientRect();"
-           "return r.width>120&&r.left>=0&&r.right<=innerWidth+1;})()"), "封面完整在屏内")
+say(c.eval("(function(){var r=document.querySelector('#sa-books .sa-slot .sa-spine')"
+           ".getBoundingClientRect();return r.width>10&&r.left>=0&&r.right<=innerWidth+1;})()"),
+    "书脊完整在屏内")
+say(c.eval("(function(){var r=document.querySelector('#sa-books .sa-slot.out .sa-book')"
+           ".getBoundingClientRect();return r.width>100&&r.left>=0&&r.right<=innerWidth+1;})()"),
+    "抽出的封面完整在屏内")
 c.eval("saOpen(0)")
 time.sleep(0.6)
-mob = json.loads(c.eval("(function(){var r=document.createElement('div');"
-                        "var im=document.querySelector('#sa-leaf figure.cur img').getBoundingClientRect();"
+mob = json.loads(c.eval("(function(){var im=document.querySelector('#sa-leaf figure.cur img')"
+                        ".getBoundingClientRect();"
                         "return JSON.stringify([Math.round(im.left),Math.round(im.right),"
                         "Math.round(im.top),Math.round(im.bottom),innerWidth,innerHeight]);})()"))
 say(mob[0] >= -1 and mob[1] <= mob[4] + 1 and mob[3] <= mob[5] + 1,
