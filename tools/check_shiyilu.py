@@ -14,7 +14,7 @@
 
 本测试对本地服务跑（先起 server.py + 9222 调试 Chrome）：
     1. 书架、书脊、抽出态都在；抽出来的封面是第 1 页
-    2. 开局默认抽出第一本；点「塞回」能收回去，再点书脊又抽出来
+    2. 开局所有书都稳稳立在架上(不抽出)；点书脊抽出来，点「塞回」收回去
     3. 点抽出封面 → 全屏阅读器铺满整屏（fixed 没被 transform 祖先吃掉）
     4. 一次只露一页；页 1 是封面；整话 8 页能加载，末页横版，进度满格
     5. 放大层、合上、Esc、桌面 ← → 都能用
@@ -134,13 +134,16 @@ say(cov[0] > 0, "抽出封面图加载出来了", "%s 宽 %s" % (cov[1], cov[0])
 say("ep08-1" in cov[1], "封面就是原作第一页", cov[1])
 
 # ---- 2. 抽出 / 塞回 ----
-say(pulled_count(c) == 1, "开局默认抽出第一本", "%d 本抽出" % pulled_count(c))
+say(pulled_count(c) == 0, "开局所有书都在架上(不抽出)", "%d 本抽出" % pulled_count(c))
+c.eval("saPull(0)")
+time.sleep(0.5)
+say(pulled_count(c) == 1, "点书脊抽出来", "%d 本抽出" % pulled_count(c))
 c.eval("saPush()")
 time.sleep(0.45)
 say(pulled_count(c) == 0, "点「塞回」收回去", "%d 本抽出" % pulled_count(c))
 c.eval("saPull(0)")
 time.sleep(0.5)
-say(pulled_count(c) == 1, "点书脊又抽出来", "%d 本抽出" % pulled_count(c))
+say(pulled_count(c) == 1, "再点书脊又抽出来", "%d 本抽出" % pulled_count(c))
 
 # ---- 3. 点封面进阅读器 ----
 say(not open_reader(c), "没翻开时阅读器不显示")

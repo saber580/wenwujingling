@@ -2185,10 +2185,16 @@ function saInit() {
   const stale = document.body.querySelector(":scope > #sa-reader");
   if (stale && stale !== r) stale.remove();
   if (r.parentElement !== document.body) document.body.appendChild(r);
-  /* 书架开局:默认抽出第一本,让读者一眼看到「封面会从架子里出来」 */
+  /* 书架开局:所有书都稳稳立在架子上,不抽出;只默认点亮第一本的信息
+     (点书脊才抽出来,点封面再翻开) */
   SA_BOOK = SHIYILU.books[0];
   saBuildLeaves();
-  saPull(0);
+  saCur = -1;
+  document.querySelectorAll(".sa-info-wrap .sa-info").forEach(function (el, k) {
+    el.classList.toggle("cur", k === 0);
+  });
+  const _ob = document.getElementById("sa-openbtn");
+  if (_ob) _ob.textContent = "📖 翻开《" + SHIYILU.books[0].title + "》";
   saIdx = 0; saSetHud(0);
   /* 整层禁掉滚动(见 CSS touch-action),再补一道滚轮拦截:
      阅读器铺满屏幕,背后页面不该跟着动 */
