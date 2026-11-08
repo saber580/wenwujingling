@@ -120,8 +120,8 @@ open_page(c)
 say(c.eval("!!document.querySelector('.sa-shelf')"), "书架渲染出来了")
 h2 = c.eval("(document.querySelector('.page-head h2')||{}).textContent||''")
 say("文物拟人漫画" in h2, "页面标题带「文物拟人漫画」", h2.strip())
-say(c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length") == 1,
-    "书架上有 1 本真书(书脊)",
+say(c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length") == 2,
+    "书架上有 2 本真书(书脊)",
     c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length"))
 say(c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length") >= 3,
     "书架上有若干「待上架」占位书脊",
@@ -227,6 +227,32 @@ time.sleep(0.35)
 say(cur(c) == 2, "桌面按 → 翻页", cur(c))
 c.eval("saClose()")
 
+# ---- 6.5 第二本书（妇好鸮尊） ----
+c.eval("saPull(1)")
+time.sleep(0.5)
+say(pulled_count(c) == 1, "点第二本也能抽出来", "%d 本抽出" % pulled_count(c))
+h3b = c.eval("(document.querySelector('.sa-info.cur h3')||{}).textContent||''")
+say("失业" in h3b or "妇好" in h3b or "鸮尊" in h3b, "第二本信息写着妇好鸮尊标题", h3b.strip())
+c.eval("saOpen(1)")
+time.sleep(0.5)
+say(open_reader(c), "点第二本封面打开阅读器")
+say(c.eval("document.querySelectorAll('#sa-leaf figure').length") == 5, "第二本书有 5 页",
+    "%d 页" % c.eval("document.querySelectorAll('#sa-leaf figure').length"))
+say("ep09" in cur_src(c), "第二本开局是它的封面页", cur_src(c))
+c.eval("saGoto(4)")
+time.sleep(0.3)
+w5 = [0, 0]
+for _ in range(40):
+    w5 = c.eval("(function(){var f=document.querySelector('#sa-leaf figure.cur img');"
+                "return f?[f.naturalWidth,f.naturalHeight]:[0,0];})()")
+    if w5[0]:
+        break
+    time.sleep(0.25)
+say(w5[0] > w5[1] > 0, "第二本第 5 页（文物小讲堂）是横版", "%dx%d" % tuple(w5))
+c.eval("saClose()")
+c.eval("saPush()")
+time.sleep(0.4)
+
 # ---- 7. 下边没有「缺的封面」格子 ----
 say(c.eval("!document.querySelector('.sa-grid') && !document.querySelector('.sa-work')"),
     "下边没有「缺的封面」格子了")
@@ -241,6 +267,8 @@ say(c.eval("document.documentElement.scrollWidth") <= 391, "手机端不横向�
 say(c.eval("(function(){var r=document.querySelector('#sa-books .sa-slot .sa-spine')"
            ".getBoundingClientRect();return r.width>10&&r.left>=0&&r.right<=innerWidth+1;})()"),
     "书脊完整在屏内")
+c.eval("saPull(0)")
+time.sleep(0.4)
 say(c.eval("(function(){var r=document.querySelector('#sa-books .sa-slot.out .sa-book')"
            ".getBoundingClientRect();return r.width>100&&r.left>=0&&r.right<=innerWidth+1;})()"),
     "抽出的封面完整在屏内")

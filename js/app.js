@@ -1947,6 +1947,7 @@ const SHIYILU = {
       title: "最惨的文物——沧州铁狮子",
       sub: "第 1 话",
       cover: "shiyilu/ep08-1.webp",
+      spine: "shiyilu/spine-01.webp",
       desc: "本名「镇海吼」,后周广顺三年铸,距今一千多年,河北四宝之一。露天站了一千年,被风雨、被盗、被\"好心\"修复过,所以画里的它一开口就在喊拔管。",
       ep: [
         { f: "shiyilu/ep08-1.webp", t: "封面", cap: "第 1 话 · 最惨的文物——沧州铁狮子" },
@@ -1957,6 +1958,21 @@ const SHIYILU = {
         { f: "shiyilu/ep08-6.webp", cap: "第 6 页" },
         { f: "shiyilu/ep08-7.webp", cap: "结尾 · 来都来了,一起合个影吧" },
         { f: "shiyilu/ep08-8.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:后周广顺三年铸,河北四宝之一" }
+      ]
+    },
+    {
+      id: "fuhouxiaozun",
+      title: "文物混成国宝的代价竟是失业？！",
+      sub: "第 2 话",
+      cover: "shiyilu/ep09-cover.webp",
+      spine: "shiyilu/spine-02.webp",
+      desc: "妇好鸮尊(国博款)的失业日记。承酒祭祀没人需要了,丢了饭碗的它听说陶鹰鼎都在澡堂混出名堂,决定来洗浴中心碰碰运气——顺便见见那位征战四方、主持祭祀的女战神妇好。",
+      ep: [
+        { f: "shiyilu/ep09-1.webp", t: "封面", cap: "第 2 话 · 文物混成国宝的代价竟是失业？！" },
+        { f: "shiyilu/ep09-2.webp", cap: "第 2 页" },
+        { f: "shiyilu/ep09-3.webp", cap: "第 3 页" },
+        { f: "shiyilu/ep09-4.webp", cap: "第 4 页" },
+        { f: "shiyilu/ep09-5.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:妇好鸮尊,商晚期青铜礼器" }
       ]
     }
   ]
@@ -1971,6 +1987,7 @@ function viewShiyilu() {
     const no = ["壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖", "拾"][i] || String(i + 1);
     return '<div class="sa-slot" data-i="' + i + '">'
       + '<button type="button" class="sa-spine" onclick="saPull(' + i + ')"'
+      + ' style="background-image:url(' + b.spine + ')"'
       + ' title="抽出《' + b.title + '》" aria-label="抽出 ' + b.title + '">'
       + '<span class="sa-spine-t" data-no="' + no + '">' + b.title + "</span>"
       + '<span class="sa-spine-s">' + b.sub + "</span></button>"
