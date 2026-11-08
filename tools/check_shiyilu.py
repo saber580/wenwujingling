@@ -120,11 +120,11 @@ open_page(c)
 say(c.eval("!!document.querySelector('.sa-shelf')"), "书架渲染出来了")
 h2 = c.eval("(document.querySelector('.page-head h2')||{}).textContent||''")
 say("文物拟人漫画" in h2, "页面标题带「文物拟人漫画」", h2.strip())
-say(c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length") == 4,
-    "书架上有 4 本真书(书脊)",
+say(c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length") == 8,
+    "书架上有 8 本真书(书脊)",
     c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length"))
-say(c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length") >= 3,
-    "书架上有若干「待上架」占位书脊",
+say(c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length") == 2,
+    "书架上有 2 本「待上架」占位书脊",
     "%d 本占位" % c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length"))
 h3 = c.eval("(document.querySelector('.sa-info.cur h3')||{}).textContent||''")
 say("沧州铁狮子" in h3, "当前书信息写着标题", h3.strip())
@@ -318,6 +318,44 @@ say("ep12-7" in cur_src(c), "第四本小讲堂用的是 ep12-7 图", cur_src(c)
 c.eval("saClose()")
 c.eval("saPush()")
 time.sleep(0.4)
+
+# ---- 6.8~6.11 第 5~8 本（AI 生成的水墨萌系拟人漫画） ----
+NEW_BOOKS = [
+    (4, "后母戊鼎", "spine-05", "ep11-cover", "ep11-4"),
+    (5, "四羊方尊", "spine-06", "ep13-cover", "ep13-4"),
+    (6, "金缕玉衣", "spine-07", "ep14-cover", "ep14-4"),
+    (7, "红山玉龙", "spine-08", "ep15-cover", "ep15-4"),
+]
+for bi, kw, sp, cov, hall in NEW_BOOKS:
+    no = bi + 1
+    c.eval("saPull(%d)" % bi)
+    time.sleep(0.45)
+    say(pulled_count(c) == 1, "点第 %d 本也能抽出来" % no, "%d 本抽出" % pulled_count(c))
+    h = c.eval("(document.querySelector('.sa-info.cur h3')||{}).textContent||''")
+    say(kw in h, "第 %d 本信息栏标题正确" % no, h.strip())
+    spi = c.eval("(document.querySelector('#sa-books .sa-slot[data-i=\"%d\"] .sa-spine')"
+                 ".style.backgroundImage)||''" % bi)
+    say(sp in spi, "第 %d 本用独立书脊 %s" % (no, sp), spi)
+    c.eval("saOpen(%d)" % bi)
+    time.sleep(0.45)
+    say(open_reader(c), "点第 %d 本封面打开阅读器" % no)
+    n = c.eval("document.querySelectorAll('#sa-leaf figure').length")
+    say(n == 5, "第 %d 本有 5 页(含小讲堂)" % no, "%d 页" % n)
+    say(cov in cur_src(c), "第 %d 本开局是它的封面" % no, cur_src(c))
+    c.eval("saGoto(4)")
+    time.sleep(0.3)
+    wh = [0, 0]
+    for _ in range(40):
+        wh = c.eval("(function(){var f=document.querySelector('#sa-leaf figure.cur img');"
+                    "return f?[f.naturalWidth,f.naturalHeight]:[0,0];})()")
+        if wh[0]:
+            break
+        time.sleep(0.25)
+    say(wh[0] > wh[1] > 0, "第 %d 本小讲堂是横版" % no, "%dx%d" % tuple(wh))
+    say(hall in cur_src(c), "第 %d 本小讲堂图源正确" % no, cur_src(c))
+    c.eval("saClose()")
+    c.eval("saPush()")
+    time.sleep(0.35)
 
 # ---- 7. 下边没有「缺的封面」格子 ----
 say(c.eval("!document.querySelector('.sa-grid') && !document.querySelector('.sa-work')"),

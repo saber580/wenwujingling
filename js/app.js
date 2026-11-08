@@ -2010,6 +2010,66 @@ const SHIYILU = {
         { f: "shiyilu/ep12-6.webp", t: "守护誓言", cap: "守护每一道金丝,也守护那段岁月" },
         { f: "shiyilu/ep12-7.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:汉代错金铜镇与错金工艺" }
       ]
+    },
+    {
+      id: "houmuwuding",
+      title: "最重的青铜器——后母戊鼎",
+      sub: "第 5 话",
+      cover: "shiyilu/ep11-cover.webp",
+      spine: "shiyilu/spine-05.webp",
+      desc: "商代后母戊鼎的自述。八百多斤的身子,是迄今最重的青铜器;1939年在安阳出土后差点流散,旧名司母戊鼎,2011年才正名。它自己倒不太在意名号,只嫌每次搬家都要惊动吊车。",
+      ep: [
+        { f: "shiyilu/ep11-cover.webp", t: "封面", cap: "第 5 话 · 最重的青铜器后母戊鼎" },
+        { f: "shiyilu/ep11-1.webp", cap: "八百多斤的自我介绍了" },
+        { f: "shiyilu/ep11-2.webp", cap: "陶范分铸,商代工匠怎么造出我" },
+        { f: "shiyilu/ep11-3.webp", cap: "旧名司母戊,2011年正名后母戊" },
+        { f: "shiyilu/ep11-4.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:商代后母戊鼎与陶范铸造" }
+      ]
+    },
+    {
+      id: "siyangfangzun",
+      title: "四只羊谁才是正面——四羊方尊",
+      sub: "第 6 话",
+      cover: "shiyilu/ep13-cover.webp",
+      spine: "shiyilu/spine-06.webp",
+      desc: "商代四羊方尊的四只卷角羊,至今还在争谁才是正面。三千年前它盛过祭祀的酒,1938年在湖南宁乡出土时碎成二十多块,是修复师一片片拼回来的。",
+      ep: [
+        { f: "shiyilu/ep13-cover.webp", t: "封面", cap: "第 6 话 · 四羊方尊" },
+        { f: "shiyilu/ep13-1.webp", cap: "我们四个,到底谁才是正面?" },
+        { f: "shiyilu/ep13-2.webp", cap: "三千年前,盛的是祭祀用的酒" },
+        { f: "shiyilu/ep13-3.webp", cap: "出土时碎成好多块,一片片拼回来" },
+        { f: "shiyilu/ep13-4.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:商代四羊方尊与青铜修复" }
+      ]
+    },
+    {
+      id: "jinlvyuyi",
+      title: "穿上就能不朽吗——金缕玉衣",
+      sub: "第 7 话",
+      cover: "shiyilu/ep14-cover.webp",
+      spine: "shiyilu/spine-07.webp",
+      desc: "西汉中山靖王刘胜的金缕玉衣,两千四百九十八片玉用金丝编缀,指望肉身不朽。1968年满城汉墓重见天日时玉片早已散乱,考古队编号一片片拼回,才算把这份执念重新缝好。",
+      ep: [
+        { f: "shiyilu/ep14-cover.webp", t: "封面", cap: "第 7 话 · 金缕玉衣" },
+        { f: "shiyilu/ep14-1.webp", cap: "穿上玉衣,就能千年不朽吧?" },
+        { f: "shiyilu/ep14-2.webp", cap: "两千多片玉,全靠金丝一根根编" },
+        { f: "shiyilu/ep14-3.webp", cap: "两千年后散了,又被一片片拼回" },
+        { f: "shiyilu/ep14-4.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:西汉金缕玉衣与满城汉墓" }
+      ]
+    },
+    {
+      id: "hongshanyulong",
+      title: "没有脚的龙——红山玉龙",
+      sub: "第 8 话",
+      cover: "shiyilu/ep15-cover.webp",
+      spine: "shiyilu/spine-08.webp",
+      desc: "五千年前红山先民把一块墨绿玉磨成 C 形,龙首似猪、长鬃上扬,没有脚也没有爪。1971年在内蒙古翁牛特旗出土后曾被当铁钩挂东西,如今却被称为中华第一龙。",
+      ep: [
+        { f: "shiyilu/ep15-cover.webp", t: "封面", cap: "第 8 话 · 红山玉龙" },
+        { f: "shiyilu/ep15-1.webp", cap: "我是龙,可我既没有脚也没有爪" },
+        { f: "shiyilu/ep15-2.webp", cap: "五千年前,先民拿石器慢慢磨出我" },
+        { f: "shiyilu/ep15-3.webp", cap: "曾被当铁钩,如今叫中华第一龙" },
+        { f: "shiyilu/ep15-4.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:红山文化C形玉龙" }
+      ]
     }
   ]
 };
@@ -2039,7 +2099,7 @@ function viewShiyilu() {
   }).join("");
   /* 待上架占位书脊:让书架看起来是「一排书」,而不是空柜子 */
   const empty = [];
-  for (let k = 0; k < 6; k++) {
+  for (let k = 0; k < 2; k++) {
     empty.push('<div class="sa-slot sa-empty" title="待上架 · 作者还在画">'
       + '<span class="sa-spine sa-ghost" aria-hidden="true"></span></div>');
   }
