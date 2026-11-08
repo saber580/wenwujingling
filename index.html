@@ -368,7 +368,7 @@
   position:relative;
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
   width:100%;max-width:142px;
-  padding-bottom:96px;   /* 给井完整留出空间（井高约 86 + 10 空隙） */
+  padding-bottom:120px;  /* 给井完整留出空间（放大后的井约 112 + 8 空隙） */
   animation:tkFloat var(--float-d) ease-in-out infinite;
   animation-delay:var(--float-delay);
   will-change:transform;
@@ -382,7 +382,7 @@
 /* 井：发光金盒，完整垫在票正下方 */
 .rh-fanbar .tk-well{
   position:absolute;left:50%;bottom:0;z-index:1;
-  width:68%;max-width:92px;aspect-ratio:1;
+  width:84%;max-width:128px;aspect-ratio:1;
   transform:translateX(-50%);
   filter:drop-shadow(0 6px 12px rgba(0,0,0,.42))
          drop-shadow(0 0 10px var(--well))
@@ -405,7 +405,7 @@
 .rh-fanbar .rh-cards .tk-cell:hover{animation-play-state:paused}
 .rh-fanbar .rh-cards .tk-cell:hover .tk-well{
   filter:drop-shadow(0 12px 18px rgba(0,0,0,.48)) drop-shadow(0 0 18px var(--well-bright)) drop-shadow(0 0 34px var(--well-bright));
-  width:76%;max-width:104px;
+  width:88%;max-width:138px;
   transition:width .3s cubic-bezier(.2,.8,.3,1),filter .3s;
 }
 /* —— 票本体 —— */
@@ -533,8 +533,8 @@
   .rh-fanbar .rh-cards{display:flex;overflow-x:auto;gap:8px;justify-content:flex-start;
     max-width:100%;padding:2px 12px 12px;scrollbar-width:none;-ms-overflow-style:none}
   .rh-fanbar .rh-cards::-webkit-scrollbar{display:none}
-  .rh-fanbar .rh-cards .tk-cell{flex:0 0 92px;max-width:none;padding-bottom:68px}
-  .rh-fanbar .rh-ticket .tk-well{width:72%;max-width:66px}
+  .rh-fanbar .rh-cards .tk-cell{flex:0 0 92px;max-width:none;padding-bottom:86px}
+  .rh-fanbar .rh-ticket .tk-well{width:82%;max-width:84px}
   .rh-fanbar .rh-fancard.rh-ticket{flex:0 0 92px;max-width:none;aspect-ratio:.62}
   .rh-fanbar .rh-ticket .tk-name{font-size:11.5px}
   .rh-fanbar .rh-ticket .header{font-size:8px;letter-spacing:.12em;text-indent:.12em}
