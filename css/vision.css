@@ -103,13 +103,6 @@ html body[data-page="vision"] #app{padding:18px 10px 30px}
 .vs-q button:focus-visible{outline:2px solid var(--vs-gold);outline-offset:2px}
 .vs-q-hint{font-size:11px;color:#7d7264;letter-spacing:.3px}
 
-.vs-credit{
-  position:relative;max-width:720px;margin:16px auto 0;padding-top:13px;
-  border-top:1px dashed rgba(231,201,142,.18);
-  font-size:11px;line-height:1.9;color:#8a7f70;
-}
-.vs-credit b{color:#b9a583;font-weight:700}
-
 /* ---------- 2. 区块通用 ---------- */
 .vs-sec{margin-top:38px}
 .vs-sec-h{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:6px}
