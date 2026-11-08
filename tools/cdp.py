@@ -19,8 +19,9 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 
 
 def http(path, method="GET"):
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     req = urllib.request.Request("http://127.0.0.1:%d%s" % (PORT, path), method=method)
-    return json.loads(urllib.request.urlopen(req, timeout=15).read().decode())
+    return json.loads(opener.open(req, timeout=15).read().decode())
 
 
 def tab(url=None):

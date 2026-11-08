@@ -1974,6 +1974,41 @@ const SHIYILU = {
         { f: "shiyilu/ep09-4.webp", cap: "第 4 页" },
         { f: "shiyilu/ep09-5.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:妇好鸮尊,商晚期青铜礼器" }
       ]
+    },
+    {
+      id: "taoyingding",
+      title: "国博人气文物陶鹰鼎,至今用途仍是谜",
+      sub: "第 3 话",
+      cover: "shiyilu/ep10-cover.webp",
+      spine: "shiyilu/spine-03.webp",
+      desc: "国博人气文物陶鹰鼎的求职日记。这只六千岁的仰韶文化鹰形陶鼎,活得太久忘了自己到底盛饭还是祭祀,想抄作业却发现同类就它一件——来洗浴中心碰碰运气,顺便聊聊那段被当成「鸡食盆」的黑历史。",
+      ep: [
+        { f: "shiyilu/ep10-cover.webp", t: "封面", cap: "第 3 话 · 国博人气文物陶鹰鼎,至今用途仍是谜" },
+        { f: "shiyilu/ep10-1.webp", cap: "第 1 页" },
+        { f: "shiyilu/ep10-2.webp", cap: "第 2 页" },
+        { f: "shiyilu/ep10-3.webp", cap: "第 3 页" },
+        { f: "shiyilu/ep10-4.webp", cap: "第 4 页" },
+        { f: "shiyilu/ep10-5.webp", cap: "第 5 页" },
+        { f: "shiyilu/ep10-6.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:陶鹰鼎,仰韶文化鹰形陶鼎" },
+        { f: "shiyilu/ep10-7.webp", t: "附 · 馆藏实拍", cap: "馆藏实拍:鹰形陶鼎" },
+        { f: "shiyilu/ep10-8.webp", t: "附 · 馆藏实拍", cap: "馆藏实拍:鹰形陶鼎" }
+      ]
+    },
+    {
+      id: "cuojintongzhen",
+      title: "错金铜镇 · 镇席之宝",
+      sub: "第 4 话",
+      cover: "shiyilu/ep12-1.webp",
+      spine: "shiyilu/spine-04.webp",
+      desc: "汉代错金铜镇的自述。工匠把金丝一点点错进铜里,它便有了压住席角的本事,也压住了两千年的排场。沉睡千年被考古队唤醒,如今夜里在展柜里悄悄伸个懒腰——旁边那只橘猫,是它守着每一道金丝的见证人。",
+      ep: [
+        { f: "shiyilu/ep12-1.webp", t: "封面 · 错金初成", cap: "第 4 话 · 汉代工匠为它错嵌金丝纹样" },
+        { f: "shiyilu/ep12-2.webp", t: "汉代席镇", cap: "压住席角,也压住排场" },
+        { f: "shiyilu/ep12-3.webp", t: "错金纹样", cap: "金丝入铜,千年不褪" },
+        { f: "shiyilu/ep12-4.webp", t: "破土而出", cap: "沉睡千年,再次被看见" },
+        { f: "shiyilu/ep12-5.webp", t: "文物苏醒", cap: "夜里,博物馆很热闹" },
+        { f: "shiyilu/ep12-6.webp", t: "守护誓言", cap: "守护每一道金丝,也守护那段岁月" }
+      ]
     }
   ]
 };

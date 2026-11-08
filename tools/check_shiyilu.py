@@ -120,8 +120,8 @@ open_page(c)
 say(c.eval("!!document.querySelector('.sa-shelf')"), "书架渲染出来了")
 h2 = c.eval("(document.querySelector('.page-head h2')||{}).textContent||''")
 say("文物拟人漫画" in h2, "页面标题带「文物拟人漫画」", h2.strip())
-say(c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length") == 2,
-    "书架上有 2 本真书(书脊)",
+say(c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length") == 4,
+    "书架上有 4 本真书(书脊)",
     c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length"))
 say(c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length") >= 3,
     "书架上有若干「待上架」占位书脊",
@@ -249,6 +249,61 @@ for _ in range(40):
         break
     time.sleep(0.25)
 say(w5[0] > w5[1] > 0, "第二本第 5 页（文物小讲堂）是横版", "%dx%d" % tuple(w5))
+c.eval("saClose()")
+c.eval("saPush()")
+time.sleep(0.4)
+
+# ---- 6.6 第三本书（陶鹰鼎） ----
+c.eval("saPull(2)")
+time.sleep(0.5)
+say(pulled_count(c) == 1, "点第三本也能抽出来", "%d 本抽出" % pulled_count(c))
+h3c = c.eval("(document.querySelector('.sa-info.cur h3')||{}).textContent||''")
+say("陶鹰鼎" in h3c or "鹰" in h3c, "第三本信息写着陶鹰鼎标题", h3c.strip())
+c.eval("saOpen(2)")
+time.sleep(0.5)
+say(open_reader(c), "点第三本封面打开阅读器")
+say(c.eval("document.querySelectorAll('#sa-leaf figure').length") == 9, "第三本书有 9 页",
+    "%d 页" % c.eval("document.querySelectorAll('#sa-leaf figure').length"))
+say("ep10" in cur_src(c), "第三本开局是它的封面页", cur_src(c))
+c.eval("saGoto(6)")
+time.sleep(0.3)
+w6 = [0, 0]
+for _ in range(40):
+    w6 = c.eval("(function(){var f=document.querySelector('#sa-leaf figure.cur img');"
+                "return f?[f.naturalWidth,f.naturalHeight]:[0,0];})()")
+    if w6[0]:
+        break
+    time.sleep(0.25)
+say(w6[0] > w6[1] > 0, "第三本第 7 页（文物小讲堂）是横版", "%dx%d" % tuple(w6))
+c.eval("saClose()")
+c.eval("saPush()")
+time.sleep(0.4)
+
+# ---- 6.7 第四本书（错金铜镇，豆包生成 6 张 Q 版漫画） ----
+c.eval("saPull(3)")
+time.sleep(0.5)
+say(pulled_count(c) == 1, "点第四本也能抽出来", "%d 本抽出" % pulled_count(c))
+h4c = c.eval("(document.querySelector('.sa-info.cur h3')||{}).textContent||''")
+say("错金铜镇" in h4c, "第四本信息写着错金铜镇标题", h4c.strip())
+sp4 = c.eval("(document.querySelector('#sa-books .sa-slot[data-i=\"3\"] .sa-spine')"
+             ".style.backgroundImage)||''")
+say("spine-04" in sp4, "第四本用独立书脊图 spine-04", sp4)
+c.eval("saOpen(3)")
+time.sleep(0.5)
+say(open_reader(c), "点第四本封面打开阅读器")
+say(c.eval("document.querySelectorAll('#sa-leaf figure').length") == 6, "第四本书有 6 页",
+    "%d 页" % c.eval("document.querySelectorAll('#sa-leaf figure').length"))
+say("ep12" in cur_src(c), "第四本开局是它的封面页", cur_src(c))
+c.eval("saGoto(5)")
+time.sleep(0.3)
+w4 = [0, 0]
+for _ in range(40):
+    w4 = c.eval("(function(){var f=document.querySelector('#sa-leaf figure.cur img');"
+                "return f?[f.naturalWidth,f.naturalHeight]:[0,0];})()")
+    if w4[0]:
+        break
+    time.sleep(0.25)
+say(w4[0] > 0 and w4[1] > w4[0], "第四本第 6 页（守护誓言）竖版加载成功", "%dx%d" % tuple(w4))
 c.eval("saClose()")
 c.eval("saPush()")
 time.sleep(0.4)
