@@ -2098,12 +2098,7 @@ function viewShiyilu() {
       + "</div>";
   }).join("");
   /* 待上架占位书脊:让书架看起来是「一排书」,而不是空柜子 */
-  const empty = [];
-  for (let k = 0; k < 2; k++) {
-    empty.push('<div class="sa-slot sa-empty" title="待上架 · 作者还在画">'
-      + '<span class="sa-spine sa-ghost" aria-hidden="true"></span></div>');
-  }
-  const emptyStr = empty.join("");
+  const emptyStr = "";  /* 8 本真书已排满,不再放「待上架」占位 */
   const info = SHIYILU.books.map(function (b, i) {
     return '<div class="sa-info" data-i="' + i + '">'
       + '<span class="sa-ep">' + b.sub + ' · 全话收录</span>'

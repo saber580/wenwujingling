@@ -123,8 +123,8 @@ say("文物拟人漫画" in h2, "页面标题带「文物拟人漫画」", h2.st
 say(c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length") == 8,
     "书架上有 8 本真书(书脊)",
     c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length"))
-say(c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length") == 2,
-    "书架上有 2 本「待上架」占位书脊",
+say(c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length") == 0,
+    "书架已无「待上架」占位书脊",
     "%d 本占位" % c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length"))
 h3 = c.eval("(document.querySelector('.sa-info.cur h3')||{}).textContent||''")
 say("沧州铁狮子" in h3, "当前书信息写着标题", h3.strip())
