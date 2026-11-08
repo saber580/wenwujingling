@@ -173,7 +173,7 @@ function render() {
   const [page, param] = hash.split("/");
   document.body.dataset.page = page || "home";   // 供背景/样式按页面微调(如首页背景更透亮)
   // 高亮顶部栏目(首页→我的精灵 / 图鉴 / 其他 / AI 栏目)
-  const navKey = page === "" ? "mine" : (page === "codex" ? "codex" : (page === "poster" || page === "tea" || page === "ident" || page === "trace" || page === "alive" || page === "mystery" || page === "vision" ? "poster" : (page === "restore" || page === "dye" || page === "shiyilu" || page === "guide" || page === "heart" ? "enlight" : (page === "museums" || page === "creative" || page === "biz" ? "more" : ""))));
+  const navKey = page === "" ? "mine" : (page === "codex" ? "codex" : (page === "poster" || page === "tea" || page === "ident" || page === "trace" || page === "alive" || page === "mystery" || page === "vision" || page === "studio" ? "poster" : (page === "restore" || page === "dye" || page === "shiyilu" || page === "guide" || page === "heart" ? "enlight" : (page === "museums" || page === "creative" || page === "biz" ? "more" : ""))));
   $$(".topnav .nav-item").forEach(a => a.classList.toggle("active", a.dataset.nav === navKey));
   /* 图鉴 / 精灵详情 / 茶话会要用档案包(data-deep.js)里的自述、问答与来历。
      用户手快先点进来时档案可能还在路上,这里等它一下;失败就照常渲染,绝不死循环。 */
@@ -200,12 +200,14 @@ function render() {
   else if (page === "ident") app.innerHTML = viewIdent();
   else if (page === "eval") app.innerHTML = viewEval();
   else if (page === "vision") app.innerHTML = viewVision();
+  else if (page === "studio") app.innerHTML = viewStudio();
   else app.innerHTML = viewHome();
   if (page === "restore") { setTimeout(rsHydrate, 30); setTimeout(rsPaintOutputs, 40); }  // 先给拼图盘铺图,再绘「AI 裁切输出台」图纸
   if (page === "dye") setTimeout(dyeInit, 40);              // 渲染后铺好黑白画纸(等图片解码完再允许上色)
   if (page === "ident") setTimeout(identInit, 40);          // 渲染后绑好对比滑块,接续上一次的修复与识别结果
   if (page === "eval") setTimeout(evalInitPage, 30);        // 渲染后立刻跑一遍金标集,把指标填进卡片
   if (page === "vision") setTimeout(vsInit, 30);          // 展望页：定默认清晰度、绑封面播放键
+  if (page === "studio") setTimeout(studioInit, 30);        // 影棚：载入精灵、绑工艺切换与录制
   if (page === "tea") setTimeout(teaInitView, 40);
   if (page === "shiyilu") setTimeout(saInit, 40);          // 画廊:绑横向滚动,同步底部圆点          // 渲染后点亮茶话会云端状态条,顺手探一次小桥
   window.scrollTo({ top: 0 });

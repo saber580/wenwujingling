@@ -888,3 +888,23 @@ print("反馈闭环(投票 / 坏例库 / 导出成用例 / 评测台入口):", e
 })()
 """) and ("feedback.js" in rd("index.html")) and ("FB.foot" in rd("js/app.js")) and
       ('id="evalFb"' in rd("js/app.js")) and (".fb-foot" in rd("css/style.css")))
+
+# ---- 精灵影棚(程序化视频：一件文物一道工艺) ----
+print("精灵影棚(页面/十七道工艺/入口):", ev("""
+(()=>{
+  if (typeof viewStudio !== 'function' || typeof studioInit !== 'function') return '缺函数';
+  if (!Array.isArray(STUDIO_STYLES) || STUDIO_STYLES.length !== 17)
+    return '工艺应为 17 道,实际:' + (Array.isArray(STUDIO_STYLES) ? STUDIO_STYLES.length : '非数组');
+  const want = 'ink,foil,oil,wood,riso,crayon,chalk,brick,stitch,shadow,sand,cloisonne,papercut,rubbing,batik,cobalt,kintsugi';
+  const keys = STUDIO_STYLES.map(s => s.key).join(',');
+  if (keys !== want) return '工艺清单不符: ' + keys;
+  const bad = STUDIO_STYLES.filter(s => !(s.cn && s.en && s.no && s.line1 && s.line2 &&
+      Array.isArray(s.tags) && s.tags.length === 2 && s.why &&
+      typeof s.build === 'function' && typeof s.art === 'function' && typeof s.bg === 'function'));
+  if (bad.length) return '工艺字段缺失: ' + bad.map(s => s.key).join(',');
+  const h = viewStudio();
+  return h.includes('sdCanvas') && h.includes('sdRec') && h.includes('sdStyles') && h.includes('sdSpirits')
+      && h.includes('sdReplay');
+})()
+""") and ('href="#/studio"' in rd("index.html")) and ("aw-studio.js" in rd("index.html"))
+   and ("studio.css" in rd("index.html")) and all(t in CSS_ALL for t in [".sd-stage", ".sd-chips", ".sd-spt", ".sd-btn.rec"]))

@@ -1,0 +1,161 @@
+/* ================= 精灵影棚 · 一件文物十一道工艺（#/studio） =================
+   整站是米金纸面的展厅，这一页是"摄影棚"：纸面底色不变，
+   中间那块放映屏是暗的，所有工艺都在这块屏里现算。 */
+
+.sd-wrap{
+  --sd-ink:#241f1a;
+  --sd-ink-2:#6b6259;
+  --sd-gold:#c9a227;
+  --sd-red:#b5432f;
+  --sd-line:rgba(201,162,39,.28);
+  max-width:1080px;margin:0 auto;padding:16px 14px 40px;
+}
+.sd-wrap *{box-sizing:border-box}
+
+/* 本页画心要满宽：非首页 #app 有宣纸装裱内边距，叠上自己的 padding 屏就窄了 */
+html body[data-page="studio"] #app{padding:16px 10px 30px}
+
+/* ---------- 头部 ---------- */
+.sd-head{padding:6px 4px 16px}
+.sd-kicker{
+  display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:3.4px;
+  color:var(--sd-red);padding:5px 11px;border-radius:99px;
+  background:rgba(181,67,47,.08);border:1px solid rgba(181,67,47,.22);
+}
+.sd-title{
+  margin:13px 0 8px;font-size:29px;line-height:1.28;letter-spacing:.5px;font-weight:800;
+  color:var(--sd-ink);
+  background:linear-gradient(180deg,#2b2621 0%,#4a3f33 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.sd-lead{margin:0;font-size:13.5px;line-height:1.85;color:var(--sd-ink-2);max-width:620px}
+.sd-lead b{color:var(--sd-red);font-weight:700}
+
+/* ---------- 放映屏 ---------- */
+.sd-stage{
+  position:relative;border-radius:16px;overflow:hidden;
+  background:#0d0b09;
+  box-shadow:0 16px 44px rgba(60,42,20,.30),0 0 0 1px rgba(201,162,39,.22) inset,
+             0 2px 0 rgba(255,255,255,.5);
+}
+.sd-stage canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.sd-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.08)}
+.sd-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#e7c98e,#c9a227);transition:width .06s linear}
+
+.sd-hud{display:flex;gap:9px;margin:11px 2px 0}
+.sd-btn{
+  flex:1;padding:11px 14px;border-radius:12px;cursor:pointer;
+  font-family:inherit;font-size:13.5px;font-weight:700;
+  color:#4a3f33;background:#fffdf8;border:1px solid var(--sd-line);
+  box-shadow:0 2px 0 rgba(201,162,39,.16);transition:.16s;
+}
+.sd-btn:active{transform:translateY(1px);box-shadow:none}
+.sd-btn.rec{color:#fff;background:linear-gradient(180deg,#c1543c,#a53d29);border-color:#8e3220}
+.sd-btn.rec.on{background:linear-gradient(180deg,#8e3220,#6d2416);animation:sdPulse 1s infinite}
+@keyframes sdPulse{0%,100%{opacity:1}50%{opacity:.72}}
+.sd-btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* ---------- 选精灵 ---------- */
+.sd-pick{margin-top:20px}
+.sd-ph{display:flex;align-items:baseline;gap:10px;padding:0 4px 9px}
+.sd-ph b{font-size:14px;color:var(--sd-ink);letter-spacing:.4px}
+.sd-ph em{font-size:11.5px;color:var(--sd-ink-2);font-style:normal;letter-spacing:.3px}
+
+.sd-strip{
+  display:flex;gap:9px;overflow-x:auto;padding:3px 4px 10px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.sd-strip::-webkit-scrollbar{display:none}
+.sd-spt{
+  flex:0 0 auto;width:70px;border:1px solid var(--sd-line);border-radius:13px;
+  background:#fffdf8;padding:6px 4px 4px;cursor:pointer;transition:.15s;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.sd-spt img{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(80,60,30,.16))}
+.sd-spt span{font-size:10px;color:var(--sd-ink-2);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px}
+.sd-spt.on{border-color:#b5432f;background:#fff6ef;box-shadow:0 0 0 2px rgba(181,67,47,.16)}
+.sd-spt.on span{color:#8e3220;font-weight:700}
+
+/* ---------- 选工艺 ---------- */
+.sd-chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:0 4px}
+.sd-chip{
+  display:flex;align-items:center;gap:8px;padding:10px 11px;cursor:pointer;
+  border:1px solid var(--sd-line);border-radius:12px;background:#fffdf8;
+  font-family:inherit;text-align:left;transition:.15s;
+}
+.sd-chip i{
+  font-style:normal;font-size:10px;font-weight:800;letter-spacing:.6px;
+  color:#b58f45;font-variant-numeric:tabular-nums;
+}
+.sd-chip b{font-size:13px;color:#3a322a;font-weight:700;letter-spacing:.3px}
+.sd-chip.on{border-color:#b5432f;background:linear-gradient(180deg,#fff8f2,#fdf0e6);box-shadow:0 0 0 2px rgba(181,67,47,.14)}
+.sd-chip.on i{color:#b5432f}
+.sd-chip.on b{color:#8e3220}
+
+/* ---------- 说明卡 ---------- */
+.sd-note{
+  margin-top:22px;padding:16px 16px 14px;border-radius:16px;
+  background:linear-gradient(180deg,#fffdf8,#faf3e6);
+  border:1px solid var(--sd-line);
+  box-shadow:0 6px 20px rgba(120,95,50,.10);
+}
+.sd-note h3{margin:0 0 8px;font-size:13.5px;letter-spacing:.6px;color:#8e3220}
+.sd-note p{margin:0;font-size:13px;line-height:1.92;color:#4c4238}
+.sd-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.sd-tags span{
+  font-size:11px;padding:4px 9px;border-radius:99px;letter-spacing:.3px;
+  color:#7a6440;background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.26);
+}
+
+/* ---------- 技术说明 ---------- */
+.sd-how{margin-top:20px;padding:0 6px}
+.sd-how h3{margin:0 0 8px;font-size:13.5px;color:#5a4c3a;letter-spacing:.5px}
+.sd-how p{margin:0 0 8px;font-size:12.5px;line-height:1.95;color:#6b6259}
+.sd-how .sd-dim{color:#8a8074;font-size:12px}
+
+/* ---------- 底部互链 ---------- */
+.sd-crumb{
+  display:flex;flex-wrap:wrap;gap:9px;align-items:center;justify-content:center;
+  margin:26px 0 4px;font-size:12px;
+}
+.sd-crumb a{color:#8e3220;text-decoration:none;font-weight:700;padding:6px 5px}
+.sd-crumb a:active{opacity:.7}
+.sd-crumb span{color:#c9bda9}
+
+/* ---------- 吐司 ---------- */
+.sd-toast{
+  position:fixed;left:50%;bottom:112px;transform:translate(-50%,14px);
+  padding:10px 18px;border-radius:99px;font-size:12.5px;font-weight:700;
+  color:#fff8ea;background:rgba(41,32,24,.94);border:1px solid rgba(201,162,39,.3);
+  opacity:0;pointer-events:none;transition:.22s;z-index:80;white-space:nowrap;
+}
+.sd-toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- 桌面 ---------- */
+@media (min-width:760px){
+  .sd-wrap{padding:20px 16px 48px}
+  .sd-title{font-size:38px}
+  .sd-lead{font-size:14.5px}
+  .sd-chips{grid-template-columns:repeat(4,1fr)}
+  .sd-spt{width:82px}
+  .sd-spt img{width:64px;height:64px}
+  .sd-spt span{font-size:11px;max-width:72px}
+  .sd-hud{max-width:360px}
+  .sd-bar{height:3px}
+}
+
+@media (min-width:1080px){
+  .sd-title{font-size:44px}
+  .sd-chips{grid-template-columns:repeat(6,1fr)}
+}
+
+/* 手机底部标签栏 93px，留出位置别压住最后一行 */
+@media (max-width:640px){
+  .sd-wrap{padding-bottom:126px}
+  .sd-toast{bottom:132px}
+  .sd-title{font-size:26px}
+}
+
+/* 影棚页：站点的 MCP 徽标会压在画布右下角，本页藏起来 */
+body[data-page="studio"] .wj-tech-pill{display:none}
