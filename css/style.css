@@ -304,34 +304,41 @@ h1,h2,h3{margin:0}
 .sa-fhead h3{margin:8px 0 6px;font-size:19px;letter-spacing:1px;color:#5c3317}
 .sa-fhead p{margin:0 auto;max-width:46em;font-size:13px;line-height:1.85;color:var(--ink-2)}
 
-.sa-viewer{position:relative;margin:4px auto 8px;max-width:1020px}
-.sa-track{display:flex;align-items:center;gap:16px;overflow-x:auto;overflow-y:hidden;
-  scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;padding:2px 2px 4px}
-.sa-track::-webkit-scrollbar{display:none}
-.sa-slide{position:relative;flex:0 0 auto;margin:0;cursor:zoom-in;border-radius:12px;
-  overflow:hidden;background:#fffdf8;scroll-snap-align:center;
-  box-shadow:0 16px 34px -16px rgba(110,74,18,.45),0 0 0 1px rgba(180,140,60,.32),
-             0 0 0 6px rgba(255,253,246,.9);}
-.sa-slide img{display:block;height:auto;width:auto;max-height:min(66vh,640px);
-  max-width:min(80vw,620px);object-fit:contain;background:#fdfaf3}
-.sa-slide figcaption{position:absolute;left:0;right:0;bottom:0;padding:26px 14px 11px;
-  font-size:12px;line-height:1.5;color:#fff;opacity:0;transition:opacity .2s;
-  background:linear-gradient(transparent,rgba(38,24,8,.7))}
-.sa-slide:hover figcaption{opacity:1}
-.sa-badge{position:absolute;top:10px;left:10px;font-size:11px;padding:2px 9px;border-radius:999px;
-  color:#6b4212;background:rgba(255,251,240,.9);box-shadow:0 2px 6px rgba(80,50,10,.18)}
+/* 竖版漫画书:一条 720px 的窄栏,页与页之间留一道缝,像装订好的册子 */
+/* 页码条悬在屏底(手机在标签栏上方),读到书里才浮出来。
+   不用 transform 居中 —— 这个 fixed 元素上 transform 会被算成 none(实测),
+   改用 left:0/right:0 + margin:auto 摆正,动画只动 opacity。 */
+.sa-hud{position:fixed;left:0;right:0;margin:0 auto;
+  bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;
+  display:flex;align-items:center;gap:9px;width:min(92vw,420px);padding:7px 10px;border-radius:999px;
+  background:rgba(255,251,240,.96);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  border:1px solid rgba(180,140,60,.42);box-shadow:0 14px 32px -14px rgba(110,74,18,.55);
+  opacity:0;pointer-events:none;transition:opacity .22s ease}
+.sa-hud.on{opacity:1;pointer-events:auto}
+.sa-hbtn{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:1px solid rgba(180,140,60,.5);
+  background:#fff;color:#8a5a20;font-size:17px;line-height:1;cursor:pointer;display:grid;place-items:center;
+  transition:background .15s,transform .15s}
+.sa-hbtn:hover{background:#fdf6e6;transform:scale(1.06)}
+.sa-hbtn:active{transform:scale(.94)}
+.sa-hinfo{flex:0 0 auto;font-size:12px;color:#6b4a1c;letter-spacing:.5px;white-space:nowrap}
+.sa-hinfo b{font-size:14px;color:#8e3220}
+.sa-hbar{flex:1 1 auto;height:4px;min-width:40px;border-radius:999px;background:rgba(150,110,50,.18);overflow:hidden}
+.sa-hbar i{display:block;height:100%;width:12.5%;border-radius:999px;
+  background:linear-gradient(90deg,#c9a227,#8e3220);transition:width .3s ease}
 
-.sa-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:38px;height:38px;
-  border-radius:50%;border:1px solid rgba(180,140,60,.45);background:rgba(255,253,246,.94);
-  color:#8a5a20;font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center;
-  box-shadow:0 6px 14px rgba(110,74,18,.2);transition:background .15s,transform .15s}
-.sa-nav:hover{background:#fff;transform:translateY(-50%) scale(1.06)}
-.sa-prev{left:2px}
-.sa-next{right:2px}
-
-.sa-dots{display:flex;gap:7px;justify-content:center;margin:8px 0 2px}
-.sa-dots i{width:7px;height:7px;border-radius:50%;background:rgba(150,110,50,.28);cursor:pointer;transition:all .2s}
-.sa-dots i.on{background:#c9922f;width:18px;border-radius:999px}
+.sa-book{max-width:720px;margin:0 auto 6px;display:grid;gap:9px;padding:9px;border-radius:16px;
+  background:linear-gradient(180deg,#fffef9,#f6edda);border:1px solid rgba(180,140,60,.34);
+  box-shadow:0 24px 52px -28px rgba(110,74,18,.5),inset 0 0 0 1px rgba(255,255,255,.7)}
+.sa-page{position:relative;margin:0;cursor:zoom-in;border-radius:7px;overflow:hidden;background:#fff;
+  box-shadow:0 2px 8px rgba(90,60,20,.12);transition:box-shadow .18s}
+.sa-page:hover{box-shadow:0 6px 16px rgba(90,60,20,.2)}
+.sa-page img{display:block;width:100%;height:auto}
+.sa-page.land{background:#efe6d3}
+.sa-pnum{position:absolute;right:7px;bottom:7px;padding:1px 7px;border-radius:999px;
+  font-size:11px;line-height:1.5;color:#8a6a3a;background:rgba(255,252,244,.88);
+  box-shadow:0 1px 4px rgba(80,50,10,.18);pointer-events:none}
+.sa-ptag{position:absolute;left:7px;top:7px;font-size:11px;padding:2px 9px;border-radius:999px;
+  color:#6b4212;background:rgba(255,251,240,.92);box-shadow:0 2px 6px rgba(80,50,10,.18);pointer-events:none}
 
 .sa-acts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:12px}
 .sa-note{font-size:12px;color:var(--ink-2)}
@@ -363,10 +370,11 @@ h1,h2,h3{margin:0}
 @media (max-width:768px){
   .sa-feature{padding:14px 12px 12px;border-radius:16px}
   .sa-fhead h3{font-size:17px}
-  .sa-track{gap:12px}
-  .sa-slide img{max-height:min(56vh,460px);max-width:86vw}
-  .sa-nav{width:32px;height:32px;font-size:17px}
-  .sa-prev{left:-4px}.sa-next{right:-4px}
+  .sa-hud{bottom:calc(101px + env(safe-area-inset-bottom,0px));width:min(88vw,360px);
+    gap:7px;padding:6px 9px;border-radius:999px}
+  .sa-hinfo{font-size:11.5px}
+  .sa-book{padding:6px;gap:6px;border-radius:12px}
+  .sa-page{border-radius:5px}
   .sa-acts .btn{flex:1 1 auto}
   .sa-note{flex:1 1 100%;text-align:center}
   .sa-grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px}
@@ -411,6 +419,15 @@ h1,h2,h3{margin:0}
 .dye-tools .btn{font-size:12.5px;padding:8px 14px}
 .dye-toolset,.dye-brushset{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2)}
 .dye-toolset button,.dye-brushset button{border:1px solid rgba(180,140,60,.5);background:#fff;color:#8a5a20;border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer}
+/* 笔头档位单独一行：按钮里画一个跟档位等大的点，粗细一眼可见。
+   侧栏只有 300px，标签「笔头」会把五行挤成两行，所以只用小圆点表示粗细。 */
+.dye-sizerow{gap:7px;justify-content:space-between}
+.dye-brushset{gap:4px;flex-wrap:nowrap;width:100%}
+.dye-brushset button{flex:1 1 0;justify-content:center;display:inline-flex;align-items:center;gap:4px;
+  padding:5px 4px;min-width:0;font-size:12px;white-space:nowrap}
+.dye-brushset button i{flex:0 0 auto;width:var(--d,8px);height:var(--d,8px);border-radius:50%;
+  background:currentColor;opacity:.9;transition:transform .14s}
+.dye-brushset button:hover i{transform:scale(1.12)}
 .dye-toolset button.cur,.dye-brushset button.cur{background:#8e3220;border-color:#8e3220;color:#fff}
 .dye-undo{margin-left:auto;border:1px solid rgba(180,140,60,.55);background:#fff;color:#8a5a20;border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;transition:opacity .15s}
 .dye-undo:hover:not(:disabled){background:#fdf6e6}
@@ -438,6 +455,7 @@ h1,h2,h3{margin:0}
   .dye-peekbtn{display:none}
   .dye-tools .btn{font-size:12px;padding:7px 11px}
   .dye-toolset button,.dye-brushset button{padding:5px 10px}
+  .dye-brushset button{padding:5px 5px;font-size:11.5px;gap:3px}
 }
 
 /* ---- AI 文物识别:照片复原对比滑块 + 识别结果 ---- */

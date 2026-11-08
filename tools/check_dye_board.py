@@ -141,6 +141,24 @@ c.eval("dyeBrushSize(52)")
 time.sleep(0.15)
 say(c.eval("DYE.brush") == 52 and c.eval("document.querySelectorAll('#dye-brushset .cur').length") == 1,
     "笔头粗细能换", "%dpx" % c.eval("DYE.brush"))
+# 用户要求：档位太少，要「极细」这种细档
+sizes = json.loads(c.eval("JSON.stringify(Array.prototype.map.call("
+                          "document.querySelectorAll('#dye-brushset button'),"
+                          "function(b){return Number(b.dataset.b)}))"))
+say(len(sizes) >= 5 and sizes == sorted(sizes), "笔头有五档以上且从细到粗排好", sizes)
+say(sizes and sizes[0] <= 4, "最细一档叫得出「极细」这种量级", "%d px 半径" % (sizes[0] if sizes else 0))
+first_txt = c.eval("(document.querySelector('#dye-brushset button')||{}).textContent||''").strip()
+say("极细" in first_txt, "第一档标的是「极细」", first_txt)
+dots = json.loads(c.eval("JSON.stringify(Array.prototype.map.call("
+                         "document.querySelectorAll('#dye-brushset button i'),"
+                         "function(i){return Math.round(i.getBoundingClientRect().width)}))"))
+say(len(dots) == len(sizes) and dots == sorted(dots) and dots[-1] > dots[0],
+    "按钮里的小圆点跟着档位变大", dots)
+c.eval("dyeBrushSize(3)")
+time.sleep(0.15)
+say(c.eval("DYE.brush") == 3 and c.eval("document.querySelectorAll('#dye-brushset .cur').length") == 1,
+    "点「极细」能选中且只有一个高亮", "%dpx" % c.eval("DYE.brush"))
+c.eval("dyeBrushSize(30)")
 
 # ---- 3. 轻点只填一片 ----
 r = cv_rect(c)

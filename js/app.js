@@ -1941,10 +1941,16 @@ function relicClockPick(id) {
 const SHIYILU = {
   author: "拾遗录",
   home: "https://www.xiaohongshu.com/user/profile/69f16bd40000000001007800",
+  /* 第 8 话一整话 8 页(封面 + 6 页正篇 + 文物小讲堂),按原作顺序排 */
   ep: [
     { f: "shiyilu/ep08-1.webp", t: "封面", cap: "第 8 话 · 最惨的文物——沧州铁狮子" },
-    { f: "shiyilu/ep08-2.webp", t: "漫画", cap: "三个小伙伴千里迢迢跑到沧州,只为看一眼这头狮子" },
-    { f: "shiyilu/ep08-3.webp", t: "小讲堂", cap: "文物小讲堂:后周广顺三年铸,河北四宝之一" }
+    { f: "shiyilu/ep08-2.webp", cap: "第 2 页" },
+    { f: "shiyilu/ep08-3.webp", cap: "第 3 页" },
+    { f: "shiyilu/ep08-4.webp", cap: "第 4 页" },
+    { f: "shiyilu/ep08-5.webp", cap: "第 5 页" },
+    { f: "shiyilu/ep08-6.webp", cap: "第 6 页" },
+    { f: "shiyilu/ep08-7.webp", cap: "结尾 · 来都来了,一起合个影吧" },
+    { f: "shiyilu/ep08-8.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:后周广顺三年铸,河北四宝之一" }
   ],
   works: [
     { f: "shiyilu/covers/c00.webp", t: "鸮卣:古代职场双面人" },
@@ -1962,11 +1968,11 @@ const SHIYILU = {
   ]
 };
 function viewShiyilu() {
-  const slides = SHIYILU.ep.map(function (p, i) {
-    return '<figure class="sa-slide" onclick="saZoom(' + i + ')" title="点开放大">'
-      + '<img src="' + p.f + '" alt="' + p.cap + '"' + (i ? ' loading="lazy"' : '') + '>'
-      + '<span class="sa-badge">' + p.t + "</span>"
-      + "<figcaption>" + p.cap + "</figcaption></figure>";
+  const pages = SHIYILU.ep.map(function (p, i) {
+    return '<figure class="sa-page' + (p.land ? " land" : "") + '" data-i="' + i + '" onclick="saZoom(' + i + ')" title="点开放大">'
+      + '<img src="' + p.f + '" alt="第 8 话 第 ' + (i + 1) + ' 页"' + (i > 1 ? ' loading="lazy"' : '') + '>'
+      + (p.t ? '<span class="sa-ptag">' + p.t + "</span>" : "")
+      + '<span class="sa-pnum">' + (i + 1) + "</span></figure>";
   }).join("");
   const works = SHIYILU.works.map(function (w) {
     return '<figure class="sa-work" onclick="saOpenWork()" title="去小红书看这一话">'
@@ -1975,8 +1981,8 @@ function viewShiyilu() {
   }).join("");
   return `
     <div class="page-head">
-      <h2>🖌 拾遗录 · 文物拟人画廊</h2>
-      <p>这一栏<b>不是 AI 画的</b>。是小红书作者「${SHIYILU.author}」用一支笔画的:文物变成会抱怨、会认命的打工人。我们把第 8 话请进展厅——因为画里那头"最惨的狮子",正好就在你的图鉴里。AI 能让文物开口说话,可这种一笔一笔的幽默,AI 还学不来。</p>
+      <h2>🖌 拾遗录 · 文物拟人漫画</h2>
+      <p>这一栏<b>不是 AI 画的</b>。是小红书作者「${SHIYILU.author}」用一支笔画的:文物变成会抱怨、会认命的打工人。我们把第 8 话<b>整话 ${SHIYILU.ep.length} 页</b>请进展厅,一页不落——因为画里那头"最惨的狮子",正好就在你的图鉴里。AI 能让文物开口说话,可这种一笔一笔的幽默,AI 还学不来。</p>
     </div>
 
     <section class="sa-feature">
@@ -1985,20 +1991,21 @@ function viewShiyilu() {
         <h3>最惨的文物——沧州铁狮子</h3>
         <p>本名「镇海吼」,后周广顺三年铸,距今一千多年,河北四宝之一。它比我们站里那只精灵更惨:露天站了一千年,被风雨、被盗、被"好心"修复过,所以画里的它一开口就在喊拔管。</p>
       </div>
-      <div class="sa-viewer" id="sa-viewer">
-        <button type="button" class="sa-nav sa-prev" onclick="saGo(-1)" aria-label="上一页">‹</button>
-        <div class="sa-track" id="sa-track">${slides}</div>
-        <button type="button" class="sa-nav sa-next" onclick="saGo(1)" aria-label="下一页">›</button>
-      </div>
-      <div class="sa-dots" id="sa-dots">
-        ${SHIYILU.ep.map(function (_, i) { return '<i class="' + (i ? "" : "on") + '" onclick="saTo(' + i + ')"></i>'; }).join("")}
-      </div>
+      <div class="sa-book" id="sa-book">${pages}</div>
       <div class="sa-acts">
         <button class="btn gold" onclick="location.hash='#/spirit/tielion'">📖 沧州铁狮子在我的图鉴里</button>
         <button class="btn ghost" onclick="location.hash='#/tea'">🍵 让它自己讲一遍</button>
-        <span class="sa-note">点画可放大;左右拖动、或用两侧箭头翻页</span>
+        <span class="sa-note">往下滚就是一页页翻;点任意一页可放大,放大后点空白处关掉</span>
       </div>
     </section>
+    <!-- 阅读控件放在 section 外面:手机端 .sa-feature 带 transform,
+         position:fixed 的子孙会改挂到它身上,悬不住屏底 -->
+    <div class="sa-hud" id="sa-hud" aria-label="翻页">
+      <button type="button" class="sa-hbtn" onclick="saGo(-1)" aria-label="上一页">‹</button>
+      <span class="sa-hinfo">第 <b id="sa-cur">1</b> / ${SHIYILU.ep.length} 页</span>
+      <button type="button" class="sa-hbtn" onclick="saGo(1)" aria-label="下一页">›</button>
+      <span class="sa-hbar"><i id="sa-hbar"></i></span>
+    </div>
 
     <h3 class="section-title">作者还画了这些 <small class="muted">(共 ${SHIYILU.works.length} 篇 · 点封面去小红书看原作)</small></h3>
     <div class="sa-grid">${works}</div>
@@ -2014,55 +2021,95 @@ function viewShiyilu() {
       <i class="sa-zoom-x">✕</i>
     </div>`;
 }
-/* 翻页 / 圆点 / 放大 */
-function saTrack() { return document.getElementById("sa-track"); }
-/* 翻页记住「当前第几张」,不要每次从滚动位置反推 —— 第一张贴左时,
-   视口中心其实更靠近第二张,点一次"下一页"会直接跳到底。 */
-let saIdx = 0, saLock = 0;
-function saTo(i) {
-  const t = saTrack(); if (!t) return;
-  const n = t.querySelectorAll(".sa-slide");
-  if (!n.length) return;
+/* 竖版漫画书:向下连续读,页码与进度条跟着走 */
+function saBook() { return document.getElementById("sa-book"); }
+function saPages() { const b = saBook(); return b ? b.querySelectorAll(".sa-page") : []; }
+/* 翻页记住「当前第几页」,不要每次从滚动位置反推 —— 长页面的中心点
+   常常落在下一页的头上,"下一页"会一次跳两页。 */
+let saIdx = 0, saLock = 0, saObs = null;
+function saSetHud(i) {
+  const n = saPages().length || 1;
+  const cur = document.getElementById("sa-cur");
+  if (cur) cur.textContent = i + 1;
+  const bar = document.getElementById("sa-hbar");
+  if (bar) bar.style.width = ((i + 1) / n * 100).toFixed(1) + "%";
+}
+/* 谁能滚?多数时候是 document;手机端 main 上挂着 overflow:auto,但它可能只溢出
+   几像素(不是真正在滚的那层),照它滚会「页码跳了、画面不动」。所以先看 document,
+   确实滚不动了再往下找真正能滚的祖先。 */
+function saScroller(el) {
+  const doc = document.scrollingElement || document.documentElement;
+  if (doc.scrollHeight > window.innerHeight + 40) return window;
+  let p = el && el.parentElement;
+  while (p && p !== document.body && p !== document.documentElement) {
+    const s = getComputedStyle(p);
+    if (/(auto|scroll)/.test(s.overflowY) && p.scrollHeight > p.clientHeight + 40) return p;
+    p = p.parentElement;
+  }
+  return window;
+}
+function saGoto(i) {
+  const n = saPages(); if (!n.length) return;
   i = Math.max(0, Math.min(n.length - 1, i));
-  const s = n[i];
-  const r = s.getBoundingClientRect(), tr = t.getBoundingClientRect();
-  const left = r.left - tr.left + t.scrollLeft;
-  const goal = Math.max(0, left - (t.clientWidth - r.width) / 2);
-  saIdx = i; saDots(i);
-  saLock = Date.now() + 600;            // 平滑滚动期间的 scroll 事件别来抢方向
-  t.scrollTo({ left: goal, behavior: "smooth" });
+  const r = n[i].getBoundingClientRect();
+  const sc = saScroller(saBook());
+  let goal;
+  if (sc === window) goal = r.top + window.scrollY - 74;
+  else goal = r.top - sc.getBoundingClientRect().top + sc.scrollTop - 74;
+  saIdx = i; saSetHud(i);
+  saLock = Date.now() + 650;      // 平滑滚动期间的 scroll 事件别来抢方向
+  sc.scrollTo({ top: Math.max(0, goal), behavior: "smooth" });
 }
 function saGo(d) {
   if (Date.now() < saLock) return;
-  saTo(saIdx + d);
-}
-function saDots(i) {
-  const d = document.getElementById("sa-dots"); if (!d) return;
-  Array.prototype.forEach.call(d.children, function (el, k) { el.classList.toggle("on", k === i); });
+  saGoto(saIdx + d);
 }
 function saInit() {
-  const t = saTrack(); if (!t) return;
-  t.addEventListener("scroll", function () {
+  if (!saBook()) return;
+  saIdx = 0; saSetHud(0);
+  /* 页码条只在「书在屏上」时浮出来,读完了就收走,别挡作品墙 */
+  const hud = document.getElementById("sa-hud");
+  if (hud) {
+    if (saObs) { saObs.disconnect(); saObs = null; }
+    if (window.IntersectionObserver) {
+      saObs = new IntersectionObserver(function (es) {
+        hud.classList.toggle("on", !!(es[0] && es[0].isIntersecting));
+      }, { threshold: 0.02 });
+      saObs.observe(saBook());
+    } else hud.classList.add("on");
+  }
+  /* 滚动时反解「在读第几页」:哪一页的中心最靠近视口偏上的位置 */
+  const sc = saScroller(saBook());
+  const sync = function () {
     if (Date.now() < saLock) return;
-    const n = t.querySelectorAll(".sa-slide");
-    if (!n.length) return;
-    const tr = t.getBoundingClientRect();
-    let best = 0, bd = 1e9, mid = t.clientWidth / 2;
-    Array.prototype.forEach.call(n, function (el, i) {
+    const n = saPages(); if (!n.length) return;
+    let best = 0, bd = 1e9;
+    const vh = sc === window ? window.innerHeight : sc.clientHeight;
+    const vtop = sc === window ? 0 : sc.getBoundingClientRect().top;
+    const aim = vtop + vh * 0.42;
+    Array.prototype.forEach.call(n, function (el, k) {
       const r = el.getBoundingClientRect();
-      const c = r.left - tr.left + r.width / 2;
-      const dd = Math.abs(c - mid);
-      if (dd < bd) { bd = dd; best = i; }
+      const dd = Math.abs(r.top + r.height / 2 - aim);
+      if (dd < bd) { bd = dd; best = k; }
     });
-    saIdx = best; saDots(best);
-  }, { passive: true });
+    if (best !== saIdx) { saIdx = best; saSetHud(best); }
+  };
+  sc.addEventListener("scroll", sync, { passive: true });
+  /* 桌面端 ← → 也能翻页;焦点在输入框里就不抢 */
+  document.addEventListener("keydown", function (e) {
+    if (!saBook() || e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target && e.target.tagName;
+    if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
+    if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); saGo(1); }
+    else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); saGo(-1); }
+  });
 }
 function saZoom(i) {
   const box = document.getElementById("sa-zoom");
   if (!box) return;
   const p = SHIYILU.ep[i] || SHIYILU.ep[0];
   box.querySelector("img").src = p.f;
-  box.querySelector("span").textContent = p.cap;
+  box.querySelector("span").textContent = "第 " + (i + 1) + " / " + SHIYILU.ep.length + " 页 · " + p.cap;
   box.classList.add("show");
 }
 function saZoomClose(e) {
@@ -2520,7 +2567,7 @@ function viewDye() {
       <b>🖌 怎么玩(真彩画板 · 自己上色)</b>
       <ol>
         <li><b>蘸色</b>:下面一排是十二种传统色(朱红 / 赭石 / 石青 / 石绿 / 赤金…),点一下就蘸上了;想更准,点「🎨」自己调一个。</li>
-        <li><b>轻点 = 填一块,按住 = 涂一笔</b>:轻点处一整片封闭区域会用当前颜色填满,像数字油画(背景那一大片也算一块,点错了按「↶ 撤销」);按住拖动就是笔刷,细 / 中 / 粗三档。</li>
+        <li><b>轻点 = 填一块,按住 = 涂一笔</b>:轻点处一整片封闭区域会用当前颜色填满,像数字油画(背景那一大片也算一块,点错了按「↶ 撤销」);按住拖动就是笔刷,从<b>极细到特粗五档</b>,描眼睛用极细、铺背景用特粗。</li>
         <li><b>涂错了就擦</b>:切到「🧽 橡皮」,擦掉的只是你涂的颜色,线稿一根都不会少。</li>
         <li><b>照着画、画完带走</b>:右边(手机上在画布右上角)常驻缩小版原图,点一下放大;满意了就「💾 保存作品」,「✨ 一键赋彩」可以先偷看 AI 填满的样子。</li>
       </ol>
@@ -2549,12 +2596,16 @@ function viewDye() {
             <button type="button" data-t="brush" class="cur" onclick="dyeTool('brush')">🖌 画笔</button>
             <button type="button" data-t="eraser" onclick="dyeTool('eraser')">🧽 橡皮</button>
           </span>
-          <span class="dye-brushset" id="dye-brushset">
-            <button type="button" data-b="16" onclick="dyeBrushSize(16)">细</button>
-            <button type="button" data-b="30" onclick="dyeBrushSize(30)">中</button>
-            <button type="button" data-b="52" onclick="dyeBrushSize(52)">粗</button>
-          </span>
           <button type="button" class="dye-undo" id="dye-undo" onclick="dyeUndo()" title="撤销上一步" disabled>↶ 撤销</button>
+        </div>
+        <div class="dye-tools dye-sizerow">
+          <span class="dye-brushset" id="dye-brushset" aria-label="笔头粗细">
+            <button type="button" data-b="3" style="--d:4px" title="极细 · 描眼睛、勾纹样(半径 3)" onclick="dyeBrushSize(3)"><i></i>极细</button>
+            <button type="button" data-b="8" style="--d:6px" title="细 · 小面积细节(半径 8)" onclick="dyeBrushSize(8)"><i></i>细</button>
+            <button type="button" data-b="16" style="--d:9px" title="中 · 常规上色(半径 16)" onclick="dyeBrushSize(16)"><i></i>中</button>
+            <button type="button" data-b="30" style="--d:13px" title="粗 · 大块铺色(半径 30)" onclick="dyeBrushSize(30)"><i></i>粗</button>
+            <button type="button" data-b="52" style="--d:18px" title="特粗 · 背景整片(半径 52)" onclick="dyeBrushSize(52)"><i></i>特粗</button>
+          </span>
         </div>
         <div class="dye-tools">
           <button type="button" class="btn ghost dye-peekbtn" onpointerdown="dyePeek(true)" onpointerup="dyePeek(false)" onpointerleave="dyePeek(false)" onpointercancel="dyePeek(false)" oncontextmenu="return false">👁 按住看原图</button>
