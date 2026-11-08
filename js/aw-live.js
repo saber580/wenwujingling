@@ -633,10 +633,44 @@
     return d;
   }
   /* 单独拎出来：逐字铺开时正文是自己写的，不能走 put()，但最后一样要念 */
-  function speakThem(txt) {
-    if (box.classList.contains("show") && CUR && window.Voice && window.Voice.enabled()) {
-      window.Voice.say(txt, { primary: CUR.primary, id: CUR.id });
+  function speakThem(txt, o) {
+    if (!(box.classList.contains("show") && CUR && window.Voice && window.Voice.enabled())) return;
+    var opts = o || { primary: CUR.primary, id: CUR.id };
+    /* 分句念：首句先出声，后面顺着接，段落再长也不用等整段合成 */
+    if (window.Voice.saySegments && window.Voice.splitSentences) {
+      var segs = window.Voice.splitSentences(txt);
+      if (segs && segs.length) { window.Voice.saySegments(segs, opts); return; }
     }
+    window.Voice.say(txt, opts);
+  }
+
+  /* 一边流式吐字，一边把"已经写完的那几句"送去合成。
+     整段到齐时头一句的音频往往已经在手上，开口几乎没有等待。 */
+  function voiceStream(opts) {
+    var buf = "";
+    var re = /[。！？!?；;…\n]/;
+    return {
+      push: function (t) {
+        if (!window.Voice || !window.Voice.enabled || !window.Voice.enabled()) return;
+        buf += String(t || "");
+        var cut = -1;
+        for (var i = 0; i < buf.length; i++) if (re.test(buf[i])) cut = i;
+        if (cut < 4) return;                 /* 太短的还不值得单独送一次合成 */
+        var head = buf.slice(0, cut + 1);
+        buf = buf.slice(cut + 1);
+        if (window.Voice.prefetchSegmentList) window.Voice.prefetchSegmentList(head, opts);
+        else if (window.Voice.prefetch) window.Voice.prefetch(head, opts);
+      }
+    };
+  }
+
+  /* 文字一到就两步走：① 逐句并行送合成 ② 立刻开口（不等打字机铺完）。
+     以前是"铺完再念"，一段话光等就打掉两三秒——线上反馈"字都出来半天了还不说话"。 */
+  function speakNow(txt, opts) {
+    if (!window.Voice) return;
+    if (window.Voice.prefetchSegmentList) window.Voice.prefetchSegmentList(txt, opts);
+    else if (window.Voice.prefetch) window.Voice.prefetch(txt, opts);
+    speakThem(txt, opts);
   }
 
   /* ---- 逐字铺开 + 思考态 ----
@@ -743,6 +777,7 @@
       : Promise.resolve(false);
 
     var lb = liveBubble(false), done = false;
+    var vs = voiceStream({ primary: s.primary, id: s.id });
     var tm = setTimeout(function () {
       if (done) return;
       done = true; lb.fail();
@@ -753,19 +788,23 @@
     chat([
       { role: "system", content: persona(s) },
       { role: "user", content: "（电话刚接通，你已经说过：" + line + "）请用一句话接着问他打这个电话想聊什么，别重复自我介绍，三十字以内。" }
-    ], function (t) { if (!done) lb.push(t); })
+    ], function (t) { vs.push(t); if (!done) lb.push(t); })
       .then(function (r) {
         if (done) return;
         done = true; clearTimeout(tm);
-        /* 文字一到就先合成：打字机还要铺一会儿，这段正好把 2~4 秒的合成时间盖住 */
-        if (window.Voice && window.Voice.prefetch) {
+        /* 文字一到就先逐句合成：开场白还在念，这段正好把合成时间盖住 */
+        if (window.Voice && window.Voice.prefetchSegmentList) {
+          window.Voice.prefetchSegmentList(r.text, { primary: s.primary, id: s.id });
+        } else if (window.Voice && window.Voice.prefetch) {
           window.Voice.prefetch(r.text, { primary: s.primary, id: s.id });
         }
         lb.finish(r.text, function () {
           HIST.push({ role: "assistant", content: r.text });
           setVia(r.via);
           /* 等本地那句念完再接云端那句，别把开场白截断；此时音频已经备好，接得上来 */
-          Promise.resolve(spoken).catch(function () {}).then(function () { speakThem(r.text); });
+          Promise.resolve(spoken).catch(function () {}).then(function () {
+            speakThem(r.text, { primary: s.primary, id: s.id });
+          });
         });
         BUSY = false;
       })
@@ -984,18 +1023,15 @@
   function greet(s) {
     BUSY = true;
     var lb = liveBubble(true);
+    var vs = voiceStream({ primary: s.primary, id: s.id });
     chat([{ role: "system", content: persona(s) },
           { role: "user", content: "用一句话自报家门，说清你是谁、什么朝代的。" }],
-          function (t) { lb.push(t); })
+          function (t) { vs.push(t); lb.push(t); })
       .then(function (r) {
-        if (window.Voice && window.Voice.prefetch) {
-          window.Voice.prefetch(r.text, { primary: s.primary, id: s.id });
-        }
-        lb.finish(r.text, function () {
-          HIST.push({ role: "assistant", content: r.text });
-          setVia(r.via);
-          speakThem(r.text);
-        });
+        HIST.push({ role: "assistant", content: r.text });
+        setVia(r.via);
+        speakNow(r.text, { primary: s.primary, id: s.id });
+        lb.finish(r.text);
       })
       .catch(function (e) {
         lb.fail();
@@ -1018,17 +1054,14 @@
     var la = localAnswer(CUR, q);
     BUSY = true;
     var lb = liveBubble(false);
+    var vs = voiceStream({ primary: CUR.primary, id: CUR.id });
     chat([{ role: "system", content: persona(CUR) }].concat(HIST.slice(-7)),
-         function (t) { lb.push(t); })
+         function (t) { vs.push(t); lb.push(t); })
       .then(function (r) {
-        if (window.Voice && window.Voice.prefetch) {
-          window.Voice.prefetch(r.text, { primary: CUR.primary, id: CUR.id });
-        }
-        lb.finish(r.text, function () {
-          HIST.push({ role: "assistant", content: r.text });
-          setVia(r.via);
-          speakThem(r.text);
-        });
+        HIST.push({ role: "assistant", content: r.text });
+        setVia(r.via);
+        speakNow(r.text, { primary: CUR.primary, id: CUR.id });
+        lb.finish(r.text);
       })
       .catch(function (e) {
         lb.fail();

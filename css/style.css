@@ -2579,7 +2579,9 @@ body.flyleaf-on #intro{display:none!important}
 .aq-techbar b{font-weight:600;color:#a82613;white-space:nowrap}
 .aq-techbar:hover{background:#fff1de;border-color:#d9b78b}
 .aq:has(.aq-panel:not([hidden])) .wj-tech-pill,.aq.panel-open .wj-tech-pill{display:none}
-@media (max-width:640px){.wj-tech-pill{font-size:10px;padding:4px 8px;right:auto;left:0}.aq-techbar{font-size:10.5px;margin:0 8px 2px}}
+/* 手机窄屏：徽标宽 251px、悬在红舞狮正上方，正好压在首屏「文物精灵」标题带上（2026-11-08 实测重叠 10×19px 且自身右侧溢出屏外）。
+   窄屏下不浮动此徽标；同样的握手状态在「小答」面板顶部的 .aq-techbar 与自检页仍可见。 */
+@media (max-width:640px){.wj-tech-pill{display:none}.aq-techbar{font-size:10.5px;margin:0 8px 2px}}
 
 /* ================= 落地与合作页(探索 · 之五) ================= */
 .bz-note{font-size:12.5px;color:#7a6a52;background:#fbf3e2;border:1px dashed #e0c9a0;border-radius:12px;padding:11px 15px;margin:14px 0 4px;line-height:1.85}

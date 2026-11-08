@@ -10,7 +10,7 @@
 (function () {
   var W = window;
   if (W.Voice && W.Voice.version) return;      /* 幂等 */
-  var VERSION = "v1";
+  var VERSION = "v2";
 
   var BASE = "audio/";
   var LS = "wj.voice";
@@ -416,6 +416,91 @@
     });
   }
 
+  /* ---------- 整段朗读：先切句，再一句一句念 ----------
+     为什么要切：edge-tts 是整段合成，段落越长越慢，而且整段没合成完一句也不出声。
+     切成短句之后——首句短、合成快，先出声；其余几句并行预合成，句间不留空档。
+     2026-11-08：线上反馈"字都出来半天了还没念"，根因就是整段串行等合成。 */
+  var SENT_END = "。！？!?；;…";
+
+  function splitSentences(text) {
+    var s = String(text || "").replace(/\r/g, "").replace(/[ \t]+/g, " ").trim();
+    if (!s) return [];
+    var out = [], buf = "";
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      buf += ch;
+      if (SENT_END.indexOf(ch) >= 0) {
+        /* 连着的省略号／感叹号别把一句话劈成几截 */
+        if (SENT_END.indexOf(s[i + 1]) >= 0) continue;
+        var t = buf.trim();
+        if (t) out.push(t);
+        buf = "";
+      } else if (ch === "\n") {
+        var t2 = buf.trim();
+        if (t2) out.push(t2);
+        buf = "";
+      }
+    }
+    var tail = buf.trim();
+    if (tail) out.push(tail);
+    /* 太碎的句子（"对。"）并进相邻句，省一次建连也省一次起播延迟 */
+    var merged = [];
+    for (var j = 0; j < out.length; j++) {
+      var cur2 = out[j];
+      if (merged.length && (cur2.length < 7 || merged[merged.length - 1].length < 7)) {
+        merged[merged.length - 1] += cur2;
+      } else {
+        merged.push(cur2);
+      }
+    }
+    return merged;
+  }
+
+  /* 逐句播放（首句先出声，后面顺着接）。
+     与 say() 共用 saySeq 语义：新的一次发声会让上一次整串作废。 */
+  function saySegments(list, opts) {
+    opts = opts || {};
+    if (!enabled()) return Promise.resolve(false);
+    var segs = [];
+    for (var i = 0; i < (list || []).length; i++) {
+      var b = clean(list[i]);
+      if (b) segs.push(b);
+    }
+    if (!segs.length) return Promise.resolve(false);
+    if (!opts.keepStory) {
+      halt(true);
+      killAudio();
+    }
+    warmVoices();
+    var seq = ++saySeq;
+    var idx = 0;
+    function step() {
+      if (seq !== saySeq) return Promise.resolve(false);
+      if (idx >= segs.length) return Promise.resolve(true);
+      var body = segs[idx++];
+      return sayRemote(body, opts, seq, 8000).then(function (ok) {
+        if (seq !== saySeq) return false;
+        if (ok) { LOCK.on = true; LOCK.at = Date.now(); return step(); }
+        if (!synthOK()) return false;
+        /* 与 say() 同一套规矩：这一场已经出过它的嗓子就绝不换人 */
+        if (!opts.keepStory && LOCK.on && (Date.now() - LOCK.at) < LOCK_MS) {
+          try { W.dispatchEvent(new CustomEvent("voice:mute")); } catch (e) {}
+          return false;
+        }
+        try { W.dispatchEvent(new CustomEvent("voice:fallback")); } catch (e) {}
+        return sayLocal(segs.slice(idx - 1).join(""), opts);
+      });
+    }
+    return step();
+  }
+
+  /* 一段回复的分句并行预合成：文字刚到就全送出去，等念的时候音频已经在手上 */
+  function prefetchSegments(text, opts) {
+    if (!enabled()) return;
+    var segs = splitSentences(text);
+    for (var i = 0; i < segs.length; i++) prefetch(segs[i], opts);
+  }
+
   /* 只读诊断，方便自检脚本核对 */
   function probe() {
     return {
@@ -431,6 +516,9 @@
     version: VERSION,
     tell: tell,
     say: say,
+    saySegments: saySegments,
+    splitSentences: splitSentences,
+    prefetchSegmentList: prefetchSegments,
     prefetch: prefetch,
     stop: stop,
     enabled: enabled,

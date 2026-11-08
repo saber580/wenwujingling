@@ -86,9 +86,11 @@
     "html.craft-on .rh-seals .rh-ava{transition:transform .38s cubic-bezier(.2,.85,.2,1)}",
 
     "/* ---------- ⑥ 逐字浮现 ---------- */",
-    "html.craft-on .craft-split i.craft-char{display:inline-block;opacity:0;transform:translateY(.4em)}",
-    "html.craft-on .craft-in i.craft-char{animation:craftChar .5s cubic-bezier(.2,.85,.2,1) forwards}",
-    "@keyframes craftChar{to{opacity:1;transform:none}}",
+    /* 基线必须是「可见」：动画只做增强。手机端有 animation:none!important 的全局降级，
+       若基线写 opacity:0，动画被掐掉后标题就永久不可见（2026-11-08 踩过）。 */
+    "html.craft-on .craft-split i.craft-char{display:inline-block;opacity:1;transform:none}",
+    "html.craft-on .craft-in i.craft-char{animation:craftChar .5s cubic-bezier(.2,.85,.2,1) both}",
+    "@keyframes craftChar{from{opacity:0;transform:translateY(.4em)}to{opacity:1;transform:none}}",
 
     "/* ---------- ⑨ 卡片悬停提亮（主页 AI 工具卡 + 图鉴卡） ---------- */",
     "html.craft-on .codex-card,html.craft-on .rh-tool{transition:transform .28s cubic-bezier(.2,.85,.2,1),box-shadow .28s,border-color .28s}",
@@ -174,10 +176,18 @@
   }
 
   /* ============================ ⑥ 逐字浮现 ============================ */
-  var REVEAL = ".rh-title-cn,.aw-hero h2,.mys-hero h2,.rh-head-txt h2,.section-title";
+  /* 注意：不要把「渐变裁字」(background-clip:text + color:transparent) 的标题放进来。
+     这类标题一旦拆成 inline-block 子元素，父级渐变就裁不到子元素字形上，字会整块消失。 */
+  var REVEAL = ".aw-hero h2,.mys-hero h2,.rh-head-txt h2,.section-title";
   var io = null, watched = [];
   function split(el) {
     if (el.__craftSplit) return;
+    /* 兜底：渐变裁字(background-clip:text)的元素绝不拆，拆开父级渐变就裁不到子字形，字会消失 */
+    try {
+      var _cs = window.getComputedStyle(el);
+      var _clip = _cs.webkitBackgroundClip || _cs.backgroundClip || "";
+      if (String(_clip).indexOf("text") > -1) return;
+    } catch (e) {}
     var txt = String(el.textContent || "");
     if (!txt.trim()) return;
     el.__craftText = txt;
