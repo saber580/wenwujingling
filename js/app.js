@@ -1934,23 +1934,22 @@ function relicClockPick(id) {
   teaToggle(id);
 }
 
-/* ---------------- 拾遗录 · 文物拟人画廊 ----------------
-   小红书作者「拾遗录」的原创手绘:文物变成会抱怨、会认命的打工人。
-   本站只做非商业展示与学习交流,版权归原作者;点封面直达原作。
-   第 8 话画的沧州铁狮子,正好是图鉴里的 tielion。 */
+/* ---------------- AI 文物拟人漫画 ----------------
+   AI 绘画把文物画成会抱怨、会认命的打工人,一话一个小故事。
+   第 1 话画的沧州铁狮子,正好是图鉴里的 tielion。 */
 const SHIYILU = {
-  author: "拾遗录",
-  home: "https://www.xiaohongshu.com/user/profile/69f16bd40000000001007800",
+  author: "文物精灵 · AI 拟人创作",
+  home: "#/dye",
   /* 每一「本」是一话:cover 是书脊/封面用的第一页,ep 是整话内页 */
   books: [
     {
       id: "tielion",
       title: "最惨的文物——沧州铁狮子",
-      sub: "第 8 话",
+      sub: "第 1 话",
       cover: "shiyilu/ep08-1.webp",
       desc: "本名「镇海吼」,后周广顺三年铸,距今一千多年,河北四宝之一。露天站了一千年,被风雨、被盗、被\"好心\"修复过,所以画里的它一开口就在喊拔管。",
       ep: [
-        { f: "shiyilu/ep08-1.webp", t: "封面", cap: "第 8 话 · 最惨的文物——沧州铁狮子" },
+        { f: "shiyilu/ep08-1.webp", t: "封面", cap: "第 1 话 · 最惨的文物——沧州铁狮子" },
         { f: "shiyilu/ep08-2.webp", cap: "第 2 页" },
         { f: "shiyilu/ep08-3.webp", cap: "第 3 页" },
         { f: "shiyilu/ep08-4.webp", cap: "第 4 页" },
@@ -1969,10 +1968,11 @@ function viewShiyilu() {
   /* 书架每一格:一个书位,内含「书脊」(没抽出时)和「抽出的书」(抽出时原位显示) */
   const slots = SHIYILU.books.map(function (b, i) {
     const n = b.ep.length;
+    const no = ["壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖", "拾"][i] || String(i + 1);
     return '<div class="sa-slot" data-i="' + i + '">'
       + '<button type="button" class="sa-spine" onclick="saPull(' + i + ')"'
       + ' title="抽出《' + b.title + '》" aria-label="抽出 ' + b.title + '">'
-      + '<span class="sa-spine-t">' + b.title + "</span>"
+      + '<span class="sa-spine-t" data-no="' + no + '">' + b.title + "</span>"
       + '<span class="sa-spine-s">' + b.sub + "</span></button>"
       + '<figure class="sa-book" onclick="saOpen(' + i + ')" role="button" tabindex="0"'
       + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();saOpen(' + i + ');}"'
@@ -2017,8 +2017,8 @@ function viewShiyilu() {
   }).join("");
   return `
     <div class="page-head">
-      <h2>🖌 拾遗录 · 文物拟人漫画</h2>
-      <p>这一栏<b>不是 AI 画的</b>。是小红书作者「${SHIYILU.author}」用一支笔画的:文物变成会抱怨、会认命的打工人。点书架上的<b>书脊</b>把书抽出来,再点封面翻开,一页页读。AI 能让文物开口说话,可这种一笔一笔的幽默,AI 还学不来。</p>
+      <h2>🖌 AI 文物拟人漫画</h2>
+      <p>把文物<b>交给 AI 拟人化</b>,画成会抱怨、会认命的打工人——上一秒还是镇馆之宝,下一秒就在工位上摸鱼。点书架上的<b>书脊</b>把书抽出来,再点封面翻开,一页页读它的小故事。</p>
     </div>
 
     <section class="sa-shelf">
@@ -2038,7 +2038,7 @@ function viewShiyilu() {
 
     <div class="sa-credit">
       <b>关于这一栏</b>
-      <p>以上手绘均为小红书作者「<a href="${SHIYILU.home}" target="_blank" rel="noopener">${SHIYILU.author}</a>」的原创作品,版权归原作者所有。本站仅作<b>非商业展示与学习交流</b>,不用于任何售卖;更多篇目请到作者主页阅读。</p>
+      <p>这些漫画由「文物精灵」的 <b>AI 绘画能力拟人创作</b>而来:AI 读文物的年代、出土地与文物知识,再把它们画成有性格、会吐槽的角色。更多话正在上架中。</p>
     </div>
 
     <!-- 阅读器:整屏覆盖。放在 section 之外 —— .sa-shelf 这类容器一旦带上
@@ -2080,6 +2080,12 @@ function saPull(i) {
   Array.prototype.forEach.call(slots, function (el, k) {
     const on = k === i;
     el.classList.toggle("out", on);   /* 书位整体进入「抽出」态:书脊隐、封面书显 */
+    if (on) {
+      /* 抽出书是相对 .sa-books 定位的,把它的 left 对齐到该书位左缘,
+         让封面正好「落」在这本书该站的位置上,不悬空、不越出书架 */
+      const book = el.querySelector(".sa-book");
+      if (book) book.style.left = el.offsetLeft + "px";
+    }
   });
   document.querySelectorAll(".sa-info-wrap .sa-info").forEach(function (el, k) {
     el.classList.toggle("cur", k === i);

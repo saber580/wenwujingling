@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
-"""拾遗录 · 文物拟人漫画（侧面书架 + 抽书）守卫。
+"""AI 文物拟人漫画（侧面书架 + 抽书）守卫。
 
 用户要求演进（2026-11-08 最终形态）：
     「以漫画书那种形式」「先把第八画做成漫画」
     →「能不能做一个侧面的书架，点它能把这个漫画书抽出来」
       「下边那些缺的是一本那些不要有了」
+    →「做得不好看，找开源书架项目参考」→ 木质书柜 + 书脊阵列 + 抽出翻盖
+    →「改成 AI 绘画化，不要提小红书」→ 去掉作者/版权来源，改 AI 拟人创作定位
 
-所以形态改成：书架上竖排立着一排书脊；点书脊，书从架子里「抽出来」、
-停在半空展示封面；再点封面进全屏阅读器（一次一页、左右翻、点画放大）。
-下边那 11 本「缺的封面格子」整个删掉，只留这一本。
+所以形态：木质书柜里竖排立着书脊；点书脊，书原位「抽出 + 倾斜」、
+展示封面；再点封面进全屏阅读器（一次一页、左右翻、点画放大）。
+下边那 11 本「缺的封面格子」整个删掉，只留这一本 + 右侧「待上架」占位书脊。
 
 本测试对本地服务跑（先起 server.py + 9222 调试 Chrome）：
-    1. 书架、书脊、抽出态都在；抽出来的封面是原作第 1 页
+    1. 书架、书脊、抽出态都在；抽出来的封面是第 1 页
     2. 开局默认抽出第一本；点「塞回」能收回去，再点书脊又抽出来
     3. 点抽出封面 → 全屏阅读器铺满整屏（fixed 没被 transform 祖先吃掉）
     4. 一次只露一页；页 1 是封面；整话 8 页能加载，末页横版，进度满格
     5. 放大层、合上、Esc、桌面 ← → 都能用
     6. 阅读器打开时滚轮不把背后页面带走
     7. 手机 390：不横向溢出、书脊完整、左右滑翻页
-    8. 下边没有「缺的封面」格子；署名与版权仍在；导航有入口
+    8. 下边没有「缺的封面」格子；AI 拟人创作说明在；导航有入口
 
 用法：
     python tools/check_shiyilu.py [URL]
@@ -110,14 +112,14 @@ def pulled_count(c):
     return c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty).out').length")
 
 
-print("== 拾遗录 · 侧面书架 + 抽书 ==  %s" % BASE)
+print("== AI 文物拟人漫画 · 侧面书架 + 抽书 ==  %s" % BASE)
 c = CDP("about:blank")
 open_page(c)
 
 # ---- 1. 书架 / 书脊 ----
 say(c.eval("!!document.querySelector('.sa-shelf')"), "书架渲染出来了")
 h2 = c.eval("(document.querySelector('.page-head h2')||{}).textContent||''")
-say("拾遗录" in h2, "页面标题带「拾遗录」", h2.strip())
+say("文物拟人漫画" in h2, "页面标题带「文物拟人漫画」", h2.strip())
 say(c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length") == 1,
     "书架上有 1 本真书(书脊)",
     c.eval("document.querySelectorAll('#sa-books .sa-slot:not(.sa-empty)').length"))
@@ -125,7 +127,7 @@ say(c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length") >=
     "书架上有若干「待上架」占位书脊",
     "%d 本占位" % c.eval("document.querySelectorAll('#sa-books .sa-slot.sa-empty').length"))
 h3 = c.eval("(document.querySelector('.sa-info.cur h3')||{}).textContent||''")
-say("沧州铁狮子" in h3, "当前书信息写着第 8 话标题", h3.strip())
+say("沧州铁狮子" in h3, "当前书信息写着标题", h3.strip())
 cov = c.eval("(function(){var i=document.querySelector('#sa-books .sa-book img');"
              "return i?[i.naturalWidth,i.getAttribute('src')]:[0,''];})()") or [0, ""]
 say(cov[0] > 0, "抽出封面图加载出来了", "%s 宽 %s" % (cov[1], cov[0]))
@@ -227,8 +229,7 @@ say(c.eval("!document.querySelector('.sa-grid') && !document.querySelector('.sa-
     "下边没有「缺的封面」格子了")
 
 credit = c.eval("(document.querySelector('.sa-credit')||{}).textContent||''")
-say("拾遗录" in credit and "版权" in credit, "页面上写了署名与版权说明")
-say(c.eval("!!document.querySelector('.sa-credit a[href*=xiaohongshu]')"), "留了作者原作链接")
+say("AI" in credit and "拟人" in credit, "页面写了 AI 拟人创作说明")
 
 # ---- 8. 手机 390 ----
 open_page(c, 390, 844, 2, True)
