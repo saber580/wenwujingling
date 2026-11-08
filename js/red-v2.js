@@ -353,7 +353,7 @@
           <div class="rh-head">
             <span class="rh-no" aria-hidden="true">叁乙</span>
             <div class="rh-head-txt">
-              <span class="rh-kicker">ENLIGHTENMENT · 文物启蒙</span>
+              <span class="rh-kicker">PLAYGROUND · 文物新玩法</span>
               <h2>寓教于乐，边玩边懂</h2>
               <p>修文物、给黑白稿上色、看国宝漫画、排文博路线、做心仪卡、再亲手埋一座墓。不靠 AI，也能把文物文化玩进心里。</p>
             </div>

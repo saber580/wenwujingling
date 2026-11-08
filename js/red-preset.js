@@ -314,7 +314,7 @@
         <div class="rh-ai-in">
           <div class="rh-sec-head rh-sec-head-light">
             <div>
-              <span class="rh-kicker">03乙 · ENLIGHTENMENT · 文物启蒙</span>
+              <span class="rh-kicker">03乙 · PLAYGROUND · 文物新玩法</span>
               <h2>寓教于乐,边玩边懂</h2>
               <p>修文物、给黑白稿上色。不靠 AI,也能把文物文化玩进心里。</p>
             </div>

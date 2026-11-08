@@ -1,0 +1,242 @@
+/* ================= 展望 · 文物活进下一个千年（#/vision） =================
+   设计意图：整站是米金纸面的"白天展厅"，这一页做成一间"暗厅"——
+   深墨底 + 点云金星，把 3 分钟的科幻短片当成展厅里的放映装置。
+   配色只借站点已有的金/朱，不引入新色系。 */
+
+.vs-wrap{
+  --vs-ink:#0c0b0a;
+  --vs-ink-2:#15120f;
+  --vs-gold:#e7c98e;
+  --vs-gold-d:#b58f45;
+  --vs-paper:#f4ece0;
+  --vs-dim:#9a8d7c;
+  max-width:1080px;margin:0 auto;padding:18px 16px 40px;
+}
+.vs-wrap *{box-sizing:border-box}
+
+/* 本页要让暗厅尽量满宽：非首页的 #app 默认有宣纸装裱内边距（窄屏 16px），
+   叠上 .vs-wrap 自己的 12px 就只剩 314 宽，视频被挤窄。仅本页收窄。
+   用 html body 提高特异性，压过 red-inner.css 的 body:not([data-page="home"]) #app。 */
+html body[data-page="vision"] #app{padding:18px 10px 30px}
+
+
+/* ---------- 1. 暗厅 · 放映 ---------- */
+.vs-stage{
+  position:relative;overflow:hidden;border-radius:20px;
+  background:
+    radial-gradient(620px 320px at 50% -12%, rgba(231,201,142,.13), transparent 62%),
+    radial-gradient(420px 260px at 12% 108%, rgba(70,110,120,.16), transparent 66%),
+    linear-gradient(180deg,#100d0a 0%,#0a0908 58%,#070606 100%);
+  border:1px solid rgba(231,201,142,.22);
+  box-shadow:0 22px 54px rgba(40,26,8,.3), inset 0 1px 0 rgba(255,240,210,.06);
+  padding:26px 22px 20px;
+  text-align:center;
+}
+/* 点点星尘（纯 CSS，无图片） */
+.vs-stage::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:
+    radial-gradient(1.4px 1.4px at 18% 24%, rgba(255,236,196,.9), transparent),
+    radial-gradient(1.1px 1.1px at 72% 18%, rgba(255,236,196,.75), transparent),
+    radial-gradient(1.6px 1.6px at 46% 62%, rgba(220,240,230,.7), transparent),
+    radial-gradient(1.1px 1.1px at 88% 68%, rgba(255,236,196,.6), transparent),
+    radial-gradient(1px 1px at 30% 82%, rgba(220,240,230,.55), transparent);
+  background-size:100% 100%;
+}
+.vs-kicker{
+  position:relative;font-size:11px;letter-spacing:5px;color:var(--vs-gold-d);
+  text-transform:uppercase;font-weight:700;
+}
+.vs-title{
+  position:relative;margin:10px 0 8px;
+  font-size:clamp(24px,5.2vw,40px);line-height:1.24;letter-spacing:2px;
+  color:var(--vs-paper);font-weight:800;
+  text-shadow:0 0 26px rgba(231,201,142,.28);
+}
+.vs-title em{
+  font-style:normal;color:var(--vs-gold);
+  background:linear-gradient(100deg,#f3ddb4,#c9a227 46%,#f0dcb2);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.vs-lead{
+  position:relative;max-width:640px;margin:0 auto 18px;
+  font-size:13px;line-height:2;color:#b9ac9a;
+}
+
+/* 放映装置：封面 + 播放键 */
+.vs-player{position:relative;max-width:900px;margin:0 auto}
+.vs-frame{
+  position:relative;border-radius:14px;overflow:hidden;
+  background:#050505;border:1px solid rgba(231,201,142,.26);
+  box-shadow:0 14px 40px rgba(0,0,0,.55);
+}
+.vs-frame video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#000}
+.vs-cover{
+  position:absolute;inset:0;cursor:pointer;border:0;padding:0;margin:0;
+  background:rgba(6,5,4,.42);display:grid;place-items:center;
+  transition:background .2s;
+}
+.vs-cover:hover{background:rgba(6,5,4,.16)}
+.vs-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.86}
+.vs-play{
+  position:relative;display:grid;place-items:center;
+  width:74px;height:74px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%, rgba(255,244,214,.96), rgba(201,162,39,.92));
+  box-shadow:0 10px 30px rgba(0,0,0,.5), 0 0 0 7px rgba(231,201,142,.16);
+  transition:transform .18s;
+}
+.vs-cover:hover .vs-play{transform:scale(1.06)}
+.vs-play svg{width:26px;height:26px;margin-left:4px;fill:#20180a}
+.vs-cover-t{
+  position:absolute;left:0;right:0;bottom:14px;text-align:center;
+  font-size:11.5px;letter-spacing:2px;color:#f0e2c6;text-shadow:0 2px 8px #000;
+}
+
+/* 清晰度切换 */
+.vs-q{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 0;justify-content:center}
+.vs-q button{
+  all:unset;cursor:pointer;padding:6px 13px;border-radius:999px;font-size:11.5px;
+  color:#c8b79c;border:1px solid rgba(231,201,142,.28);letter-spacing:.6px;
+  transition:.16s;
+}
+.vs-q button.on{background:rgba(231,201,142,.16);color:var(--vs-gold);border-color:rgba(231,201,142,.55)}
+.vs-q button:focus-visible{outline:2px solid var(--vs-gold);outline-offset:2px}
+.vs-q-hint{font-size:11px;color:#7d7264;letter-spacing:.3px}
+
+.vs-credit{
+  position:relative;max-width:720px;margin:16px auto 0;padding-top:13px;
+  border-top:1px dashed rgba(231,201,142,.18);
+  font-size:11px;line-height:1.9;color:#8a7f70;
+}
+.vs-credit b{color:#b9a583;font-weight:700}
+
+/* ---------- 2. 区块通用 ---------- */
+.vs-sec{margin-top:38px}
+.vs-sec-h{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.vs-sec-h h3{
+  margin:0;font-size:19px;letter-spacing:1px;color:var(--ink);
+  border-left:4px solid var(--red);padding-left:11px;line-height:1.3;
+}
+.vs-sec-h span{font-size:11.5px;color:#9b8c76;letter-spacing:1.6px;padding-bottom:3px}
+.vs-sec-p{font-size:12.5px;line-height:1.95;color:#6b6259;margin:8px 0 16px}
+
+/* ---------- 3. 时间轴 ---------- */
+.vs-line{position:relative;margin-top:6px;padding-left:26px}
+.vs-line::before{
+  content:"";position:absolute;left:7px;top:6px;bottom:8px;width:2px;
+  background:linear-gradient(180deg,rgba(181,67,47,.65),rgba(201,162,39,.45),rgba(120,140,150,.35));
+  border-radius:2px;
+}
+.vs-item{position:relative;margin:0 0 15px}
+.vs-item::before{
+  content:"";position:absolute;left:-25px;top:6px;width:11px;height:11px;border-radius:50%;
+  background:#fffdf8;border:2.5px solid var(--gold);box-shadow:0 0 0 4px rgba(201,162,39,.1);
+}
+.vs-item.hot::before{border-color:var(--red);box-shadow:0 0 0 4px rgba(181,67,47,.12)}
+.vs-yr{
+  font-family:Georgia,"Times New Roman",serif;font-size:20px;font-weight:700;
+  color:var(--red-d);letter-spacing:1px;line-height:1;
+}
+.vs-yr i{
+  font-style:normal;font-family:inherit;font-size:10px;vertical-align:3px;
+  margin-left:7px;padding:2px 6px;border-radius:4px;
+  background:rgba(181,67,47,.1);color:var(--red);letter-spacing:1px;
+}
+.vs-item h4{margin:5px 0 3px;font-size:14.5px;color:var(--ink);letter-spacing:.4px}
+.vs-item p{margin:0;font-size:12px;line-height:1.85;color:#7a6f60}
+.vs-item p b{color:var(--red-d);font-weight:700}
+
+/* ---------- 4. 三种能力对回本站 ---------- */
+.vs-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:14px;margin-top:4px}
+.vs-card{
+  position:relative;display:flex;flex-direction:column;
+  padding:17px 17px 15px;border-radius:16px;
+  background:linear-gradient(180deg,#fffdf8,#fbf5e9);
+  border:1px solid #e7dcc6;box-shadow:0 6px 18px rgba(120,90,40,.07);
+}
+.vs-card::after{
+  content:"";position:absolute;inset:5px;border-radius:12px;pointer-events:none;
+  border:1px solid rgba(201,162,39,.16);
+}
+.vs-card-no{font-size:10.5px;letter-spacing:2.6px;color:#b08a4a;font-weight:700}
+.vs-card h4{margin:8px 0 4px;font-size:16.5px;color:var(--ink);letter-spacing:.5px}
+.vs-card-from{
+  font-size:11.5px;color:#8a7a63;line-height:1.7;margin:0 0 10px;
+  padding-bottom:9px;border-bottom:1px dashed #e4cfae;
+}
+.vs-card-from b{color:var(--red-d)}
+.vs-card ul{margin:0 0 12px;padding-left:0;list-style:none}
+.vs-card li{
+  position:relative;font-size:12.5px;line-height:1.9;color:#4a423a;padding-left:15px;margin:2px 0;
+}
+.vs-card li::before{
+  content:"";position:absolute;left:3px;top:9px;width:5px;height:5px;border-radius:50%;
+  background:var(--gold);opacity:.75;
+}
+.vs-card li em{font-style:normal;color:#8a6d3b;font-weight:700}
+.vs-go{
+  margin-top:auto;display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
+  font-size:12px;font-weight:700;color:var(--red);text-decoration:none;
+  padding:6px 12px;border-radius:999px;background:rgba(181,67,47,.07);
+  border:1px solid rgba(181,67,47,.2);transition:.16s;
+}
+.vs-go:hover{background:rgba(181,67,47,.13)}
+.vs-go i{font-style:normal;transition:transform .16s}
+.vs-go:hover i{transform:translateX(3px)}
+
+/* ---------- 5. 三步 ---------- */
+.vs-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:13px;margin-top:6px}
+.vs-step{padding:15px 16px;border-radius:14px;background:#fffdf8;border:1px solid var(--line)}
+.vs-step-t{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:1.8px;font-weight:700}
+.vs-step-t s{
+  width:9px;height:9px;border-radius:50%;text-decoration:none;flex:none;
+}
+.vs-step.done .vs-step-t{color:var(--red)}
+.vs-step.done .vs-step-t s{background:var(--red)}
+.vs-step.now .vs-step-t{color:#a7842c}
+.vs-step.now .vs-step-t s{background:var(--gold);box-shadow:0 0 0 4px rgba(201,162,39,.16)}
+.vs-step.far .vs-step-t{color:#7d8a8d}
+.vs-step.far .vs-step-t s{background:transparent;border:2px dashed #93a0a3}
+.vs-step h5{margin:8px 0 7px;font-size:15px;color:var(--ink)}
+.vs-step ul{margin:0;padding:0;list-style:none}
+.vs-step li{font-size:12px;line-height:1.9;color:#5c5347;padding-left:12px;position:relative}
+.vs-step li::before{content:"·";position:absolute;left:2px;color:#b08a4a;font-weight:700}
+
+/* ---------- 6. 收尾一句 ---------- */
+.vs-end{
+  margin-top:30px;padding:22px 20px;border-radius:16px;text-align:center;
+  background:linear-gradient(180deg,rgba(181,67,47,.05),rgba(201,162,39,.05));
+  border:1px dashed #e0c9a0;
+}
+.vs-end p{margin:0;font-size:14px;line-height:2.1;color:#5a5044;letter-spacing:.6px}
+.vs-end p b{color:var(--red-d)}
+.vs-end small{display:block;margin-top:9px;font-size:11px;color:#9b8c76;letter-spacing:.4px}
+
+/* ---------- 7. 响应式 ---------- */
+@media (max-width:640px){
+  .vs-wrap{padding:10px 6px 126px}
+  html body[data-page="vision"] #app{padding:10px 4px 22px;margin-top:10px}
+  .vs-stage{padding:20px 14px 16px;border-radius:16px}
+  .vs-lead{font-size:12.5px;line-height:1.95}
+  .vs-play{width:60px;height:60px}
+  .vs-play svg{width:22px;height:22px}
+  .vs-cover-t{bottom:9px;font-size:10.5px;letter-spacing:1.4px}
+  .vs-title{letter-spacing:1px}
+  .vs-sec{margin-top:30px}
+  .vs-sec-h h3{font-size:17px}
+  .vs-cards,.vs-steps{grid-template-columns:1fr}
+  .vs-line{padding-left:22px}
+  .vs-item::before{left:-22px;width:10px;height:10px}
+  /* 手机底部 Cut-Out 标签栏 93px，别压住最后一段 */
+  .vs-wrap{padding-bottom:126px}
+  /* 技术胶囊在本页会压住收尾块 */
+  .wj-tech-pill{display:none!important}
+}
+/* 技术胶囊（MCP 已挂 N 工具…）是悬浮在画心上的，本页会压住暗厅文案，整页不显示 */
+body[data-page="vision"] .wj-tech-pill{display:none!important}
+/* 右上角朱红「文物精靈」印章会压住暗厅右上角，本页收起（纯装饰、aria-hidden） */
+body[data-page="vision"] .ri-seal{display:none!important}
+
+@media (prefers-reduced-motion:reduce){
+  .vs-play,.vs-go i{transition:none}
+}

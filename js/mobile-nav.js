@@ -94,11 +94,11 @@
     if (!src) return;
     curKey = key;
     sheetTitle.textContent = label;
-    /* 「奇境」tab 合并展示两个栏目：AI 文物奇境 + 文物启蒙 */
+    /* 「奇境」tab 合并展示两个栏目：AI 文物奇境 + 文物新玩法 */
     if (key === "poster") {
       var edu = q('.topnav [data-nav="enlight"] .nav-drop');
       var head = '<div class="msheet-grp">AI 文物奇境</div>';
-      var tail = edu ? '<div class="msheet-grp">文物启蒙</div>' + edu.innerHTML : "";
+      var tail = edu ? '<div class="msheet-grp">文物新玩法</div>' + edu.innerHTML : "";
       sheetBody.innerHTML = head + src.innerHTML + tail;
     } else {
       sheetBody.innerHTML = src.innerHTML;
