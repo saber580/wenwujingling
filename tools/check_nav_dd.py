@@ -64,17 +64,17 @@ time.sleep(0.3)
 # 「导航已在、toggleDD 还没定义」的空档里点空 —— 一律按条件等。
 for _ in range(80):
     ready = c.eval("document.readyState==='complete'"
-                   "&&document.querySelectorAll('.topnav .nav-dd').length===3"
+                   "&&document.querySelectorAll('.topnav .nav-dd').length===4"
                    "&&typeof toggleDD==='function'"
                    "&&typeof closeOtherDD==='function'")
     if ready:
         break
     time.sleep(0.4)
 n = c.eval("document.querySelectorAll('.topnav .nav-dd').length")
-if n != 3:
+if n != 4:
     print("导航栏目数量异常：", n, "（readyState=%s）" % c.eval("document.readyState"))
     sys.exit(2)
-print("  导航就绪：3 栏，脚本已加载")
+print("  导航就绪：4 栏，脚本已加载")
 
 
 def btn(nav):
