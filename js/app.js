@@ -1968,11 +1968,17 @@ const SHIYILU = {
   ]
 };
 function viewShiyilu() {
-  const pages = SHIYILU.ep.map(function (p, i) {
-    return '<figure class="sa-page' + (p.land ? " land" : "") + '" data-i="' + i + '" onclick="saZoom(' + i + ')" title="点开放大">'
-      + '<img src="' + p.f + '" alt="第 8 话 第 ' + (i + 1) + ' 页"' + (i > 1 ? ' loading="lazy"' : '') + '>'
+  const ep = SHIYILU.ep;
+  /* 每一页就是一个「书页」,不是流式列表 —— 一次只露一页,左右翻 */
+  const leaves = ep.map(function (p, i) {
+    return '<figure class="sa-leaf-p' + (i === 0 ? " cur" : "") + (p.land ? " land" : "") + '"'
+      + ' data-i="' + i + '" onclick="saZoom(' + i + ')" title="点开放大">'
+      + '<img src="' + p.f + '" alt="第 8 话 · ' + p.cap + '"' + (i > 1 ? ' loading="lazy"' : '') + '>'
       + (p.t ? '<span class="sa-ptag">' + p.t + "</span>" : "")
-      + '<span class="sa-pnum">' + (i + 1) + "</span></figure>";
+      + '<span class="sa-pnum">' + (i + 1) + " / " + ep.length + "</span></figure>";
+  }).join("");
+  const dots = ep.map(function (_, i) {
+    return '<i class="' + (i ? "" : "on") + '" onclick="saGoto(' + i + ')"></i>';
   }).join("");
   const works = SHIYILU.works.map(function (w) {
     return '<figure class="sa-work" onclick="saOpenWork()" title="去小红书看这一话">'
@@ -1982,37 +1988,63 @@ function viewShiyilu() {
   return `
     <div class="page-head">
       <h2>🖌 拾遗录 · 文物拟人漫画</h2>
-      <p>这一栏<b>不是 AI 画的</b>。是小红书作者「${SHIYILU.author}」用一支笔画的:文物变成会抱怨、会认命的打工人。我们把第 8 话<b>整话 ${SHIYILU.ep.length} 页</b>请进展厅,一页不落——因为画里那头"最惨的狮子",正好就在你的图鉴里。AI 能让文物开口说话,可这种一笔一笔的幽默,AI 还学不来。</p>
+      <p>这一栏<b>不是 AI 画的</b>。是小红书作者「${SHIYILU.author}」用一支笔画的:文物变成会抱怨、会认命的打工人。第 8 话<b>整话 ${ep.length} 页</b>已经做成一本,封面就是原作第一页,翻开一页页看——因为画里那头"最惨的狮子",正好就在你的图鉴里。AI 能让文物开口说话,可这种一笔一笔的幽默,AI 还学不来。</p>
     </div>
 
-    <section class="sa-feature">
-      <div class="sa-fhead">
-        <span class="sa-ep">第 8 话</span>
-        <h3>最惨的文物——沧州铁狮子</h3>
-        <p>本名「镇海吼」,后周广顺三年铸,距今一千多年,河北四宝之一。它比我们站里那只精灵更惨:露天站了一千年,被风雨、被盗、被"好心"修复过,所以画里的它一开口就在喊拔管。</p>
-      </div>
-      <div class="sa-book" id="sa-book">${pages}</div>
-      <div class="sa-acts">
-        <button class="btn gold" onclick="location.hash='#/spirit/tielion'">📖 沧州铁狮子在我的图鉴里</button>
-        <button class="btn ghost" onclick="location.hash='#/tea'">🍵 让它自己讲一遍</button>
-        <span class="sa-note">往下滚就是一页页翻;点任意一页可放大,放大后点空白处关掉</span>
+    <section class="sa-shelf">
+      <div class="sa-shelf-in">
+        <figure class="sa-vol" onclick="saOpen(0)" role="button" tabindex="0"
+                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();saOpen(0);}"
+                title="翻开这本书" aria-label="翻开第 8 话 最惨的文物——沧州铁狮子">
+          <img src="${ep[0].f}" alt="第 8 话封面 · 最惨的文物——沧州铁狮子">
+          <span class="sa-vol-open">翻开 · 共 ${ep.length} 页</span>
+        </figure>
+        <div class="sa-info">
+          <span class="sa-ep">第 8 话 · 全话收录</span>
+          <h3>最惨的文物——沧州铁狮子</h3>
+          <p>本名「镇海吼」,后周广顺三年铸,距今一千多年,河北四宝之一。它比我们站里那只精灵更惨:露天站了一千年,被风雨、被盗、被"好心"修复过,所以画里的它一开口就在喊拔管。</p>
+          <ul class="sa-meta">
+            <li><b>${ep.length}</b> 页</li>
+            <li><b>6</b> 页正篇</li>
+            <li><b>1</b> 页文物小讲堂</li>
+            <li>手机可左右滑</li>
+          </ul>
+          <div class="sa-acts">
+            <button class="btn gold" onclick="saOpen(0)">📖 翻开这本书</button>
+            <button class="btn ghost" onclick="location.hash='#/spirit/tielion'">📜 图鉴里的沧州铁狮子</button>
+            <span class="sa-note">点画可放大,再点空白处退出</span>
+          </div>
+        </div>
       </div>
     </section>
-    <!-- 阅读控件放在 section 外面:手机端 .sa-feature 带 transform,
-         position:fixed 的子孙会改挂到它身上,悬不住屏底 -->
-    <div class="sa-hud" id="sa-hud" aria-label="翻页">
-      <button type="button" class="sa-hbtn" onclick="saGo(-1)" aria-label="上一页">‹</button>
-      <span class="sa-hinfo">第 <b id="sa-cur">1</b> / ${SHIYILU.ep.length} 页</span>
-      <button type="button" class="sa-hbtn" onclick="saGo(1)" aria-label="下一页">›</button>
-      <span class="sa-hbar"><i id="sa-hbar"></i></span>
-    </div>
 
-    <h3 class="section-title">作者还画了这些 <small class="muted">(共 ${SHIYILU.works.length} 篇 · 点封面去小红书看原作)</small></h3>
+    <h3 class="section-title">书架上还缺 11 本 <small class="muted">(站内只收了封面,点开去原作者主页看全篇)</small></h3>
     <div class="sa-grid">${works}</div>
 
     <div class="sa-credit">
       <b>关于这一栏</b>
       <p>以上手绘均为小红书作者「<a href="${SHIYILU.home}" target="_blank" rel="noopener">${SHIYILU.author}</a>」的原创作品,版权归原作者所有。本站仅作<b>非商业展示与学习交流</b>,不用于任何售卖;每篇的完整内容请到作者主页阅读。</p>
+    </div>
+
+    <!-- 阅读器:整屏覆盖。放在 section 之外 —— .sa-shelf/.sa-feature 这类容器
+         一旦带上 transform,position:fixed 的子孙就会改挂到它身上,悬不住整屏 -->
+    <div class="sa-reader" id="sa-reader" role="dialog" aria-modal="true" aria-label="漫画阅读器">
+      <div class="sa-rtop">
+        <span class="sa-rtitle">第 8 话 · 最惨的文物——沧州铁狮子</span>
+        <button type="button" class="sa-rclose" onclick="saClose()">✕ 合上</button>
+      </div>
+      <div class="sa-stage" id="sa-stage">
+        <button type="button" class="sa-arrow sa-prev" onclick="saGo(-1)" aria-label="上一页">‹</button>
+        <div class="sa-leaf" id="sa-leaf">${leaves}</div>
+        <button type="button" class="sa-arrow sa-next" onclick="saGo(1)" aria-label="下一页">›</button>
+      </div>
+      <div class="sa-rbot">
+        <button type="button" class="sa-rbtn" onclick="saGo(-1)" aria-label="上一页">‹</button>
+        <span class="sa-rnum">第 <b id="sa-cur">1</b> / ${ep.length} 页</span>
+        <span class="sa-rbar"><i id="sa-hbar"></i></span>
+        <span class="sa-dots" id="sa-dots">${dots}</span>
+        <button type="button" class="sa-rbtn" onclick="saGo(1)" aria-label="下一页">›</button>
+      </div>
     </div>
 
     <div class="sa-zoom" id="sa-zoom" onclick="saZoomClose(event)">
@@ -2021,87 +2053,93 @@ function viewShiyilu() {
       <i class="sa-zoom-x">✕</i>
     </div>`;
 }
-/* 竖版漫画书:向下连续读,页码与进度条跟着走 */
-function saBook() { return document.getElementById("sa-book"); }
-function saPages() { const b = saBook(); return b ? b.querySelectorAll(".sa-page") : []; }
-/* 翻页记住「当前第几页」,不要每次从滚动位置反推 —— 长页面的中心点
-   常常落在下一页的头上,"下一页"会一次跳两页。 */
-let saIdx = 0, saLock = 0, saObs = null;
+/* 一本书,一次只露一页 */
+function saReader() { return document.getElementById("sa-reader"); }
+function saLeaves() {
+  const l = document.getElementById("sa-leaf");
+  return l ? l.querySelectorAll("figure") : [];
+}
+let saIdx = 0, saBound = 0;
 function saSetHud(i) {
-  const n = saPages().length || 1;
+  const n = saLeaves().length || 1;
   const cur = document.getElementById("sa-cur");
   if (cur) cur.textContent = i + 1;
   const bar = document.getElementById("sa-hbar");
   if (bar) bar.style.width = ((i + 1) / n * 100).toFixed(1) + "%";
-}
-/* 谁能滚?多数时候是 document;手机端 main 上挂着 overflow:auto,但它可能只溢出
-   几像素(不是真正在滚的那层),照它滚会「页码跳了、画面不动」。所以先看 document,
-   确实滚不动了再往下找真正能滚的祖先。 */
-function saScroller(el) {
-  const doc = document.scrollingElement || document.documentElement;
-  if (doc.scrollHeight > window.innerHeight + 40) return window;
-  let p = el && el.parentElement;
-  while (p && p !== document.body && p !== document.documentElement) {
-    const s = getComputedStyle(p);
-    if (/(auto|scroll)/.test(s.overflowY) && p.scrollHeight > p.clientHeight + 40) return p;
-    p = p.parentElement;
-  }
-  return window;
+  const dots = document.getElementById("sa-dots");
+  if (dots) Array.prototype.forEach.call(dots.children, function (el, k) {
+    el.classList.toggle("on", k === i);
+  });
 }
 function saGoto(i) {
-  const n = saPages(); if (!n.length) return;
+  const n = saLeaves(); if (!n.length) return;
   i = Math.max(0, Math.min(n.length - 1, i));
-  const r = n[i].getBoundingClientRect();
-  const sc = saScroller(saBook());
-  let goal;
-  if (sc === window) goal = r.top + window.scrollY - 74;
-  else goal = r.top - sc.getBoundingClientRect().top + sc.scrollTop - 74;
+  Array.prototype.forEach.call(n, function (el, k) { el.classList.toggle("cur", k === i); });
   saIdx = i; saSetHud(i);
-  saLock = Date.now() + 650;      // 平滑滚动期间的 scroll 事件别来抢方向
-  sc.scrollTo({ top: Math.max(0, goal), behavior: "smooth" });
 }
 function saGo(d) {
-  if (Date.now() < saLock) return;
+  const n = saLeaves().length; if (!n) return;
+  if (d < 0 && saIdx === 0) { rsToast("已经是封面了"); return; }
+  if (d > 0 && saIdx === n - 1) { rsToast("这一话读完了,点右上角合上"); return; }
   saGoto(saIdx + d);
 }
+function saOpen(i) {
+  const r = saReader(); if (!r) return;
+  r.classList.add("on");
+  document.body.classList.add("sa-reading");
+  saGoto(i || 0);
+  const btn = r.querySelector(".sa-rclose");
+  if (btn && btn.focus) btn.focus({ preventScroll: true });
+}
+function saClose() {
+  const r = saReader(); if (!r) return;
+  r.classList.remove("on");
+  document.body.classList.remove("sa-reading");
+  const z = document.getElementById("sa-zoom");
+  if (z) z.classList.remove("show");
+}
 function saInit() {
-  if (!saBook()) return;
+  const r = saReader(); if (!r) return;
+  /* main 是 position:relative + z-index:1,自成层叠上下文 —— 阅读器的 z-index:9000
+     被困在 main 这一层里,压不过 topbar(70) 和手机标签栏(59)。
+     所以把它挂到 body 下面;上一轮路由留下的旧阅读器先收走 */
+  const stale = document.body.querySelector(":scope > #sa-reader");
+  if (stale && stale !== r) stale.remove();
+  if (r.parentElement !== document.body) document.body.appendChild(r);
   saIdx = 0; saSetHud(0);
-  /* 页码条只在「书在屏上」时浮出来,读完了就收走,别挡作品墙 */
-  const hud = document.getElementById("sa-hud");
-  if (hud) {
-    if (saObs) { saObs.disconnect(); saObs = null; }
-    if (window.IntersectionObserver) {
-      saObs = new IntersectionObserver(function (es) {
-        hud.classList.toggle("on", !!(es[0] && es[0].isIntersecting));
-      }, { threshold: 0.02 });
-      saObs.observe(saBook());
-    } else hud.classList.add("on");
+  /* 整层禁掉滚动(见 CSS touch-action),再补一道滚轮拦截:
+     阅读器铺满屏幕,背后页面不该跟着动 */
+  if (!r.__saWheel) {
+    r.__saWheel = 1;
+    r.addEventListener("wheel", function (e) { e.preventDefault(); }, { passive: false });
   }
-  /* 滚动时反解「在读第几页」:哪一页的中心最靠近视口偏上的位置 */
-  const sc = saScroller(saBook());
-  const sync = function () {
-    if (Date.now() < saLock) return;
-    const n = saPages(); if (!n.length) return;
-    let best = 0, bd = 1e9;
-    const vh = sc === window ? window.innerHeight : sc.clientHeight;
-    const vtop = sc === window ? 0 : sc.getBoundingClientRect().top;
-    const aim = vtop + vh * 0.42;
-    Array.prototype.forEach.call(n, function (el, k) {
-      const r = el.getBoundingClientRect();
-      const dd = Math.abs(r.top + r.height / 2 - aim);
-      if (dd < bd) { bd = dd; best = k; }
-    });
-    if (best !== saIdx) { saIdx = best; saSetHud(best); }
-  };
-  sc.addEventListener("scroll", sync, { passive: true });
-  /* 桌面端 ← → 也能翻页;焦点在输入框里就不抢 */
+  /* 手机上左右滑翻页;上下滑不动,别把页面带走 */
+  if (!r.__saTouch) {
+    r.__saTouch = 1;
+    let sx = 0, sy = 0, st = 0;
+    r.addEventListener("touchstart", function (e) {
+      const t = e.touches[0]; if (!t) return;
+      sx = t.clientX; sy = t.clientY; st = Date.now();
+    }, { passive: true });
+    r.addEventListener("touchend", function (e) {
+      const t = e.changedTouches[0]; if (!t) return;
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Date.now() - st > 800) return;                 // 停太久不算划
+      if (Math.abs(dx) < 42 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+      saGo(dx < 0 ? 1 : -1);
+    }, { passive: true });
+  }
+  /* 键盘只绑一次:← → 翻页,Esc 合上 */
+  if (saBound) return;
+  saBound = 1;
   document.addEventListener("keydown", function (e) {
-    if (!saBook() || e.metaKey || e.ctrlKey || e.altKey) return;
+    const box = saReader();
+    if (!box || !box.classList.contains("on")) return;
     const t = e.target && e.target.tagName;
     if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
     if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); saGo(1); }
     else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); saGo(-1); }
+    else if (e.key === "Escape") { e.preventDefault(); saClose(); }
   });
 }
 function saZoom(i) {
