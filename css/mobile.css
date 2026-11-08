@@ -98,6 +98,11 @@
   }
   .msheet a:last-child{border-bottom:0}
   .msheet a:active{background:rgba(255,222,176,.55);color:#A50F17}
+  .msheet-grp{
+    font-family:var(--rh-kai);font-size:12px;letter-spacing:2px;color:#A0713A;
+    padding:10px 8px 3px;margin-top:2px;
+  }
+  .msheet-grp + .msheet-grp{border-top:1px solid rgba(150,84,30,.22);margin-top:10px}
 
   /* ---------------- 4 · 首屏：月洞与说明牌 ---------------- */
   .rh-hero-wrap{padding:6px 14px 0;gap:0}
@@ -203,7 +208,7 @@
   .rh-map-card{padding:11px}
   .rh-map-foot{font-size:10.5px}
 
-  /* ---------------- 8 · AI 工坊 / 图鉴 / 尾屏 ---------------- */
+  /* ---------------- 8 · AI 文物奇境 / 文物启蒙 / 图鉴 / 尾屏 ---------------- */
   .rh-tools{grid-template-columns:1fr 1fr;gap:10px}
   .rh-tool{padding:14px 13px;border-radius:11px}
   .rh-tool b{font-size:14.5px;letter-spacing:.6px}

@@ -687,7 +687,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
     <button type="button" class="sc-btn sc-voice" id="introVoice" hidden onclick="introVoiceOn()">🔊 开启旁白</button>
   </div>
 
-  <!-- 顶部导航 · 红版合并栏目(首页 / 精灵 / 探索 / AI 工坊 + 登录 / 音乐) -->
+  <!-- 顶部导航 · 红版合并栏目(首页 / 精灵 / 探索 / AI文物奇境 + 文物启蒙 + 登录 / 音乐) -->
   <header class="topbar rh-topbar">
     <div class="brand" onclick="location.hash='#/'">
       <img class="brand-logo" src="装饰/神兽标志.webp" alt="文物精灵">
@@ -725,24 +725,32 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
       </div>
       <div class="nav-item nav-dd" data-nav="poster">
         <button type="button" class="nav-btn" onclick="toggleDD(event, this)">
-          AI 工坊
+          AI文物奇境
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
         </button>
         <div class="nav-drop drop-right">
-          <a href="#/trace">🎬 文物溯源视频讲解</a>
           <a href="#/alive" class="aw-nav-first">✨ 活态苏醒 · 文物聊天</a>
           <a href="#/mystery">📜 燕赵史事推演局</a>
+          <a href="#/trace">🎬 文物溯源视频讲解</a>
           <a href="#/poster">📸 AI打卡海报</a>
-          <a href="#/restore">🧩 AI文物修复</a>
           <a href="#/tea">🍵 AI精灵茶话会</a>
-          <a href="#/dye">🎨 AI赋彩</a>
-          <a href="#/shiyilu">🖌 AI文物拟人漫画</a>
           <a href="#/ident">🔍 AI文物识别</a>
           <a href="#/eval">📊 AI评测台</a>
-          <a href="#/heart">🃏 心仪卡工坊</a>
-          <a href="#/guide">🗺 AI旅游攻略</a>
-          <a href="向考古-我埋下的三千年.html?v=1024">⛏ 向考古 · 我埋下的三千年</a>
           <a href="#/" onclick="return aiCfgOpen()">☁️ 云端 AI</a>
+        </div>
+      </div>
+      <div class="nav-item nav-dd" data-nav="enlight">
+        <button type="button" class="nav-btn" onclick="toggleDD(event, this)">
+          文物启蒙
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
+        </button>
+        <div class="nav-drop drop-right">
+          <a href="#/restore">🧩 文物修复</a>
+          <a href="#/dye">🎨 文物赋彩</a>
+          <a href="#/shiyilu">🖌 文物拟人漫画</a>
+          <a href="#/guide">🗺 文博旅游攻略</a>
+          <a href="#/heart">🃏 心仪卡工坊</a>
+          <a href="向考古-我埋下的三千年.html?v=1024">⛏ 向考古 · 我埋下的三千年</a>
         </div>
       </div>
       <a class="nav-item auth-btn" id="authBtn" href="#/" onclick="return authOpen()" title="登录 / 注册:登录后直接用本站 AI">👤 登录 / 注册</a>
@@ -890,23 +898,23 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
   <script src="js/save-id.js"></script>
   <script src="js/qrcode.js"></script>
   <script src="js/ident-direct.js?v=20261019"></script>
-  <script src="js/app.js?v=20261108w"></script>
+  <script src="js/app.js?v=20261108x"></script>
   <script src="js/feedback.js?v=fb1"></script>
   <script src="js/eval-bench.js?v=ev2"></script>
   <script src="js/vendor/workbuddy-cloud-sdk.js"></script>
   <script src="js/cloud-ai.js?v=ca15"></script>
   <script src="js/bg-paint.js?v=bp8"></script>
   <script src="js/flyleaf.js?v=fl3"></script>
-  <script src="js/red-v2.js?v=red32"></script>
-<script src="js/guide.js?v=gi1"></script>
+  <script src="js/red-v2.js?v=red33"></script>
+<script src="js/guide.js?v=gi2"></script>
 <script src="js/red-inner.js?v=ri8"></script>
 
 <script src="js/voice.js?v=v7"></script>
   <script src="js/aw-live.js?v=aw24"></script>
 <script src="js/aw-mystery.js?v=my2"></script>
 <script src="js/aw-craft.js?v=cf5"></script>
-<script src="js/aw-trace.js?v=tr40"></script>
-<script src="js/mobile-nav.js?v=m7"></script>
+<script src="js/aw-trace.js?v=tr41"></script>
+<script src="js/mobile-nav.js?v=m8"></script>
 
 <script>
 /* 手机流畅度兜底：把"无限循环的装饰动画"停掉（CSS 压不住的 JS 驱动动画也一起处理）
@@ -956,7 +964,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
   }catch(e){}
 })();
 </script>
-<script src="js/newbie.js?v=nb4"></script>
+<script src="js/newbie.js?v=nb5"></script>
 
 <script id="bg-sand-js">
 (function(){

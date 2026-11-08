@@ -105,7 +105,7 @@
     window.open("心仪卡/index.html", "_blank");
   };
 
-  /* AI 旅游攻略：#/guide 由 js/guide.js 自己接管路由与挂载 */
+  /* 文博旅游攻略：#/guide 由 js/guide.js 自己接管路由与挂载 */
   function decorate() {
     if (currentPage() === "home") return;
     ensureHeart();

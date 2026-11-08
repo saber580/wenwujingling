@@ -55,10 +55,13 @@
 
   const AI_TOOLS = [
     { no: "01", em: "📸", title: "AI 打卡海报", desc: "把精灵与博物馆,变成一张可以分享的海报。", href: "#/poster" },
-    { no: "02", em: "🧩", title: "AI 文物修复", desc: "去划痕、补缺口、恢复原色,再认一遍。", href: "#/restore" },
-    { no: "03", em: "🍵", title: "AI 精灵茶话会", desc: "挑 3~6 只精灵,跨时空聊一场。", href: "#/tea" },
-    { no: "04", em: "🎨", title: "AI 赋彩", desc: "把 36 幅黑白文物稿,亲手还上颜色。", href: "#/dye" },
-    { no: "05", em: "🔍", title: "AI 文物识别", desc: "拍一张照片,报出名字、年代与来历。", href: "#/ident" }
+    { no: "02", em: "🍵", title: "AI 精灵茶话会", desc: "挑 3~6 只精灵,跨时空聊一场。", href: "#/tea" },
+    { no: "03", em: "🔍", title: "AI 文物识别", desc: "拍一张照片,报出名字、年代与来历。", href: "#/ident" }
+  ];
+
+  const EDU_TOOLS = [
+    { no: "01", em: "🧩", title: "文物修复", desc: "去划痕、补缺口、恢复原色,再认一遍。", href: "#/restore" },
+    { no: "02", em: "🎨", title: "文物赋彩", desc: "把 36 幅黑白文物稿,亲手还上颜色。", href: "#/dye" }
   ];
 
   let deck = "a";
@@ -192,6 +195,16 @@
         '<span class="rh-tool-go">进入 →</span></a>';
     }).join("");
 
+    const eduTools = EDU_TOOLS.map(function (t) {
+      const href = t.href;
+      return '<a class="rh-tool" href="' + esc(href) + '">' +
+        '<span class="rh-tool-no">' + t.no + "</span>" +
+        '<span class="rh-tool-em">' + t.em + "</span>" +
+        "<b>" + esc(t.title) + "</b>" +
+        "<small>" + esc(t.desc) + "</small>" +
+        '<span class="rh-tool-go">进入 →</span></a>';
+    }).join("");
+
     const primaryAttrs = Object.keys(ATTRIBUTES.primary).map(function (k) {
       const a = ATTRIBUTES.primary[k];
       return '<span class="rh-attr-chip" title="' + esc(a.desc) + '"><img src="' + esc(attrIcon("primary", k)) + '" alt=""><b>' + esc(a.name) + "</b></span>";
@@ -287,13 +300,26 @@
         <div class="rh-ai-in">
           <div class="rh-sec-head rh-sec-head-light">
             <div>
-              <span class="rh-kicker">03 · AI WORKSHOP</span>
-              <h2>让文物,陪你玩起来</h2>
-              <p>拍海报、修文物、办茶话会、给黑白稿上色、识别一件器物。五件 AI 工具,都能从一只精灵开始。</p>
+              <span class="rh-kicker">03 · AI WONDERLAND · AI 文物奇境</span>
+              <h2>让文物,被 AI 唤醒</h2>
+              <p>打卡海报、精灵茶话会、文物识别。AI 与文物文化深度相融,每一样都能从一只精灵开始。</p>
             </div>
             <a class="rh-ai-cfg" href="#/" onclick="return aiCfgOpen()">☁️ 云端 AI →</a>
           </div>
           <div class="rh-tools">${tools}</div>
+        </div>
+      </section>
+
+      <section class="rh-ai rh-ai-edu">
+        <div class="rh-ai-in">
+          <div class="rh-sec-head rh-sec-head-light">
+            <div>
+              <span class="rh-kicker">03乙 · ENLIGHTENMENT · 文物启蒙</span>
+              <h2>寓教于乐,边玩边懂</h2>
+              <p>修文物、给黑白稿上色。不靠 AI,也能把文物文化玩进心里。</p>
+            </div>
+          </div>
+          <div class="rh-tools">${eduTools}</div>
         </div>
       </section>
 
@@ -537,11 +563,13 @@
     const items = $$(".rh-topbar .nav-item");
     if (!items.length) return;
     const page = location.hash.replace(/^#\/?/, "").split("/")[0];
-    const ai = ["poster", "restore", "tea", "dye", "ident"];
+    const ai = ["poster", "tea", "ident", "trace", "alive", "mystery"];
+    const edu = ["restore", "dye", "shiyilu", "guide", "heart"];
     let key = "";
     if (!page) key = "mine";
     else if (page === "codex") key = "codex";
     else if (ai.indexOf(page) >= 0) key = "poster";
+    else if (edu.indexOf(page) >= 0) key = "enlight";
     else if (page === "museums" || page === "creative" || page === "biz") key = "more";
     items.forEach(function (a) {
       if (!a.dataset.nav) return;

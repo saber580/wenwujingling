@@ -1,5 +1,5 @@
 /* =============================================================================
- * js/aw-trace.js · 文物溯源 · 视频讲解（AI 工坊新增项目，路由 #/trace）
+ * js/aw-trace.js · 文物溯源 · 视频讲解（AI 文物奇境新增项目，路由 #/trace）
  * -----------------------------------------------------------------------------
  *  · 与 aw-live / aw-mystery / aw-craft 同模式：不改动任何既有 css / js，
  *    自注入 style，经 hashchange 挂载 #/trace（注册在 app.js 之后覆盖默认渲染）。
@@ -1115,7 +1115,7 @@
   function pageHTML() {
     return '<div class="trace-page">' +
       '<div class="trace-hero">' +
-        '<span class="trace-eyebrow">AI 工坊 · 溯源讲解</span>' +
+        '<span class="trace-eyebrow">AI 文物奇境 · 溯源讲解</span>' +
         '<h2>文物溯源 · 视频讲解</h2>' +
         '<p>文物无言，各载春秋。世间没有两件完全相同的古物，每一件文物背后，都沉淀着一段独一无二的故事，藏着古人的悲欢、时代的风云，等待我们解锁、传递华夏文明。</p>' +
         '<span class="trace-stat">视频精灵 · 八只讲解精灵已就位</span>' +

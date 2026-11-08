@@ -2,7 +2,7 @@
    文物精灵 · 手机导航（MOBILE ONLY）
    ---------------------------------------------------------
    只在窄屏（<=860px）把顶栏里的五个入口搬到底部标签栏：
-   首页 / 精灵 / 探索 / AI 工坊 / 我的
+   首页 / 精灵 / 探索 / 奇境 / 我的
    「功能不变」：底部栏点下去调用的是原顶栏同一批链接与函数，
    顶栏 DOM 一行未改，只是窄屏时被 CSS 隐藏。
    若脚本未加载，body 不会带 .mnav-on，顶栏导航照常显示（自动降级）。
@@ -94,7 +94,15 @@
     if (!src) return;
     curKey = key;
     sheetTitle.textContent = label;
-    sheetBody.innerHTML = src.innerHTML;
+    /* 「奇境」tab 合并展示两个栏目：AI 文物奇境 + 文物启蒙 */
+    if (key === "poster") {
+      var edu = q('.topnav [data-nav="enlight"] .nav-drop');
+      var head = '<div class="msheet-grp">AI 文物奇境</div>';
+      var tail = edu ? '<div class="msheet-grp">文物启蒙</div>' + edu.innerHTML : "";
+      sheetBody.innerHTML = head + src.innerHTML + tail;
+    } else {
+      sheetBody.innerHTML = src.innerHTML;
+    }
     mask.classList.add("on");
     sheet.classList.add("on");
     document.body.style.overflow = "hidden";
@@ -110,7 +118,7 @@
       { key: "mine",   label: "首页",   icon: "home",    act: "link",  sel: '.topnav a[data-nav="mine"]' },
       { key: "codex",  label: "精灵",   icon: "spirit",  act: "sheet", sel: '.topnav [data-nav="codex"]' },
       { key: "more",   label: "探索",   icon: "explore", act: "sheet", sel: '.topnav [data-nav="more"]' },
-      { key: "poster", label: "AI 工坊", icon: "studio",  act: "sheet", sel: '.topnav [data-nav="poster"]' },
+      { key: "poster", label: "奇境", icon: "studio",  act: "sheet", sel: '.topnav [data-nav="poster"]' },
       { key: "me",     label: "我的",   icon: "me",      act: "auth" }
     ];
 

@@ -173,7 +173,7 @@ function render() {
   const [page, param] = hash.split("/");
   document.body.dataset.page = page || "home";   // 供背景/样式按页面微调(如首页背景更透亮)
   // 高亮顶部栏目(首页→我的精灵 / 图鉴 / 其他 / AI 栏目)
-  const navKey = page === "" ? "mine" : (page === "codex" ? "codex" : (page === "poster" || page === "restore" || page === "tea" || page === "dye" || page === "ident" ? page : (page === "museums" || page === "creative" || page === "biz" ? "more" : "")));
+  const navKey = page === "" ? "mine" : (page === "codex" ? "codex" : (page === "poster" || page === "tea" || page === "ident" || page === "trace" || page === "alive" || page === "mystery" ? "poster" : (page === "restore" || page === "dye" || page === "shiyilu" || page === "guide" || page === "heart" ? "enlight" : (page === "museums" || page === "creative" || page === "biz" ? "more" : ""))));
   $$(".topnav .nav-item").forEach(a => a.classList.toggle("active", a.dataset.nav === navKey));
   /* 图鉴 / 精灵详情 / 茶话会要用档案包(data-deep.js)里的自述、问答与来历。
      用户手快先点进来时档案可能还在路上,这里等它一下;失败就照常渲染,绝不死循环。 */
@@ -282,7 +282,7 @@ function viewHome() {
       <div>
         <span class="eyebrow">01 — EXPLORE</span>
         <h2>一眼逛完文物精灵</h2>
-        <p class="sec-sub">我的精灵是已经醒来的伙伴 · 文物图鉴收着全部 ${all.length + LEGENDS.length} 只 · 博物馆与文创里,还有更多河北的故事;AI 茶话会、AI 赋彩,让文物陪你玩起来。</p>
+        <p class="sec-sub">我的精灵是已经醒来的伙伴 · 文物图鉴收着全部 ${all.length + LEGENDS.length} 只 · 博物馆与文创里,还有更多河北的故事;AI 茶话会、文物赋彩,让文物陪你玩起来。</p>
       </div>
     </div>
     <div class="home-cats">
@@ -309,7 +309,7 @@ function viewHome() {
       </div>
       <div class="cat-card cat-dye" onclick="location.hash='#/dye'">
         <img class="cat-corner" src="装饰/夔龙角.webp" alt="">
-        <div class="cat-t">🎨 AI赋彩</div>
+        <div class="cat-t">🎨 文物赋彩</div>
         <div class="cat-d"><b>36</b> 幅 Q 版文物褪成了黑白稿,等你把颜色还给它</div>
         <div class="cat-avatars"><span class="more">点按填色 · 拖笔涂抹 · 可保存作品</span></div>
       </div>
@@ -523,7 +523,7 @@ function viewBiz() {
         <h3>研学机构与课后服务</h3>
         <p class="bz-sub">面向研学机构、中小学课后服务、少年宫</p>
         <div class="bz-row"><span class="bz-k">交付</span><span class="bz-v">按校订阅、教师端任务单、学生作品(赋彩 / 打卡海报 / 心仪卡)</span></div>
-        <div class="bz-row"><span class="bz-k">优势</span><span class="bz-v">AI 工坊 12 个功能本身就是教学模块,不用另做一套课程</span></div>
+        <div class="bz-row"><span class="bz-k">优势</span><span class="bz-v">AI 文物奇境 + 文物启蒙两大栏目的功能本身就是教学模块,不用另做一套课程</span></div>
         <div class="bz-row"><span class="bz-k">起步</span><span class="bz-v">找 1 所合作校做社团课试点,跑完一个学期再谈年框</span></div>
         <div class="bz-price">3–6 万元 / 校 / 年<i>SaaS 交付,边际成本接近 0,三条里最容易起量</i></div>
       </div>
@@ -648,9 +648,9 @@ function posterSpiritInfoHTML(id) {
     </div>`;
 }
 /* ================================================================
-   AI 文物修复(拼图修复小游戏 · 顶栏「AI文物修复」栏目)
-   玩法:AI 随机抽选一件 Q 版精灵 → AI 破损模拟打乱成拼图碎块 →
-        点选/拖拽交换碎片,AI 复原度实时检测 → 复原完成出「AI 修复报告」;
+   文物修复(拼图修复小游戏 · 顶栏「文物修复」栏目)
+   玩法:随机抽选一件 Q 版精灵 → 破损模拟打乱成拼图碎块 →
+        点选/拖拽交换碎片,复原度实时检测 → 复原完成出「修复报告」;
    输出:可导出「完整参考图」+「可裁切拼图块」图纸(16 / 32 / 64 三档)。
    ================================================================ */
 const RS_MODES = { "16": { cols: 4, rows: 4 }, "32": { cols: 8, rows: 4 }, "64": { cols: 8, rows: 8 } };
@@ -860,8 +860,8 @@ function viewRestore() {
   const tt = rsTotal(), okN = rsCorrect(RS.slots), pct = Math.round(okN / tt * 100);
   return `
     <div class="page-head">
-      <h2>🧩 AI 文物修复</h2>
-      <p>AI 随机抽选一件 Q 版文物精灵,自动「破损模拟」成拼图碎块——点选或拖拽,把碎片换回原位、让文物重光。三档难度(16 / 32 / 64 块),可一键导出「完整参考图」与「可裁切拼图块」图纸,打印剪下即可线下拼玩。</p>
+      <h2>🧩 文物修复</h2>
+      <p>随机抽选一件 Q 版文物精灵,自动「破损模拟」成拼图碎块——点选或拖拽,把碎片换回原位、让文物重光。三档难度(16 / 32 / 64 块),可一键导出「完整参考图」与「可裁切拼图块」图纸,打印剪下即可线下拼玩。</p>
     </div>
     <div class="rs-ai-strip">
       <span class="rs-chip"><b>AI</b> 随机抽选</span>
@@ -1082,7 +1082,7 @@ function rsDrawSheet(cv, img) {
   ctx.fillStyle = "#f8f3e8"; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.fillStyle = "#5c3317";
   ctx.font = "700 44px " + RS_FONT;
-  ctx.fillText("文物精灵 · AI 文物修复 — 拼图素材", 46, 66);
+  ctx.fillText("文物精灵 · 文物修复 — 拼图素材", 46, 66);
   ctx.font = "400 26px " + RS_FONT;
   ctx.fillStyle = "#8a5a2b";
   ctx.fillText(s.name + (rsNo(s.id) ? " · " + rsNo(s.id) : "") + (rsStationName(s.id) ? " · " + rsStationName(s.id) : "") + " · " + N + " 块(" + m.cols + "×" + m.rows + ")· 沿虚线裁切", 46, 110);
@@ -1110,7 +1110,7 @@ function rsDrawRef(cv, img) {
   ctx.strokeStyle = "rgba(150,110,60,.5)"; ctx.lineWidth = 1.5; ctx.strokeRect(48, 48, W - 96, H - 96);
   ctx.fillStyle = "#7c1511"; ctx.textAlign = "center";
   ctx.font = "700 58px " + RS_FONT;
-  ctx.fillText("AI 文物修复 · 完整参考图", W / 2, 158);
+  ctx.fillText("文物修复 · 完整参考图", W / 2, 158);
   ctx.fillStyle = "#8a5a2b"; ctx.font = "400 30px " + RS_FONT;
   ctx.fillText("修复目标 —— 照着这张图,把碎片换回原位", W / 2, 214);
   const boxW = 780, boxH = 820, cy = 660;                 // 展示区中心(竖版海报)
@@ -1147,7 +1147,7 @@ async function rsDownload(kind) {
     if (!img) { rsToast("图片还没加载好,请稍后再试"); return; }
     const cv = document.createElement("canvas");
     if (kind === "ref") rsDrawRef(cv, img); else rsDrawSheet(cv, img);
-    const name = "文物精灵_AI文物修复_" + (kind === "ref" ? "完整参考图" : "拼图块" + RS.mode + "块") + "_" + RS.spirit.name + ".webp";
+    const name = "文物精灵_文物修复_" + (kind === "ref" ? "完整参考图" : "拼图块" + RS.mode + "块") + "_" + RS.spirit.name + ".webp";
     const a = document.createElement("a");
     a.href = cv.toDataURL("image/png");
     a.download = name;
@@ -1934,7 +1934,7 @@ function relicClockPick(id) {
   teaToggle(id);
 }
 
-/* ---------------- AI 文物拟人漫画 ----------------
+/* ---------------- 文物拟人漫画 ----------------
    AI 绘画把文物画成会抱怨、会认命的打工人,一话一个小故事。
    第 1 话画的沧州铁狮子,正好是图鉴里的 tielion。 */
 const SHIYILU = {
@@ -2125,7 +2125,7 @@ function viewShiyilu() {
   }).join("");
   return `
     <div class="page-head">
-      <h2>🖌 AI 文物拟人漫画</h2>
+      <h2>🖌 文物拟人漫画</h2>
       <p>把文物<b>交给 AI 拟人化</b>,画成会抱怨、会认命的打工人——上一秒还是镇馆之宝,下一秒就在工位上摸鱼。点书架上的<b>书脊</b>把书抽出来,再点封面翻开,一页页读它的小故事。</p>
     </div>
 
@@ -2720,7 +2720,7 @@ function posterCompose(spiritId) {
   });
 }
 
-/* ---------------- AI 赋彩页(真彩画板 · 色板 / 笔头 / 橡皮 / 参考原图) ---------------- */
+/* ---------------- 文物赋彩页(真彩画板 · 色板 / 笔头 / 橡皮 / 参考原图) ---------------- */
 /* 十二种颜色不是随机取的 RGB,是按矿物 / 植物颜料来的:朱红、赭石、藤黄、石绿、石青、靛蓝…… */
 const DYE_PALETTE = [
   { n: "朱红", v: "#c0392b" }, { n: "赭石", v: "#a05a2c" }, { n: "藤黄", v: "#e8b33a" },
@@ -2787,7 +2787,7 @@ function viewDye() {
   ).join("");
   return `
     <div class="page-head">
-      <h2>🎨 AI赋彩</h2>
+      <h2>🎨 文物赋彩</h2>
       <p>闭馆后的神秘画室:${n} 幅 Q 版文物都褪成了黑白稿。蘸一支矿物色,亲手把颜色还给它们——轻点填一整块、按住涂一笔、涂错了拿橡皮擦掉;它本来长什么样,旁边一直摆着。</p>
     </div>
     <div class="tea-howto">
@@ -2798,7 +2798,7 @@ function viewDye() {
         <li><b>涂错了就擦</b>:切到「🧽 橡皮」,擦掉的只是你涂的颜色,线稿一根都不会少。</li>
         <li><b>照着画、画完带走</b>:右边(手机上在画布右上角)常驻缩小版原图,点一下放大;满意了就「💾 保存作品」,「✨ 一键赋彩」可以先偷看 AI 填满的样子。</li>
       </ol>
-      <p>上色只在本机浏览器里完成,不联网、不上传;图稿来自「AI 赋彩」画册,共 ${n} 幅,点下面的缩略图随便挑。</p>
+      <p>上色只在本机浏览器里完成,不联网、不上传;图稿来自「文物赋彩」画册,共 ${n} 幅,点下面的缩略图随便挑。</p>
     </div>
     <div class="dye-stage" id="dye-stage">
       <div class="dye-cv-wrap">
@@ -3256,7 +3256,7 @@ function dyeSave() {
   dyePaint();
   const a = document.createElement("a");
   a.href = DYE.vis.toDataURL("image/png");
-  a.download = "文物精灵_AI赋彩_第" + (DYE.idx + 1) + "幅.png";
+  a.download = "文物精灵_文物赋彩_第" + (DYE.idx + 1) + "幅.png";
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -3801,7 +3801,7 @@ function authSave(email, mode, token) {
     try { if (typeof identCloudPing === "function") identCloudPing(); } catch (e) {}
     try { if (window.wjCloudWarm) window.wjCloudWarm(); } catch (e) {}
     try {
-      if (window.wjToast) window.wjToast("✅ 已登录，云端 AI 已就绪 —— 点「AI 工坊」里任一功能即可直接使用", 4200);
+      if (window.wjToast) window.wjToast("✅ 已登录，云端 AI 已就绪 —— 点「AI 文物奇境」里任一功能即可直接使用", 4200);
     } catch (e) {}
   }, 80);
   return s;
@@ -5575,7 +5575,7 @@ const QZ = { spirit: null, pool: [], cur: null, chosen: -1, phase: "idle", busy:
              qElId: "", qNo: 0, streak: 0, best: 0, total: 0, correct: 0, gen: 0,
              mode: "local", aiKind: "history", open: null };
 const AQ_LET = ["A", "B", "C", "D"];
-const AQ_CHIPS = ["考考我!", "怎么打卡唤醒文物?", "带我去看沧州铁狮子", "铁狮子有什么来历?", "长信宫灯是什么?", "一共有多少精灵?", "怎么捕捉精灵?", "去沧州站看看", "第零站怎么开启?", "AI赋彩怎么玩?", "AI文物识别怎么玩?"];
+const AQ_CHIPS = ["考考我!", "怎么打卡唤醒文物?", "带我去看沧州铁狮子", "铁狮子有什么来历?", "长信宫灯是什么?", "一共有多少精灵?", "怎么捕捉精灵?", "去沧州站看看", "第零站怎么开启?", "文物赋彩怎么玩?", "AI文物识别怎么玩?"];
 
 function aqEsc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -5645,8 +5645,8 @@ function aqFindStation(q) {
 const AQ_PAGES = [
   { k: ["图鉴", "文物图鉴", "我的精灵"], h: "#/codex", n: "文物图鉴" },
   { k: ["海报"], h: "#/poster", n: "AI 打卡海报" },
-  { k: ["修复", "拼图"], h: "#/restore", n: "AI 文物修复" },
-  { k: ["赋彩", "上色", "涂色", "填色"], h: "#/dye", n: "AI赋彩" },
+  { k: ["修复", "拼图"], h: "#/restore", n: "文物修复" },
+  { k: ["赋彩", "上色", "涂色", "填色"], h: "#/dye", n: "文物赋彩" },
   { k: ["识别", "识图", "鉴定", "扫描", "文物识别", "照片修复", "照片复原"], h: "#/ident", n: "AI 文物识别" },
   { k: ["博物馆"], h: "#/museums", n: "河北的博物馆" },
   { k: ["文创", "灵感"], h: "#/creative", n: "文创灵感" },
@@ -5662,11 +5662,11 @@ const AQ_HELP = [
   { k: ["打卡", "拍照", "唤醒", "幻化", "新文物"], a: "首页或任意站点页都有「<b>📷 打卡拍照 · 唤醒文物</b>」。拍下或选一张文物照片,AI 会把它幻化成 Q 版精灵,再发你一个专属图鉴编码。AI 幻化时照片会提交给云端图像模型(仅这一张,只用于生成立绘);<b>连不上云端时自动改用本机国风卡</b>,那时照片完全不出本机。" },
   { k: ["捕捉", "捉", "收服", "抓"], a: "对战里把野生精灵打到<b>残血</b>,就会出现「收下它」按钮;血打空也会自动把它收下。<b>答对题目</b>才能掷骰子出手,答错要挨一下反击——想练题感?说「考考我」,我陪你刷题!" },
   { k: ["对战", "挑战", "掷骰", "骰子", "答题", "打", "血"], a: "挑战流程:一段「回忆」动画 → AI 出题 → 答对掷骰子攻击(1~6 点,出战精灵的主属性还有特性加成)、答错被反击掉血。对面 30 血、你的精灵 6 血(青铜出战 +2);打到残血就能收下它!" },
-  { k: ["修复"], a: "顶栏「AI 文物修复」:随机抽一件文物精灵,<b>16 / 32 / 64 块</b> 三档拼图,还能下载参考图和可裁剪拼图块,打印出来线下拼。拼完点「检查」,还会夸你!" },
-  { k: ["赋彩", "上色", "涂色", "填色", "黑白"], a: "顶栏「AI赋彩」:36 幅 Q 版文物图稿都褪成了黑白——<b>点一下填一整块色、按住拖笔慢慢涂抹</b>,把颜色还给文物;「👁 按住看原图」能偷看答案,画完「💾 保存作品」收进相册,全程只在本机完成。" },
+  { k: ["修复"], a: "顶栏「文物修复」:随机抽一件文物精灵,<b>16 / 32 / 64 块</b> 三档拼图,还能下载参考图和可裁剪拼图块,打印出来线下拼。拼完点「检查」,还会夸你!" },
+  { k: ["赋彩", "上色", "涂色", "填色", "黑白"], a: "顶栏「文物赋彩」:36 幅 Q 版文物图稿都褪成了黑白——<b>点一下填一整块色、按住拖笔慢慢涂抹</b>,把颜色还给文物;「👁 按住看原图」能偷看答案,画完「💾 保存作品」收进相册,全程只在本机完成。" },
   { k: ["识别", "识图", "鉴定", "扫描", "照片修复", "照片复原"], a: "顶栏「AI 文物识别」:上传 / 拍一张文物照片,先<b>修</b>——去划痕裂纹、补细碎缺口、恢复原色、超分放大 2×,按住中间的滑块就能对比修复前后,可保存修复图;再<b>认</b>——云端 AI 报出它的<b>名字 / 年代 / 材质 / 出处 / 来历</b>,显示在页面最上方;本机引擎再给器型 / 纹样 / 年代 / 材质四项判断和「相近候选」,点开直接看档案讲解。云端没连上时,自动退回本机识别。" },
   { k: ["海报"], a: "顶栏「AI 打卡海报」:选一张照片 + 你点亮的文物,一键合成写实 / Q 版打卡海报,下载下来就能发朋友圈~" },
-  { k: ["ai", "人工智能", "有什么功能", "功能", "亮点"], a: "站内的 AI 玩法有:<b>AI 幻化唤醒</b>(拍照变精灵)、<b>AI 打卡海报</b>、<b>AI 文物修复</b>拼图、<b>AI 赋彩</b>(给 Q 版文物上色)、<b>AI 文物识别</b>(照片修复对比 + 报名字来历、器型 / 年代识别),还有我——<b>答疑 + 带路 + 出题</b>一把抓的红舞狮小答 🦁" },
+  { k: ["ai", "人工智能", "有什么功能", "功能", "亮点"], a: "站内的 AI 玩法有:<b>AI 幻化唤醒</b>(拍照变精灵)、<b>AI 打卡海报</b>、<b>AI 文物识别</b>(照片修复对比 + 报名字来历、器型 / 年代识别),还有我——<b>答疑 + 带路 + 出题</b>一把抓的红舞狮小答 🦁" },
   { k: ["存档", "保存", "进度", "清空", "重置"], a: "进度都保存在本机浏览器里,正式版和测试版各存各的。想从头再来:打开「文物图鉴」拉到最底,点「清空进度」。" },
   { k: ["解锁", "隐藏", "秘密", "彩蛋"], a: "站里藏着一个「<b>第零站 · 华夏</b>」:把其余 12 个站点的精灵全部收齐,它就会自动开启——夏 → 清、十六朝各一件,都睡在那儿等你。" },
   { k: ["手机", "运行", "打开", "怎么用", "部署"], a: "手机浏览器直接打开就能玩,打卡拍照会调起相机;电脑上想更顺滑,用本地静态服务器(比如 8899 端口)打开效果最好。" },
