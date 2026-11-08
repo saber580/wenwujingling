@@ -279,7 +279,7 @@ c.eval("saClose()")
 c.eval("saPush()")
 time.sleep(0.4)
 
-# ---- 6.7 第四本书（错金铜镇，豆包生成 6 张 Q 版漫画） ----
+# ---- 6.7 第四本书（错金铜镇，豆包生成 6 张 Q 版漫画 + 1 页文物小讲堂） ----
 c.eval("saPull(3)")
 time.sleep(0.5)
 say(pulled_count(c) == 1, "点第四本也能抽出来", "%d 本抽出" % pulled_count(c))
@@ -291,7 +291,7 @@ say("spine-04" in sp4, "第四本用独立书脊图 spine-04", sp4)
 c.eval("saOpen(3)")
 time.sleep(0.5)
 say(open_reader(c), "点第四本封面打开阅读器")
-say(c.eval("document.querySelectorAll('#sa-leaf figure').length") == 6, "第四本书有 6 页",
+say(c.eval("document.querySelectorAll('#sa-leaf figure').length") == 7, "第四本书有 7 页(含小讲堂)",
     "%d 页" % c.eval("document.querySelectorAll('#sa-leaf figure').length"))
 say("ep12" in cur_src(c), "第四本开局是它的封面页", cur_src(c))
 c.eval("saGoto(5)")
@@ -304,6 +304,17 @@ for _ in range(40):
         break
     time.sleep(0.25)
 say(w4[0] > 0 and w4[1] > w4[0], "第四本第 6 页（守护誓言）竖版加载成功", "%dx%d" % tuple(w4))
+c.eval("saGoto(6)")
+time.sleep(0.3)
+w7 = [0, 0]
+for _ in range(40):
+    w7 = c.eval("(function(){var f=document.querySelector('#sa-leaf figure.cur img');"
+                "return f?[f.naturalWidth,f.naturalHeight]:[0,0];})()")
+    if w7[0]:
+        break
+    time.sleep(0.25)
+say(w7[0] > w7[1] > 0, "第四本第 7 页（文物小讲堂）是横版", "%dx%d" % tuple(w7))
+say("ep12-7" in cur_src(c), "第四本小讲堂用的是 ep12-7 图", cur_src(c))
 c.eval("saClose()")
 c.eval("saPush()")
 time.sleep(0.4)

@@ -2007,7 +2007,8 @@ const SHIYILU = {
         { f: "shiyilu/ep12-3.webp", t: "错金纹样", cap: "金丝入铜,千年不褪" },
         { f: "shiyilu/ep12-4.webp", t: "破土而出", cap: "沉睡千年,再次被看见" },
         { f: "shiyilu/ep12-5.webp", t: "文物苏醒", cap: "夜里,博物馆很热闹" },
-        { f: "shiyilu/ep12-6.webp", t: "守护誓言", cap: "守护每一道金丝,也守护那段岁月" }
+        { f: "shiyilu/ep12-6.webp", t: "守护誓言", cap: "守护每一道金丝,也守护那段岁月" },
+        { f: "shiyilu/ep12-7.webp", t: "附 · 小讲堂", land: true, cap: "文物小讲堂:汉代错金铜镇与错金工艺" }
       ]
     }
   ]
