@@ -1,4 +1,4 @@
-/* ================= 精灵影棚 · 一件文物十七道工艺（#/studio） =================
+/* ================= 精灵影棚 · 一件文物十道工艺（#/studio） =================
    用户从抖音看到「全代码生成视频」那套玩法：每一帧都是时间的纯函数，
    无头浏览器逐帧截图再合成。这里把它搬进浏览器——真·实时渲染，不预渲染 mp4。
 
@@ -177,7 +177,7 @@
     return c;
   }
 
-  /* ---------------- 生长遮罩（十七套共用） ---------------- */
+  /* ---------------- 生长遮罩（十套共用） ---------------- */
   var _scr = null, _msk = null;
   /* 生长遮罩：必须"先画好遮罩，再一次性合成"。
      坑：在 destination-in 下连续画多个图形，后一个图形会把前一个的结果擦掉，
@@ -253,7 +253,7 @@
   }
 
   /* ===================================================================
-     十七道工艺。每道：no / cn / en / 文案 / 配色 / 字体 / bg / build / art / fx
+     十道工艺。每道：no / cn / en / 文案 / 配色 / 字体 / bg / build / art / fx
      bg 与 art 都只在必要时重建，fx 才逐帧跑。
      =================================================================== */
   /* ---- 粉笔：逐笔描线 -------------------------------------------------
@@ -517,113 +517,9 @@
 
   var STYLES = [
 
-    /* ---------- 01 水墨 ---------- */
-    {
-      key: "ink", scrim: "rgba(240,232,214,.84)", no: "01", cn: "水墨", en: "INK WASH",
-      line1: "一滴墨落在宣纸上，自己会跑。",
-      line2: "跑成山，跑成塔，跑成这只精灵的轮廓。",
-      tags: ["材质 生宣·松烟", "工序 落墨·晕染"],
-      why: "水墨不描边，靠墨色浓淡把形体“养”出来——这正好是 AI 生成纹理的逻辑：给一点点，让算法把剩下的晕开。",
-      font: KAI,
-      tx: { main: "#241f1a", sub: "#4a4038", accent: "#9c2b1b" },
-      pos: { cx: 872, cy: 316, size: 690 },
-
-      build: function (sp) {
-        var S = sp.S, sz = PLATE;
-        /* 墨色化：暗部吃墨，亮部留白 */
-        var t = off(S, S), tx = C(t);
-        tx.drawImage(sp.art, 0, 0);
-        var d = tx.getImageData(0, 0, S, S), q = d.data;
-        for (var i = 0; i < q.length; i += 4) {
-          var l = (q[i] * .299 + q[i + 1] * .587 + q[i + 2] * .114) / 255;
-          var tone = 22 + 104 * Math.pow(1 - l, 1.05);  /* 亮部浅墨、暗部浓墨 */
-          q[i] = tone + 10;
-          q[i + 1] = tone + 5;
-          q[i + 2] = tone;
-          q[i + 3] = q[i + 3] * (0.80 + 0.20 * (1 - l));
-        }
-        tx.putImageData(d, 0, 0);
-
-        var c = off(sz, sz), x = C(c);
-        var k = sz / S;
-        /* 洇：多层错位低透明 */
-        x.globalAlpha = 0.30;
-        for (var j = 0; j < 7; j++) {
-          var a = j / 7 * 6.2832, rad = 3 + (j % 3) * 2.6;
-          x.drawImage(t, Math.cos(a) * rad, Math.sin(a) * rad, sz, sz);
-        }
-        x.globalAlpha = 1;
-        x.drawImage(t, 0, 0, sz, sz);
-        /* 飞白：几笔淡墨扫过边缘 */
-        var r = mulberry(19);
-        x.globalCompositeOperation = "destination-out";
-        for (var m = 0; m < 90; m++) {
-          var px = r() * sz, py = r() * sz;
-          x.globalAlpha = 0.05 + r() * 0.16;
-          x.fillStyle = "#000";
-          x.beginPath(); x.ellipse(px, py, 4 + r() * 26, 1.5 + r() * 6, r() * 3.14, 0, 6.2832); x.fill();
-        }
-        x.globalAlpha = 1;
-        x.globalCompositeOperation = "source-over";
-        return { plate: c, k: k };
-      },
-
-      bg: function (x) {
-        x.fillStyle = "#efe6d4"; x.fillRect(0, 0, W, H);
-        var g = x.createRadialGradient(W * .34, H * .1, 60, W * .34, H * .1, W * .85);
-        g.addColorStop(0, "rgba(255,252,242,.95)"); g.addColorStop(.6, "rgba(240,231,212,.2)"); g.addColorStop(1, "rgba(198,182,156,.42)");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-        /* 远山：两笔淡墨 */
-        var r = mulberry(31);
-        x.globalAlpha = 0.10;
-        for (var pass = 0; pass < 2; pass++) {
-          x.fillStyle = "#3a332c";
-          x.beginPath(); x.moveTo(-40, H);
-          for (var i = 0; i <= 12; i++) {
-            var px = -40 + i * (W + 80) / 12;
-            var py = H - 60 - (pass ? 120 : 190) * (0.35 + r() * 0.65);
-            x.quadraticCurveTo(px - 50, py + 40, px, py);
-          }
-          x.lineTo(W + 40, H); x.closePath(); x.fill();
-        }
-        x.globalAlpha = 1;
-        /* 淡金月 */
-        var m = x.createRadialGradient(W * .82, H * .16, 4, W * .82, H * .16, 96);
-        m.addColorStop(0, "rgba(214,178,110,.55)"); m.addColorStop(1, "rgba(214,178,110,0)");
-        x.fillStyle = m; x.beginPath(); x.arc(W * .82, H * .16, 96, 0, 6.2832); x.fill();
-        x.globalCompositeOperation = "multiply"; x.globalAlpha = .5;
-        x.drawImage(fiber(), 0, 0, W, H);
-        x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
-      },
-
-      art: function (x, p, pl) {
-        var blobs = pl.blobs || (pl.blobs = (function () {
-          var r = mulberry(41), a = [];
-          for (var i = 0; i < 7; i++) a.push({ x: PLATE * (.28 + r() * .5), y: PLATE * (.22 + r() * .56), r: PLATE * (.16 + r() * .22), d: i * 0.07 });
-          return a;
-        })());
-        x.globalAlpha = 1;
-        x.drawImage(masked(pl.plate, maskBlots(seg(p, 0.02, 0.52), blobs)), 650, 66, 588, 588);
-      },
-
-      fx: function (x, p, t) {
-        /* 三滴墨 */
-        var r = mulberry(57);
-        for (var i = 0; i < 3; i++) {
-          var s = (t + i * 0.7) % 1.6, a = 1 - s / 1.6;
-          var px = 300 + i * 190 + Math.sin(t * 0.9 + i) * 10;
-          var py = 90 + s * 470;
-          x.globalAlpha = a * .5;
-          x.fillStyle = "#2a2520";
-          x.beginPath(); x.ellipse(px, py, 3 + s * 4, 5 + s * 7, 0, 0, 6.2832); x.fill();
-        }
-        x.globalAlpha = 1;
-      }
-    },
-
     /* ---------- 02 凸版烫金 ---------- */
     {
-      key: "foil", scrim: "rgba(14,11,9,.82)", no: "02", cn: "凸版烫金", en: "LETTERPRESS & FOIL",
+      key: "foil", scrim: "rgba(14,11,9,.82)", no: "01", cn: "凸版烫金", en: "LETTERPRESS & FOIL",
       line1: "印版隔着金箔，重重压进厚纸。",
       line2: "揭开箔膜，压痕里是一只它，侧光一扫就发亮。",
       tags: ["材质 金箔·棉纸", "工序 热压烫金"],
@@ -735,120 +631,9 @@
         x.globalAlpha = 1;
       }
     },
-
-    /* ---------- 03 油画厚涂 ---------- */
-    {
-      key: "oil", scrim: "rgba(232,220,196,.80)", no: "03", cn: "油画厚涂", en: "OIL IMPASTO",
-      line1: "油彩一刀一刀堆上画布，堆出它的形。",
-      line2: "镜头贴着画面掠过，笔触像山一样起伏。",
-      tags: ["材质 亚麻布·油彩", "工序 刮刀厚涂"],
-      why: "厚涂的关键不是颜色，是每一笔的“棱”（亮边 + 暗边）。用代码画两万条带棱的色块，就有了那种站在画前才有的立体感。",
-      font: SERIF,
-      tx: { main: "#231e19", sub: "#463a2c", accent: "#8a4a24" },
-      pos: { cx: 910, cy: 330, size: 760 },
-
-      build: function (sp) {
-        var sz = PLATE, S = sp.S, r = mulberry(97);
-        /* ① 起稿：把立绘降采样再放大糊一档，形先立住 */
-        var base = off(sz, sz), bx = C(base);
-        var small = off(Math.round(sz / 7), Math.round(sz / 7)), smx = C(small);
-        smx.imageSmoothingEnabled = true;
-        smx.drawImage(sp.art, 0, 0, small.width, small.height);
-        bx.imageSmoothingEnabled = true;
-        bx.drawImage(small, 0, 0, sz, sz);
-        /* ② 笔触层：方向沿"等明度线"走（垂直梯度），比统一斜向更像在塑形 */
-        var lay = off(sz, sz), x = C(lay);
-        var step = sz / 34;
-        for (var gy = 0; gy < sz; gy += step) {
-          for (var gx = 0; gx < sz; gx += step) {
-            var sx = (gx + step / 2) / sz * S, sy = (gy + step / 2) / sz * S;
-            if (alphaAt(sp, sx, sy) < 80) continue;
-            var col = colAt(sp, sx, sy);
-            var d2 = 3 / sz * S;
-            var gxx = lumAt(sp, sx + d2, sy) - lumAt(sp, sx - d2, sy);
-            var gyy = lumAt(sp, sx, sy + d2) - lumAt(sp, sx, sy - d2);
-            var ang = Math.atan2(gyy, gxx) + 1.5708;
-            /* 与全局斜向取中，免得小噪点把笔触带乱 */
-            ang = ang * .55 + (-0.52) * .45 + (r() - .5) * .12;
-            var w = step * (1.45 + r() * .45), h = step * (0.66 + r() * .22);
-            x.save();
-            x.translate(gx + step / 2 + (r() - .5) * step * .3, gy + step / 2 + (r() - .5) * step * .3);
-            x.rotate(ang);
-            var g = x.createLinearGradient(0, -h / 2, 0, h / 2);
-            g.addColorStop(0, shade(col, .30));
-            g.addColorStop(.38, shade(col, .10));
-            g.addColorStop(.68, rgb(col));
-            g.addColorStop(1, shade(col, -.30));
-            x.fillStyle = g;
-            rr(x, -w / 2, -h / 2, w, h, Math.min(w, h) * .46);
-            x.fill();
-            x.restore();
-          }
-        }
-        /* ③ 高光刀口 */
-        for (var i = 0; i < 150; i++) {
-          var px = r() * sz, py = r() * sz;
-          if (alphaAt(sp, px / sz * S, py / sz * S) < 130) continue;
-          x.save(); x.translate(px, py); x.rotate(-0.52 + (r() - .5) * .9);
-          x.strokeStyle = "rgba(255,252,240," + (.14 + r() * .34) + ")";
-          x.lineWidth = 1 + r() * 2.4; x.lineCap = "round";
-          x.beginPath(); x.moveTo(-5 - r() * 7, 0); x.lineTo(5 + r() * 7, 0); x.stroke();
-          x.restore();
-        }
-        /* ④ 笔画到形外的地方一律裁掉：厚涂也得有干净的剪影 */
-        x.globalCompositeOperation = "destination-in";
-        x.drawImage(sp.sil, 0, 0, sz, sz);
-        x.globalCompositeOperation = "source-over";
-        /* ⑤ 起稿 + 笔触合版（笔触留一点透，脸和纹样才认得出来） */
-        var c = off(sz, sz), cx3 = C(c);
-        cx3.drawImage(base, 0, 0);
-        cx3.globalAlpha = .76; cx3.drawImage(lay, 0, 0); cx3.globalAlpha = 1;
-        return { plate: c };
-      },
-
-      bg: function (x) {
-        x.fillStyle = "#e6d9c0"; x.fillRect(0, 0, W, H);
-        var r = mulberry(101);
-        /* 底布：几笔扫底 */
-        x.globalAlpha = .55;
-        for (var i = 0; i < 60; i++) {
-          var px = r() * W, py = r() * H;
-          var w = 120 + r() * 320, h = 40 + r() * 90;
-          var base = [[92, 108, 88], [70, 86, 104], [138, 122, 96], [110, 128, 112]][(r() * 4) | 0];
-          x.save(); x.translate(px, py); x.rotate((r() - .5) * .5);
-          var g = x.createLinearGradient(0, -h / 2, 0, h / 2);
-          g.addColorStop(0, shade(base, .22)); g.addColorStop(.7, rgb(base)); g.addColorStop(1, shade(base, -.26));
-          x.fillStyle = g; rr(x, -w / 2, -h / 2, w, h, h / 2); x.fill();
-          x.restore();
-        }
-        x.globalAlpha = 1;
-        /* 亚麻布纹 */
-        x.globalCompositeOperation = "multiply"; x.globalAlpha = .45;
-        x.drawImage(fiber(), 0, 0, W, H);
-        x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
-      },
-
-      art: function (x, p, pl) {
-        var k = easeOut(seg(p, 0.02, 0.66));
-        x.save();
-        var sc = 1.0 + 0.05 * p;         /* 极慢推镜 */
-        x.translate(910, 330); x.scale(sc, sc); x.translate(-910, -330);
-        x.drawImage(masked(pl.plate, maskRight(k)), 620, 40, 660, 660);
-        x.restore();
-      },
-
-      fx: function (x, p, t) {
-        var g = x.createLinearGradient(0, 0, 0, H);
-        g.addColorStop(0, "rgba(255,250,238,.10)");
-        g.addColorStop(.5, "rgba(0,0,0,0)");
-        g.addColorStop(1, "rgba(60,44,26,.16)");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-      }
-    },
-
     /* ---------- 04 木版年画 ---------- */
     {
-      key: "wood", scrim: "rgba(243,231,205,.82)", no: "04", cn: "木版年画", en: "WOODBLOCK PRINT",
+      key: "wood", scrim: "rgba(243,231,205,.82)", no: "02", cn: "木版年画", en: "WOODBLOCK PRINT",
       line1: "木版刷上墨，铺纸一刷，先印出黑色线稿。",
       line2: "每一拍再套一种颜色，年画一层层活起来。",
       tags: ["材质 梨木版·宣纸", "工序 一版一色套印"],
@@ -947,10 +732,9 @@
         x.globalAlpha = 1;
       }
     },
-
     /* ---------- 05 孔版套印 ---------- */
     {
-      key: "riso", scrim: "rgba(248,245,236,.84)", no: "05", cn: "孔版套印", en: "RISOGRAPH",
+      key: "riso", scrim: "rgba(248,245,236,.84)", no: "03", cn: "孔版套印", en: "RISOGRAPH",
       line1: "滚筒一转，先印荧光粉，再套一层蓝。",
       line2: "两色叠上的那一刻，一只它从网点里出现。",
       tags: ["材质 荧光粉·蓝", "工序 双色套印"],
@@ -1025,10 +809,9 @@
         }
       }
     },
-
     /* ---------- 06 蜡笔童画 ---------- */
     {
-      key: "crayon", scrim: "rgba(220,216,208,.82)", no: "06", cn: "蜡笔童画", en: "CRAYON KID",
+      key: "crayon", scrim: "rgba(220,216,208,.82)", no: "04", cn: "蜡笔童画", en: "CRAYON KID",
       line1: "蜡笔在粗纹画纸上涂出它的样子。",
       line2: "每秒重画三十张，它就抖着线条跑起来。",
       tags: ["材质 蜡笔·粗纹纸", "工序 每秒三十张"],
@@ -1119,10 +902,9 @@
         if (d > 0) { /* 留给颗粒层，避免大范围重绘 */ }
       }
     },
-
     /* ---------- 07 粉笔黑板 ---------- */
     {
-      key: "chalk", scrim: "rgba(20,32,26,.74)", no: "07", cn: "粉笔黑板", en: "CHALKBOARD",
+      key: "chalk", scrim: "rgba(20,32,26,.74)", no: "05", cn: "粉笔黑板", en: "CHALKBOARD",
       line1: "粉笔在墨绿黑板上，一笔一笔把它勾出来。",
       line2: "从头顶起笔，一路勾到脚，最后往暗处扫上调子。",
       tags: ["材质 粉笔·黑板", "工序 落笔·排线"],
@@ -1429,147 +1211,9 @@
         x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
       }
     },
-
-    /* ---------- 08 拼插积木 ---------- */
-    {
-      key: "brick", scrim: "rgba(10,20,40,.78)", no: "08", cn: "拼插积木", en: "TOY BRICKS",
-      line1: "积木一块块落下，咔哒扣上。",
-      line2: "镜头贴着凸点掠过，焦点在前后积木间切开。",
-      tags: ["材质 塑料积木·底板", "工序 逐块扣合"],
-      why: "积木的语法是“分解”——再复杂的形，拆成 400 块也就能拼。这和文物修复里“先编号、再归位”是同一件事。",
-      font: HEI,
-      tx: { main: "#ffffff", sub: "#d6e2f5", accent: "#ffd34d" },
-      pos: { cx: 880, cy: 320, size: 700 },
-
-      build: function (sp) {
-        var sz = PLATE, S = sp.S;
-        var cell = sz / 46, list = [];
-        var r = mulberry(401);
-        var raw = [];
-        for (var gy = 0; gy < sz; gy += cell) {
-          for (var gx = 0; gx < sz; gx += cell) {
-            var sx = (gx + cell / 2) / sz * S, sy = (gy + cell / 2) / sz * S;
-            /* 邻域取最大值：否则内部小孔会被判空，拼出来像筛子 */
-            var amax = 0;
-            for (var oy = -1; oy <= 1; oy++) for (var ox = -1; ox <= 1; ox++) {
-              var av = alphaAt(sp, sx + ox * cell * .46, sy + oy * cell * .46);
-              if (av > amax) amax = av;
-            }
-            if (amax < 100) continue;
-            raw.push({ x: gx, y: gy, c: colAt(sp, sx, sy),
-                       l: (function (c) { return (c[0] * .3 + c[1] * .59 + c[2] * .11) / 255; })(colAt(sp, sx, sy)) });
-          }
-        }
-        /* 明度按这张图自己的分布拉满：色相留着，深浅拉开，形才认得出 */
-        var ls = raw.map(function (o) { return o.l; }).sort(function (a, b) { return a - b; });
-        var lo = ls[Math.floor(ls.length * .04)], hi = ls[Math.floor(ls.length * .96)];
-        if (hi - lo < .12) hi = lo + .12;
-        /* 砖块贴片：同色只渲染一次，逐帧纯贴图（一千块砖实时算渐变顶不住） */
-        var ts = 64, tw = Math.round(ts * 1.16), tileMap = {}, tiles = [];
-        var tileFor = function (col) {
-          var q = Math.round(col[0] / 20) + "," + Math.round(col[1] / 20) + "," + Math.round(col[2] / 20);
-          if (tileMap[q] != null) return tileMap[q];
-          var cc = off(tw, tw), xc = C(cc);
-          drawBrick(xc, ts * .07, ts * .07, ts, [col[0], col[1], col[2]], 1);
-          tileMap[q] = tiles.length; tiles.push(cc);
-          return tileMap[q];
-        };
-        var ACC = [[196, 40, 44], [240, 176, 40], [52, 128, 96], [86, 158, 214]];
-        /* 内部轮廓用深色砖勾出来——不然脸、灯笼、衣摆糊成一片，只剩个"团"。
-           在砖格上直接比相邻块的明度差，勾出来的线正好一格宽。 */
-        var gmap = {};
-        for (var i4 = 0; i4 < raw.length; i4++) {
-          gmap[(raw[i4].x | 0) + "," + (raw[i4].y | 0)] = raw[i4].l;
-        }
-        var cellKey = function (gx, gy) { return gmap[(gx | 0) + "," + (gy | 0)]; };
-        /* 外轮廓一圈描黑；内部只把"明暗突变"的地方描一道，脸和灯笼才分得开 */
-        var isEdge = function (gx, gy, l0) {
-          var nb = [cellKey(gx - cell, gy), cellKey(gx + cell, gy), cellKey(gx, gy - cell), cellKey(gx, gy + cell)];
-          var miss = 0, jump = 0;
-          for (var q = 0; q < 4; q++) {
-            if (nb[q] == null) { miss++; continue; }
-            if (Math.abs(nb[q] - l0) > 0.17) jump++;
-          }
-          if (miss >= 2) return 2;      /* 外轮廓 */
-          return jump >= 2 ? 1 : 0;
-        };
-        for (var i3 = 0; i3 < raw.length; i3++) {
-          var o3 = raw[i3], c3 = o3.c;
-          var k = clamp((o3.l - lo) / (hi - lo), 0, 1);
-          /* 目标明度：暗到 0.16、亮到 0.97，再按原色相回贴 */
-          /* 砖色 = 原色，只把明度拉伸、饱和略推——像素化照片本身就是马赛克 */
-          var want = 0.20 + Math.pow(k, 0.86) * 0.80;
-          var src = Math.max(o3.l, .03);
-          var col = [c3[0] * want / src, c3[1] * want / src, c3[2] * want / src];
-          var gray0 = want * 255;
-          col = [col[0] * .80 + gray0 * .20, col[1] * .80 + gray0 * .20, col[2] * .80 + gray0 * .20];
-          if (r() < .045) col = ACC[(r() * ACC.length) | 0];
-          var ed = isEdge(o3.x, o3.y, o3.l);
-          if (ed === 2) col = [26, 20, 15];
-          else if (ed === 1) col = [86, 66, 46];
-          list.push({ x: o3.x, y: o3.y, t: tileFor(col), d: (o3.y / sz) * 0.42 + r() * 0.3 });
-        }
-        /* 组装版（静态用） */
-        var plate = off(sz, sz), x = C(plate);
-        for (var i = 0; i < list.length; i++) {
-          x.drawImage(tiles[list[i].t], list[i].x - cell * .07, list[i].y - cell * .07, cell * 1.16, cell * 1.16);
-        }
-        return { bricks: list, cell: cell, tiles: tiles, plate: plate };
-      },
-
-      bg: function (x) {
-        var g = x.createLinearGradient(0, 0, 0, H);
-        g.addColorStop(0, "#22334f"); g.addColorStop(.55, "#16233c"); g.addColorStop(1, "#0c1526");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-        /* 底板凸点：越远越小，做一点纵深 */
-        var r = mulberry(433);
-        for (var row = 0; row < 9; row++) {
-          var py = H * 0.42 + row * row * 3.4 + row * 30;
-          var rad = 7 + row * 1.6;
-          for (var col = 0; col < 22; col++) {
-            var px = -40 + col * (W + 80) / 22 + row * 14;
-            if (py > H + 20) continue;
-            var gg = x.createRadialGradient(px - rad * .3, py - rad * .4, rad * .1, px, py, rad);
-            gg.addColorStop(0, "rgba(126,164,220,.40)"); gg.addColorStop(1, "rgba(10,22,44,.30)");
-            x.fillStyle = gg;
-            x.beginPath(); x.arc(px, py, rad, 0, 6.2832); x.fill();
-          }
-        }
-        var vg = x.createRadialGradient(W * .5, H * .4, 80, W * .5, H * .4, W * .85);
-        vg.addColorStop(0, "rgba(255,255,255,.05)"); vg.addColorStop(1, "rgba(2,8,20,.62)");
-        x.fillStyle = vg; x.fillRect(0, 0, W, H);
-      },
-
-      art: function (x, p, pl) {
-        var cell = pl.cell, k2 = 588 / PLATE, d = cell * k2;
-        for (var i = 0; i < pl.bricks.length; i++) {
-          var b = pl.bricks[i];
-          var k = seg(p, 0.04 + b.d * 0.5, 0.04 + b.d * 0.5 + 0.18);
-          if (k <= 0) continue;
-          var drop = (1 - easeOut(k)) * -90;
-          var sc = 1;
-          if (k > 0.72) { var b2 = (k - 0.72) / 0.28; sc = 1 + Math.sin(b2 * 3.1416) * 0.10; }
-          x.save();
-          x.globalAlpha = Math.min(1, k * 2.2);
-          x.translate(944 + (b.x + cell / 2 - PLATE / 2) * k2, 360 + (b.y + cell / 2 - PLATE / 2) * k2 + drop);
-          x.scale(sc, sc);
-          x.drawImage(pl.tiles[b.t], -d * .58, -d * .58, d * 1.16, d * 1.16);
-          x.restore();
-        }
-        x.globalAlpha = 1;
-      },
-
-      fx: function (x, p, t) {
-        /* 顶光 */
-        var g = x.createLinearGradient(0, 0, W * .6, H);
-        g.addColorStop(0, "rgba(255,255,255,.10)"); g.addColorStop(.6, "rgba(255,255,255,0)");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-      }
-    },
-
     /* ---------- 09 刺绣 ---------- */
     {
-      key: "stitch", scrim: "rgba(10,18,32,.74)", no: "09", cn: "刺绣", en: "EMBROIDERY",
+      key: "stitch", scrim: "rgba(10,18,32,.74)", no: "06", cn: "刺绣", en: "EMBROIDERY",
       line1: "每一针都按真丝线来画，丝线顺着针法反光。",
       line2: "拉远看，是整只它；金线在边缘盘出一圈亮。",
       tags: ["材质 真丝绣线·绢", "工序 平针·盘金"],
@@ -1664,10 +1308,9 @@
         }
       }
     },
-
     /* ---------- 10 皮影戏 ---------- */
     {
-      key: "shadow", scrim: "rgba(240,222,180,.74)", no: "10", cn: "皮影戏", en: "SHADOW PUPPET",
+      key: "shadow", scrim: "rgba(240,222,180,.74)", no: "07", cn: "皮影戏", en: "SHADOW PUPPET",
       line1: "灯在幕后，牛皮刻的它一登场就有颜色。",
       line2: "贴着幕布清楚又有色，离开幕布就剩一道黑。",
       tags: ["材质 牛皮·白纱幕", "工序 镂刻·缀结"],
@@ -1743,10 +1386,9 @@
         x.fillRect(0, 0, W, H);
       }
     },
-
     /* ---------- 11 沙画 ---------- */
     {
-      key: "sand", scrim: "rgba(24,16,6,.74)", no: "11", cn: "沙画", en: "SAND ANIMATION",
+      key: "sand", scrim: "rgba(24,16,6,.74)", no: "08", cn: "沙画", en: "SAND ANIMATION",
       line1: "灯箱上铺满细沙，光从下往上透。",
       line2: "手指刮出一道边，它就慢慢从沙里浮出来。",
       tags: ["材质 石英砂·灯箱", "工序 撒·刮·抹"],
@@ -1840,535 +1482,395 @@
         x.globalAlpha = 1;
       }
     },
-
-    /* ---------- 12 掐丝珐琅 ---------- */
+    /* ---------- 09 彩色玻璃窗 ---------- */
     {
-      key: "cloisonne", scrim: "rgba(12,18,34,.80)", no: "12", cn: "掐丝珐琅", en: "CLOISONNE",
-      line1: "先掐铜丝圈出每一块颜色，再一格格填釉。",
-      line2: "入窑烧三遍，磨平了，金丝还在光里走。",
-      tags: ["材质 铜丝·珐琅釉", "工序 掐丝·点蓝·烧蓝"],
-      why: "珐琅的贵不在颜色多，在“每一块颜色都被金丝圈住”。用明度分区、用边缘当丝，器物自然被分成一格格的釉。",
-      font: HEI,
-      tx: { main: "#f6ecd6", sub: "#c4b393", accent: "#e8c473" },
-      pos: { cx: 944, cy: 360, size: 660 },
+      key: "stained", scrim: "rgba(8,12,20,.74)", no: "09", cn: "彩色玻璃窗", en: "STAINED GLASS",
+      line1: "石屋里暗下来，彩窗一块块亮起。",
+      line2: "光柱里飘着灰，地上的彩斑慢慢移。",
+      tags: ["材质 彩色玻璃·铅条", "工序 切玻璃·镶铅"],
+      why: "彩窗的美不在画，在“分格”：一块块玻璃被铅条切开，光透过来才敢亮。算法上就是先采色、再切出不规则小块、最后给块与块之间留缝当铅条。",
+      font: SERIF,
+      tx: { main: "#f4eede", sub: "#b8af9c", accent: "#e0b96f" },
+      pos: { cx: 950, cy: 340, size: 700 },
 
       build: function (sp) {
         var sz = PLATE, S = sp.S, c = off(sz, sz), x = C(c);
-        var pal = [[26, 42, 84], [46, 92, 148], [206, 158, 62], [178, 64, 54],
-                   [52, 118, 96], [232, 222, 196], [112, 56, 96], [74, 104, 58]];
-        var img = x.createImageData(sz, sz), d = img.data;
-        for (var py = 0; py < sz; py++) {
-          var sy = clamp(py / sz * S, 0, S - 1);
-          for (var px = 0; px < sz; px++) {
-            var sx = clamp(px / sz * S, 0, S - 1);
-            var a = alphaAt(sp, sx, sy); if (a < 60) continue;
-            var l = lumAt(sp, sx, sy);
-            var col = pal[Math.min(pal.length - 1, Math.floor(l * pal.length))];
-            var o = (py * sz + px) * 4;
-            d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = a;
+        /* 玻璃只有这几种颜色 —— 中世纪的作坊就这几种料，凑不出渐变 */
+        var PAL = [
+          [34, 84, 158], [26, 120, 104], [168, 58, 52],
+          [212, 156, 62], [104, 72, 152], [44, 138, 168]
+        ];
+        var COLS = 15, ROWS = 21;
+        var cw = sz / COLS, ch = sz / ROWS;
+        var r = mulberry(8801);
+        var MX0 = .075, MX1 = .925, MY0 = .065, MY1 = .955;
+        var P = [], i, j, k2;
+        for (i = 0; i <= COLS; i++) {
+          P[i] = [];
+          for (j = 0; j <= ROWS; j++) {
+            var jx = (i === 0 || i === COLS) ? 0 : (r() - .5) * cw * .44;
+            var jy = (j === 0 || j === ROWS) ? 0 : (r() - .5) * ch * .44;
+            P[i][j] = [i * cw + jx, j * ch + jy];
           }
         }
-        x.putImageData(img, 0, 0);
-        /* 铜丝 */
-        x.globalCompositeOperation = "source-atop";
-        x.globalAlpha = .95;
-        x.drawImage(tint(sobel(sp, 0.13), "#e8c473"), 0, 0, sz, sz);
-        x.globalAlpha = 1;
-        /* 釉面反光 */
-        var g = x.createLinearGradient(0, 0, sz, sz);
-        g.addColorStop(0, "rgba(255,255,255,.24)");
-        g.addColorStop(.42, "rgba(255,255,255,0)");
-        g.addColorStop(1, "rgba(0,0,0,.26)");
-        x.fillStyle = g; x.fillRect(0, 0, sz, sz);
-        x.globalCompositeOperation = "source-over";
+        /* 底是铅，缝隙露出来就是铅条 */
+        x.fillStyle = "#14161a"; x.fillRect(0, 0, sz, sz);
+
+        for (i = 0; i < COLS; i++) {
+          for (j = 0; j < ROWS; j++) {
+            var a = P[i][j], b = P[i + 1][j], d2 = P[i + 1][j + 1], e2 = P[i][j + 1];
+            var mx = (a[0] + b[0] + d2[0] + e2[0]) / 4;
+            var my = (a[1] + b[1] + d2[1] + e2[1]) / 4;
+            /* 器物在窗里要留边，像彩窗里的圣像，不能顶满整扇窗 */
+            var qx = ((mx / sz) - MX0) / (MX1 - MX0) * S;
+            var qy = ((my / sz) - MY0) / (MY1 - MY0) * S;
+            var col;
+            if (qx < 0 || qx >= S || qy < 0 || qy >= S || alphaAt(sp, qx, qy) < 70) {
+              /* 剪影之外：夜色玻璃，冷、暗，把器物衬出来 */
+              col = [12 + (r() * 7 | 0), 21 + (r() * 9 | 0), 46 + (r() * 15 | 0)];
+            } else {
+              var pc = colAt(sp, qx, qy);
+              var hsl = rgb2hsl(pc[0], pc[1], pc[2]);
+              /* 玻璃只烧得出两头：冷是钴蓝紫，暖是金与琥珀。
+                 中间那段黄绿最脏，一律归到两极去 —— 教堂窗的老配色也是这么干的 */
+              var L2 = hsl[2], hh;
+              if (L2 < .30) hh = .655;
+              else if (L2 < .44) hh = .735;
+              else if (L2 < .58) hh = .60;
+              else if (L2 < .74) hh = .075;
+              else hh = .115;
+              var ss = L2 < .58 ? .74 : .86;
+              var ll = clamp(.20 + L2 * .52 + (r() - .5) * .07, .12, .84);
+              col = hsl2rgb(hh, ss, ll);
+            }
+            var g = x.createLinearGradient(mx - cw * .7, my - ch * .7, mx + cw * .6, my + ch * .6);
+            g.addColorStop(0, shade(col, .40));
+            g.addColorStop(.55, rgb(col));
+            g.addColorStop(1, shade(col, -.30));
+            x.fillStyle = g;
+            x.beginPath();
+            x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]);
+            x.lineTo(d2[0], d2[1]); x.lineTo(e2[0], e2[1]);
+            x.closePath(); x.fill();
+            /* 玻璃里的小气泡：透光时最有说服力的细节 */
+            var bn = 1 + (r() * 3 | 0);
+            for (k2 = 0; k2 < bn; k2++) {
+              x.globalAlpha = .10 + r() * .18;
+              x.fillStyle = r() > .5 ? "#ffffff" : "#000000";
+              x.beginPath();
+              x.arc(mx + (r() - .5) * cw * .7, my + (r() - .5) * ch * .7, .8 + r() * 2.2, 0, 6.2832);
+              x.fill();
+            }
+            x.globalAlpha = 1;
+          }
+        }
+
+        /* 铅条：网格边全描一遍，两条相邻块共用一条，正好加粗 */
+        x.beginPath();
+        for (i = 0; i <= COLS; i++) for (j = 0; j < ROWS; j++) { x.moveTo(P[i][j][0], P[i][j][1]); x.lineTo(P[i][j + 1][0], P[i][j + 1][1]); }
+        for (j = 0; j <= ROWS; j++) for (i = 0; i < COLS; i++) { x.moveTo(P[i][j][0], P[i][j][1]); x.lineTo(P[i + 1][j][0], P[i + 1][j][1]); }
+        x.lineCap = "round";
+        x.strokeStyle = "#0c0e12"; x.lineWidth = 4.6; x.stroke();
+        x.strokeStyle = "rgba(158,168,184,.26)"; x.lineWidth = 1.1; x.stroke();
+
+        /* 器物自己的边也要做成铅条：彩窗的细节全靠铅条勾出来的，
+           只留色块就只剩一块马赛克，认不出是什么东西 */
+        var ed = sobel(sp, 0.13);
+        var tk = off(sz, sz), tkx = C(tk);
+        var bx0 = sz * MX0, by0 = sz * MY0, bw0 = sz * (MX1 - MX0), bh0 = sz * (MY1 - MY0);
+        var ofs = [[2.4, 0], [-2.4, 0], [0, 2.4], [0, -2.4], [1.7, 1.7], [-1.7, -1.7], [1.7, -1.7], [-1.7, 1.7]];
+        for (var oi = 0; oi < ofs.length; oi++) {
+          tkx.drawImage(ed, 0, 0, S, S, bx0 + ofs[oi][0], by0 + ofs[oi][1], bw0, bh0);
+        }
+        tkx.globalCompositeOperation = "source-in";
+        tkx.fillStyle = "#0b0e12"; tkx.fillRect(0, 0, sz, sz);
+        x.drawImage(tk, 0, 0);
+        /* 铅条上沿的一道细光，才像金属 */
+        var tk2 = off(sz, sz), thx = C(tk2);
+        thx.drawImage(ed, 0, 0, S, S, bx0 - .8, by0 - .8, bw0, bh0);
+        thx.globalCompositeOperation = "source-in";
+        thx.fillStyle = "rgba(150,162,180,.30)"; thx.fillRect(0, 0, sz, sz);
+        x.drawImage(tk2, 0, 0);
+
+        /* 外框压边 */
+        x.strokeStyle = "#0b0d11"; x.lineWidth = 14;
+        x.strokeRect(7, 7, sz - 14, sz - 14);
         return { plate: c };
       },
 
       bg: function (x) {
-        x.fillStyle = "#0b1222"; x.fillRect(0, 0, W, H);
-        var g = x.createRadialGradient(W * .74, H * .34, 30, W * .74, H * .34, W * .7);
-        g.addColorStop(0, "rgba(46,74,124,.55)"); g.addColorStop(.55, "rgba(14,22,42,.6)"); g.addColorStop(1, "rgba(4,7,14,.95)");
+        var g = x.createLinearGradient(0, 0, W, H);
+        g.addColorStop(0, "#0a0908"); g.addColorStop(.5, "#171410"); g.addColorStop(1, "#070606");
         x.fillStyle = g; x.fillRect(0, 0, W, H);
-        x.globalCompositeOperation = "overlay"; x.globalAlpha = .3;
-        x.drawImage(fiber(), 0, 0, W, H);
-        x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
-      },
-
-      art: function (x, p, pl) {
-        var k = easeOut(seg(p, 0.03, 0.66));
-        x.drawImage(masked(pl.plate, maskRight(k)), 620, 40, 660, 660);
-      },
-
-      fx: function (x, p, t) {
-        var k = seg(p, 0.5, 0.92);
-        if (k > 0 && k < 1) {
-          x.save();
-          x.beginPath(); x.rect(620, 40, 660, 660); x.clip();
-          x.globalCompositeOperation = "lighter";
-          var cx = 620 - 280 + easeOut(k) * 1220;
-          var g = x.createLinearGradient(cx - 140, 0, cx + 140, 0);
-          g.addColorStop(0, "rgba(255,240,200,0)");
-          g.addColorStop(.5, "rgba(255,246,214,.26)");
-          g.addColorStop(1, "rgba(255,240,200,0)");
-          x.fillStyle = g; x.fillRect(480, 0, 900, H);
-          x.restore();
-        }
-      }
-    },
-
-    /* ---------- 13 剪纸 ---------- */
-    {
-      key: "papercut", scrim: "rgba(240,228,206,.86)", no: "13", cn: "剪纸", en: "PAPER CUT",
-      line1: "一张红纸对折再对折，剪刀只走一刀。",
-      line2: "展开来，镂空处透光，它就有了呼吸。",
-      tags: ["材质 朱红宣纸", "工序 折剪·镂空"],
-      why: "剪纸的规矩很硬：不能断、要成片。所以它天生适合做“剪影 + 镂空”——把暗部掏成孔，光就从器物里透出来。",
-      font: KAI,
-      tx: { main: "#2a1a16", sub: "#5c3a2c", accent: "#b0231f" },
-      pos: { cx: 944, cy: 360, size: 640 },
-
-      build: function (sp) {
-        var sz = PLATE, S = sp.S, c = off(sz, sz), x = C(c);
-        x.drawImage(sp.sil, 0, 0, sz, sz);
-        x.globalCompositeOperation = "source-in";
-        x.fillStyle = "#b0231f"; x.fillRect(0, 0, sz, sz);
-        /* 阴刻路数：沿纹样轮廓走刀，把线条掏空。
-           整片红只剩"一团影子"，掏了线才有得看。 */
-        var ed = sobel(sp, 0.19);
-        var eimg = C(ed).getImageData(0, 0, S, S).data;
-        var cut = off(S, S), cx2 = C(cut);
-        var cimg = cx2.createImageData(S, S), cd = cimg.data;
-        for (var yy = 2; yy < S - 2; yy++) {
-          for (var xx = 2; xx < S - 2; xx++) {
-            if (eimg[(yy * S + xx) * 4 + 3] < 60) continue;
-            /* 只掏形内：离轮廓留出 5px 实边，纸才不断 */
-            var inner = 1;
-            for (var a2 = 0; a2 < 6.2832; a2 += 0.7854) {
-              if (alphaAt(sp, xx + Math.cos(a2) * 7, yy + Math.sin(a2) * 7) < 215) { inner = 0; break; }
-            }
-            if (!inner) continue;
-            for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
-              var o2 = ((yy + dy) * S + (xx + dx)) * 4;
-              cd[o2 + 3] = 255;
-            }
+        /* 石墙：一块块砌上去，缝比砖深 */
+        var r = mulberry(8817);
+        for (var row = -1; row < 8; row++) {
+          var yy = row * 94;
+          var off2 = (row % 2) * 88;
+          for (var col2 = -1; col2 < 9; col2++) {
+            var xx = col2 * 176 + off2 + (r() - .5) * 8;
+            var hh = 88 + r() * 5;
+            x.fillStyle = "rgba(" + (36 + (r() * 16 | 0)) + "," + (32 + (r() * 14 | 0)) + "," + (27 + (r() * 12 | 0)) + ",.9)";
+            x.fillRect(xx, yy, 170, hh);
+            x.strokeStyle = "rgba(0,0,0,.55)"; x.lineWidth = 3.5;
+            x.strokeRect(xx, yy, 170, hh);
+            x.strokeStyle = "rgba(120,110,94,.10)"; x.lineWidth = 1;
+            x.beginPath(); x.moveTo(xx + 3, yy + 3); x.lineTo(xx + 167, yy + 3); x.stroke();
           }
         }
-        cx2.putImageData(cimg, 0, 0);
-        x.globalCompositeOperation = "destination-out";
-        x.drawImage(cut, 0, 0, sz, sz);
-        x.globalCompositeOperation = "source-over";
-        /* 纸的纤维 */
-        x.globalCompositeOperation = "destination-out";
-        x.globalAlpha = .18;
-        x.drawImage(fiber(), 0, 0, sz, sz);
-        x.globalAlpha = 1;
-        x.globalCompositeOperation = "source-over";
-        return { plate: c };
-      },
-
-      bg: function (x) {
-        /* 窗纸：暖白透光，红纸贴在上面才有"透"的感觉 */
-        x.fillStyle = "#f2e6cd"; x.fillRect(0, 0, W, H);
-        var g = x.createRadialGradient(W * .74, H * .26, 40, W * .74, H * .26, W * .82);
-        g.addColorStop(0, "rgba(255,252,240,.95)"); g.addColorStop(.55, "rgba(238,224,196,.5)"); g.addColorStop(1, "rgba(186,166,136,.6)");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-        /* 窗棂 */
-        x.strokeStyle = "rgba(120,86,56,.10)"; x.lineWidth = 14;
-        x.beginPath(); x.moveTo(W * .62, 0); x.lineTo(W * .62, H); x.stroke();
-        x.beginPath(); x.moveTo(0, H * .52); x.lineTo(W, H * .52); x.stroke();
-        x.globalCompositeOperation = "multiply"; x.globalAlpha = .45;
-        x.drawImage(fiber(), 0, 0, W, H);
+        /* 窗那一片的暖光溢出 */
+        var g2 = x.createRadialGradient(W * .74, H * .44, 30, W * .74, H * .44, W * .6);
+        g2.addColorStop(0, "rgba(150,132,96,.30)");
+        g2.addColorStop(.5, "rgba(70,66,56,.12)");
+        g2.addColorStop(1, "rgba(0,0,0,0)");
+        x.fillStyle = g2; x.fillRect(0, 0, W, H);
+        x.globalCompositeOperation = "overlay"; x.globalAlpha = .4;
+        x.drawImage(grain(), 0, 0, W, H);
         x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
       },
 
       art: function (x, p, pl) {
-        var k = seg(p, 0.03, 0.6);
-        if (k <= 0) return;
-        var sc = 1 + (1 - easeOut(k)) * 0.04;
+        var k = easeOut(seg(p, 0.02, 0.66));
+        var wx = 660, wy = 34, ww = 560, wh = 660;
+
         x.save();
-        x.translate(944, 360); x.scale(sc, sc); x.translate(-944, -360);
-        /* 贴在墙上的影子 */
-        x.globalAlpha = .20 * easeOut(k);
-        x.fillStyle = "#6b3a24";
-        x.drawImage(masked(pl.plate, maskDown(k, true)), 636, 66, 640, 640);
-        x.globalAlpha = 1;
-        x.drawImage(masked(pl.plate, maskDown(k, true)), 620, 48, 640, 640);
-        x.restore();
-        x.globalAlpha = 1;
-      },
+        archPath(x, wx, wy, ww, wh);
+        x.clip();
+        x.fillStyle = "#07090d"; x.fillRect(wx - 6, wy - 6, ww + 12, wh + 12);
 
-      fx: function (x, p, t) {
-        /* 窗光轻微晃 */
-        x.globalAlpha = .05 + Math.sin(t * 1.4) * .02;
-        x.fillStyle = "#ffd9a8"; x.fillRect(0, 0, W, H);
-        x.globalAlpha = 1;
-      }
-    },
+        /* 玻璃从中心往外亮，像有人把灯点着 */
+        var rad = Math.max(1, k * PLATE * 1.02);
+        x.drawImage(masked(pl.plate, function (s) {
+          var g = s.createRadialGradient(PLATE * .5, PLATE * .44, rad * .26, PLATE * .5, PLATE * .44, rad);
+          g.addColorStop(0, "rgba(0,0,0,1)");
+          g.addColorStop(.70, "rgba(0,0,0,.94)");
+          g.addColorStop(1, "rgba(0,0,0,0)");
+          s.fillStyle = g; s.fillRect(0, 0, PLATE, PLATE);
+        }), wx, wy, ww, wh);
 
-    /* ---------- 14 拓片 ---------- */
-    {
-      key: "rubbing", scrim: "rgba(239,232,216,.86)", no: "14", cn: "拓片", en: "STONE RUBBING",
-      line1: "纸覆在碑上，拓包一遍遍扑墨。",
-      line2: "凸起的地方不着墨，字口就这样留白。",
-      tags: ["材质 宣纸·油烟墨", "工序 上纸·扑墨"],
-      why: "拓片只认“凹凸”，不认颜色。把明暗换成一件事：着墨、还是留白。一张纸就能把器物的体积拓下来。",
-      font: KAI,
-      tx: { main: "#1e1a16", sub: "#4a423a", accent: "#9c2b1b" },
-      pos: { cx: 944, cy: 360, size: 640 },
-
-      build: function (sp) {
-        var sz = PLATE, S = sp.S, c = off(sz, sz), x = C(c);
-        x.drawImage(sp.sil, 0, 0, sz, sz);
-        x.globalCompositeOperation = "source-in";
-        x.fillStyle = "#171412"; x.fillRect(0, 0, sz, sz);
-        /* 凸处不着墨 → 掏回纸白 */
-        var hi = off(sz, sz), hx = C(hi), img = hx.createImageData(sz, sz), d = img.data;
-        for (var py = 0; py < sz; py++) {
-          var sy = clamp(py / sz * S, 0, S - 1);
-          for (var px = 0; px < sz; px++) {
-            var sx = clamp(px / sz * S, 0, S - 1);
-            var l = lumAt(sp, sx, sy);
-            if (l > 0.60) {
-              var o = (py * sz + px) * 4;
-              d[o] = d[o + 1] = d[o + 2] = 255;
-              d[o + 3] = clamp((l - 0.60) * 720, 0, 232);
-            }
-          }
-        }
-        hx.putImageData(img, 0, 0);
-        x.globalCompositeOperation = "destination-out";
-        x.drawImage(hi, 0, 0);
-        /* 拓包扑不到的死角 */
-        var r = mulberry(733);
-        for (var i = 0; i < 2600; i++) {
-          x.globalAlpha = .10 + r() * .38;
-          x.fillStyle = "#000";
-          x.beginPath(); x.arc(r() * sz, r() * sz, .6 + r() * 2.4, 0, 6.2832); x.fill();
-        }
-        x.globalAlpha = 1;
-        x.globalCompositeOperation = "source-over";
-        return { plate: c };
-      },
-
-      bg: function (x) {
-        x.fillStyle = "#efe8d8"; x.fillRect(0, 0, W, H);
-        var g = x.createRadialGradient(W * .62, H * .4, 60, W * .62, H * .4, W * .8);
-        g.addColorStop(0, "rgba(255,252,244,.9)"); g.addColorStop(1, "rgba(206,196,176,.55)");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-        x.globalCompositeOperation = "multiply"; x.globalAlpha = .55;
-        x.drawImage(fiber(), 0, 0, W, H);
+        /* 背光溢出：光从玻璃里透出来 */
+        x.globalCompositeOperation = "lighter";
+        x.globalAlpha = .34 * k;
+        var gg = x.createRadialGradient(wx + ww * .5, wy + wh * .40, 40, wx + ww * .5, wy + wh * .40, ww * 1.0);
+        gg.addColorStop(0, "rgba(255,228,172,.5)");
+        gg.addColorStop(.55, "rgba(206,178,138,.12)");
+        gg.addColorStop(1, "rgba(120,140,180,0)");
+        x.fillStyle = gg; x.fillRect(wx - 220, wy - 120, ww + 440, wh + 240);
         x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
-      },
+        x.restore();
 
-      art: function (x, p, pl) {
-        var k = seg(p, 0.03, 0.62);
-        x.drawImage(masked(pl.plate, maskDown(k, true)), 636, 66, 640, 640);
-        /* 拓包：一团墨在纸上走 */
-        if (k > 0 && k < 0.99) {
-          var e = easeOut(k);
-          var px = 636 + 200 + e * 400, py = 66 + 120 + e * 380;
-          x.globalAlpha = .22;
-          var g = x.createRadialGradient(px, py, 4, px, py, 70);
-          g.addColorStop(0, "rgba(20,18,16,.55)"); g.addColorStop(1, "rgba(20,18,16,0)");
-          x.fillStyle = g; x.beginPath(); x.arc(px, py, 70, 0, 6.2832); x.fill();
+        /* 石窗框：拱边压一圈，玻璃才像嵌在墙里 */
+        archPath(x, wx - 11, wy - 11, ww + 22, wh + 22);
+        x.strokeStyle = "rgba(58,52,45,.96)"; x.lineWidth = 24; x.stroke();
+        x.strokeStyle = "rgba(134,122,102,.5)"; x.lineWidth = 2.5; x.stroke();
+
+        /* 地上的彩斑：窗投下来的光 */
+        var lit = easeOut(seg(p, 0.26, 0.92));
+        if (lit > 0) {
+          x.save();
+          x.globalCompositeOperation = "lighter";
+          x.globalAlpha = .30 * lit;
+          var bx = wx + 30, by = 612;
+          for (var i = 0; i < 5; i++) {
+            var bx2 = bx + i * 96 + Math.sin(i * 1.7) * 12;
+            x.fillStyle = ["rgba(88,130,210,1)", "rgba(196,120,80,1)", "rgba(120,180,120,1)", "rgba(200,170,90,1)", "rgba(150,130,200,1)"][i];
+            x.beginPath();
+            x.moveTo(bx2, by + 8); x.lineTo(bx2 + 78, by); x.lineTo(bx2 + 96, by + 74); x.lineTo(bx2 + 16, by + 80);
+            x.closePath(); x.fill();
+          }
+          x.restore();
           x.globalAlpha = 1;
         }
       },
 
       fx: function (x, p, t) {
-        var r = mulberry(739);
-        for (var i = 0; i < 30; i++) {
-          var px = r() * W, py = (r() * H + t * 8 * (0.4 + r())) % H;
-          x.globalAlpha = .05 + r() * .12;
-          x.fillStyle = "#2a241e";
-          x.fillRect(px, py, 1 + r() * 2, 1 + r() * 2);
+        var r = mulberry(8813), a = seg(p, 0.08, 0.5);
+        if (a <= 0) return;
+        x.save();
+        x.beginPath();
+        x.moveTo(650, 40); x.lineTo(1230, 40); x.lineTo(1090, 700); x.lineTo(540, 700);
+        x.closePath(); x.clip();
+        for (var i = 0; i < 48; i++) {
+          var px = 520 + r() * 760;
+          var py = 30 + ((r() * 690 + t * (7 + r() * 18)) % 670);
+          x.globalAlpha = (.05 + r() * .20) * a;
+          x.fillStyle = "#fff0d2";
+          x.fillRect(px, py, 1.2 + r() * 1.7, 1.2 + r() * 1.7);
         }
+        x.restore();
         x.globalAlpha = 1;
       }
     },
 
-    /* ---------- 15 蜡染 ---------- */
+    /* ---------- 10 立体书 ---------- */
     {
-      key: "batik", scrim: "rgba(14,24,42,.78)", no: "15", cn: "蜡染", en: "BATIK",
-      line1: "蜡刀蘸蜡，在布上先画一道防线。",
-      line2: "浸进靛缸，蜡裂开的地方留下冰纹。",
-      tags: ["材质 土布·靛蓝", "工序 点蜡·浸染·冰纹"],
-      why: "蜡染最动人的是“防不住”的裂——蜡一裂，靛就渗进去，成了独一无二的冰纹。这份意外，正好是代码最擅长造的随机。",
+      key: "popup", scrim: "rgba(20,16,12,.76)", no: "10", cn: "立体书", en: "POP-UP BOOK",
+      line1: "灯下翻开绘本，纸一层层立起来。",
+      line2: "镜头钻进纸页，它就站在那个世界里。",
+      tags: ["材质 卡纸·硬壳绘本", "工序 折页·插卡"],
+      why: "立体书全靠“层”：每层纸往右下投一道硬影，叠起来就有了纵深。算法上就是同一张剪影复制几份、错开几像素、投影不做模糊。",
       font: HEI,
-      tx: { main: "#f2ecdc", sub: "#a8bcd4", accent: "#8fb6d8" },
-      pos: { cx: 944, cy: 360, size: 660 },
+      tx: { main: "#f2e9d4", sub: "#b6a98c", accent: "#e0a35c" },
+      pos: { cx: 940, cy: 330, size: 700 },
 
       build: function (sp) {
         var sz = PLATE, S = sp.S, c = off(sz, sz), x = C(c);
-        /* 靛蓝只有几阶：防染白、浅靛、中靛、深靛 */
-        var lv = [[246, 240, 224], [162, 188, 212], [54, 92, 140], [18, 40, 74]];
-        var img = x.createImageData(sz, sz), d = img.data;
-        for (var py = 0; py < sz; py++) {
-          var sy = clamp(py / sz * S, 0, S - 1);
-          for (var px = 0; px < sz; px++) {
-            var sx = clamp(px / sz * S, 0, S - 1);
-            var a = alphaAt(sp, sx, sy); if (a < 60) continue;
-            var l = lumAt(sp, sx, sy);
-            var col = lv[l > 0.72 ? 0 : (l > 0.48 ? 1 : (l > 0.24 ? 2 : 3))];
-            var o = (py * sz + px) * 4;
-            d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = a;
-          }
-        }
-        x.putImageData(img, 0, 0);
-        /* 冰纹 */
-        x.globalCompositeOperation = "source-atop";
-        var r = mulberry(811);
-        x.lineCap = "round";
-        for (var i = 0; i < 92; i++) {
-          var px = r() * sz, py = r() * sz, a = r() * 6.2832;
-          x.strokeStyle = "rgba(12,28,54," + (0.35 + r() * 0.45) + ")";
-          x.lineWidth = 1.2 + r() * 2.6;
-          x.beginPath(); x.moveTo(px, py);
-          for (var k = 0; k < 8; k++) {
-            a += (r() - .5) * 1.15;
-            px += Math.cos(a) * (12 + r() * 28);
-            py += Math.sin(a) * (12 + r() * 28);
-            x.lineTo(px, py);
-          }
-          x.stroke();
-        }
-        x.globalCompositeOperation = "source-over";
-        return { plate: c };
-      },
-
-      bg: function (x) {
-        x.fillStyle = "#16253e"; x.fillRect(0, 0, W, H);
-        var g = x.createRadialGradient(W * .72, H * .34, 40, W * .72, H * .34, W * .78);
-        g.addColorStop(0, "rgba(58,86,124,.55)"); g.addColorStop(.55, "rgba(20,34,56,.5)"); g.addColorStop(1, "rgba(6,11,20,.95)");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-        x.globalCompositeOperation = "overlay"; x.globalAlpha = .45;
-        x.drawImage(fiber(), 0, 0, W, H);
-        x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
-      },
-
-      art: function (x, p, pl) {
-        var k = easeOut(seg(p, 0.03, 0.68));
-        x.drawImage(masked(pl.plate, maskRight(k)), 620, 40, 660, 660);
-      },
-
-      fx: function (x, p, t) {
-        /* 布面起伏的柔光 */
-        var g = x.createLinearGradient(0, 0, W, H);
-        g.addColorStop(0, "rgba(150,190,240,.10)");
-        g.addColorStop(.5, "rgba(0,0,0,0)");
-        g.addColorStop(1, "rgba(0,0,0,.18)");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-      }
-    },
-
-    /* ---------- 16 青花 ---------- */
-    {
-      key: "cobalt", scrim: "rgba(246,247,244,.88)", no: "16", cn: "青花", en: "BLUE & WHITE",
-      line1: "一笔钴料落在白胎上，浓淡全靠手。",
-      line2: "罩一层釉，一千三百度，蓝就定住了。",
-      tags: ["材质 高岭土·钴料", "工序 绘青·施釉·高温"],
-      why: "青花只有一种颜色，浓淡全靠“分水”。所以它最适合用明度直接换钴色——从留白到深蓝，一件器物就是一幅单色画。",
-      font: SERIF,
-      tx: { main: "#1c3358", sub: "#4a648c", accent: "#2c56a0" },
-      pos: { cx: 944, cy: 360, size: 640 },
-
-      build: function (sp) {
-        var sz = PLATE, S = sp.S, c = off(sz, sz), x = C(c);
-        var img = x.createImageData(sz, sz), d = img.data;
-        for (var py = 0; py < sz; py++) {
-          var sy = clamp(py / sz * S, 0, S - 1);
-          for (var px = 0; px < sz; px++) {
-            var sx = clamp(px / sz * S, 0, S - 1);
-            var a = alphaAt(sp, sx, sy); if (a < 60) continue;
-            var l = lumAt(sp, sx, sy);
-            var k = Math.pow(1 - l, 0.92);
-            var o = (py * sz + px) * 4;
-            d[o] = 246 - 200 * k;
-            d[o + 1] = 248 - 168 * k;
-            d[o + 2] = 244 - 96 * k;
-            d[o + 3] = a;
-          }
-        }
-        x.putImageData(img, 0, 0);
-        /* 釉面开片 */
-        x.globalCompositeOperation = "source-atop";
-        var r = mulberry(853);
-        for (var i = 0; i < 22; i++) {
-          var px2 = r() * sz, py2 = r() * sz, a2 = r() * 6.2832;
-          x.strokeStyle = "rgba(90,110,150,.16)";
-          x.lineWidth = .7;
-          x.beginPath(); x.moveTo(px2, py2);
-          for (var k2 = 0; k2 < 7; k2++) {
-            a2 += (r() - .5) * 1.3;
-            px2 += Math.cos(a2) * (18 + r() * 40);
-            py2 += Math.sin(a2) * (18 + r() * 40);
-            x.lineTo(px2, py2);
-          }
-          x.stroke();
-        }
-        /* 瓷面反光 */
-        var g = x.createLinearGradient(0, 0, sz * .8, sz);
-        g.addColorStop(0, "rgba(255,255,255,.35)");
-        g.addColorStop(.38, "rgba(255,255,255,0)");
-        g.addColorStop(1, "rgba(120,140,170,.12)");
-        x.fillStyle = g; x.fillRect(0, 0, sz, sz);
-        x.globalCompositeOperation = "source-over";
-        return { plate: c };
-      },
-
-      bg: function (x) {
-        x.fillStyle = "#f4f6f3"; x.fillRect(0, 0, W, H);
-        var g = x.createRadialGradient(W * .52, H * .3, 60, W * .52, H * .3, W * .8);
-        g.addColorStop(0, "rgba(255,255,255,.95)"); g.addColorStop(1, "rgba(198,208,214,.6)");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-        /* 回青纹：底下一圈缠枝，压住大面 */
-        x.strokeStyle = "rgba(44,86,160,.13)"; x.lineWidth = 2;
-        for (var i = 0; i < 26; i++) {
-          x.beginPath();
-          var px = i * (W / 26);
-          x.arc(px, H * 0.92, 46, Math.PI, 0);
-          x.stroke();
-        }
-      },
-
-      art: function (x, p, pl) {
-        var k = seg(p, 0.03, 0.64);
-        x.drawImage(masked(pl.plate, maskDown(k, true)), 636, 66, 640, 640);
-        /* 笔尖 */
-        if (k > 0 && k < 0.99) {
-          var e = easeOut(k);
-          var py = 66 + e * 640;
+        var i, L;
+        /* 最底：一道硬影，纸立起来压出来的，不做模糊 */
+        x.save();
+        x.globalAlpha = .30;
+        x.drawImage(tint(sp.sil, "#0c1210"), 22, 26, sz, sz);
+        x.restore();
+        /* 后两层：深一点的绿卡纸，错开，越后越偏左上 */
+        var LY = [[-54, -42, "#17312b", .95], [-30, -23, "#26503f", .95]];
+        for (i = 0; i < LY.length; i++) {
+          L = LY[i];
           x.save();
-          x.translate(944 + Math.sin(p * 6) * 40, py);
-          x.fillStyle = "#2c56a0";
-          x.beginPath(); x.ellipse(0, 0, 5, 16, 0.5, 0, 6.2832); x.fill();
+          x.globalAlpha = L[3];
+          x.drawImage(tint(sp.sil, L[2]), L[0], L[1], sz, sz);
+          x.restore();
+          /* 每层自己的落影，硬边 */
+          x.save();
+          x.globalAlpha = .16;
+          x.drawImage(tint(sp.sil, "#0a0f0d"), L[0] + 10, L[1] + 12, sz, sz);
           x.restore();
         }
-      },
-
-      fx: function (x, p, t) {
-        var g = x.createLinearGradient(0, 0, W * .5, H);
-        g.addColorStop(0, "rgba(255,255,255,.14)");
-        g.addColorStop(.5, "rgba(255,255,255,0)");
-        x.fillStyle = g; x.fillRect(0, 0, W, H);
-      }
-    },
-
-    /* ---------- 17 金缮 ---------- */
-    {
-      key: "kintsugi", scrim: "rgba(16,12,10,.80)", no: "17", cn: "金缮", en: "KINTSUGI",
-      line1: "碎了不藏，用漆粘回去，再敷一层金。",
-      line2: "裂纹成了它最好看的那几笔。",
-      tags: ["材质 生漆·金粉", "工序 补缺·描金"],
-      why: "金缮不修“旧”，修“经历”。裂缝被描成金线，等于把残缺写进器物的一生——这是整站最想说的那句话。",
-      font: KAI,
-      tx: { main: "#f4e2be", sub: "#bfa78a", accent: "#e8b96a" },
-      pos: { cx: 944, cy: 360, size: 660 },
-
-      build: function (sp) {
-        var sz = PLATE, c = off(sz, sz), x = C(c);
-        x.drawImage(sp.sil, 0, 0, sz, sz);
-        x.globalCompositeOperation = "source-in";
-        var g = x.createLinearGradient(0, 0, sz, sz);
-        g.addColorStop(0, "#2b211a"); g.addColorStop(.55, "#191310"); g.addColorStop(1, "#33261d");
-        x.fillStyle = g; x.fillRect(0, 0, sz, sz);
-        x.globalCompositeOperation = "source-atop";
-        x.globalAlpha = .20;
+        /* 米白卡纸边：贴在卡纸上剪下来的，一定有一圈纸边 */
+        x.drawImage(tint(sp.sil, "#f4ead2"), -4, -4, sz, sz);
+        x.save();
+        x.globalAlpha = .22;
+        x.drawImage(tint(sp.sil, "#8a7a5c"), 2, 3, sz, sz);
+        x.restore();
+        /* 主体 */
         x.drawImage(sp.art, 0, 0, sz, sz);
-        x.globalAlpha = 1;
-        /* 金线裂缝 */
-        var r = mulberry(919);
-        x.lineCap = "round"; x.lineJoin = "round";
-        for (var i = 0; i < 7; i++) {
-          var px = r() * sz, py = r() * sz, a = r() * 6.2832;
-          var wid = 1.6 + r() * 2.4;
-          x.strokeStyle = "rgba(216,164,72,.92)";
-          x.lineWidth = wid;
-          x.beginPath(); x.moveTo(px, py);
-          for (var k = 0; k < 11; k++) {
-            a += (r() - .5) * .95;
-            px += Math.cos(a) * (16 + r() * 30);
-            py += Math.sin(a) * (16 + r() * 30);
-            x.lineTo(px, py);
-          }
-          x.stroke();
-          /* 再描一道极细的亮边，才有"金"的厚度 */
-          x.strokeStyle = "rgba(255,236,186,.75)";
-          x.lineWidth = Math.max(.6, wid * .34);
-          x.stroke();
-        }
-        x.globalCompositeOperation = "source-over";
+        /* 纸上印的：纤维 + 一点暖光 */
+        x.globalCompositeOperation = "source-atop";
+        x.globalAlpha = .24; x.drawImage(fiber(), 0, 0, sz, sz);
+        x.globalAlpha = .12; x.fillStyle = "#d8a462"; x.fillRect(0, 0, sz, sz);
+        x.globalAlpha = .18;
+        var gg = x.createLinearGradient(0, 0, sz * .8, sz);
+        gg.addColorStop(0, "rgba(255,240,208,1)"); gg.addColorStop(.5, "rgba(255,240,208,0)");
+        x.fillStyle = gg; x.fillRect(0, 0, sz, sz);
+        x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
         return { plate: c };
       },
 
       bg: function (x) {
-        x.fillStyle = "#120e0b"; x.fillRect(0, 0, W, H);
-        var g = x.createRadialGradient(W * .76, H * .3, 30, W * .76, H * .3, W * .72);
-        g.addColorStop(0, "rgba(96,68,36,.5)"); g.addColorStop(.5, "rgba(32,22,14,.5)"); g.addColorStop(1, "rgba(4,3,2,.96)");
+        var g = x.createLinearGradient(0, 0, 0, H);
+        g.addColorStop(0, "#211c15"); g.addColorStop(.62, "#120f0b"); g.addColorStop(1, "#070605");
         x.fillStyle = g; x.fillRect(0, 0, W, H);
-        /* 木纹桌面 */
-        var r = mulberry(929);
-        x.globalAlpha = .10;
-        for (var i = 0; i < 40; i++) {
-          x.strokeStyle = "#8a6438"; x.lineWidth = .6 + r() * 2;
-          var y = r() * H;
-          x.beginPath(); x.moveTo(0, y);
-          x.bezierCurveTo(W * .3, y + (r() - .5) * 30, W * .7, y + (r() - .5) * 30, W, y + (r() - .5) * 20);
-          x.stroke();
-        }
-        x.globalAlpha = 1;
+        /* 摊开的书：两页，中间是书脊的凹 */
+        var px = 330, py = 512, pw = 1010, ph = 232;
+        x.save();
+        x.beginPath();
+        x.moveTo(px, py + 16);
+        x.quadraticCurveTo(px + pw * .5, py - 26, px + pw, py + 16);
+        x.lineTo(px + pw - 6, py + ph);
+        x.quadraticCurveTo(px + pw * .5, py + ph + 26, px + 6, py + ph);
+        x.closePath();
+        var pg = x.createLinearGradient(px, py, px, py + ph + 30);
+        pg.addColorStop(0, "#efe3c9"); pg.addColorStop(.55, "#e3d4b6"); pg.addColorStop(1, "#c9b995");
+        x.fillStyle = pg; x.fill();
+        /* 书脊阴影 */
+        x.clip();
+        var sg = x.createLinearGradient(px + pw * .5 - 70, 0, px + pw * .5 + 70, 0);
+        sg.addColorStop(0, "rgba(90,74,50,0)");
+        sg.addColorStop(.5, "rgba(74,60,40,.42)");
+        sg.addColorStop(1, "rgba(90,74,50,0)");
+        x.fillStyle = sg; x.fillRect(px + pw * .5 - 70, py, 140, ph + 30);
+        /* 纸纤维 */
+        x.globalCompositeOperation = "overlay"; x.globalAlpha = .35;
+        x.drawImage(fiber(), px, py, pw, ph);
+        x.globalAlpha = 1; x.globalCompositeOperation = "source-over";
+        x.restore();
+        /* 台灯暖光 */
+        var lg = x.createRadialGradient(W * .30, H * .06, 40, W * .30, H * .06, W * .95);
+        lg.addColorStop(0, "rgba(255,214,150,.30)");
+        lg.addColorStop(.42, "rgba(180,140,90,.10)");
+        lg.addColorStop(1, "rgba(0,0,0,.55)");
+        x.fillStyle = lg; x.fillRect(0, 0, W, H);
       },
 
       art: function (x, p, pl) {
-        var k = easeOut(seg(p, 0.03, 0.66));
-        x.drawImage(masked(pl.plate, maskRight(k)), 620, 40, 660, 660);
+        var k = easeOut(seg(p, 0.03, 0.60));
+        var cx = 950, base = 690;
+        /* 从压扁到立起来：纸片立起的动作就是纵向拉伸 */
+        var sy = 0.58 + 0.42 * k;
+        x.save();
+        x.translate(cx, base);
+        x.scale(1, sy);
+        x.translate(-cx, -base);
+        x.globalAlpha = .18 + .82 * k;
+        x.drawImage(pl.plate, 620, 40, 660, 660);
+        x.restore();
+        x.globalAlpha = 1;
+        /* 立起来时纸片在书页上投的那道长影 */
+        if (k < 0.99) {
+          x.save();
+          x.globalAlpha = .18 * (1 - k);
+          x.fillStyle = "#3a2f20";
+          x.beginPath();
+          x.ellipse(cx, base + 6, 250 + 40 * (1 - k), 26, 0, 0, 6.2832);
+          x.fill();
+          x.restore();
+          x.globalAlpha = 1;
+        }
       },
 
       fx: function (x, p, t) {
-        /* 金线的呼吸光 */
-        var k = seg(p, 0.45, 0.95);
-        if (k > 0 && k < 1) {
-          x.save();
-          x.beginPath(); x.rect(620, 40, 660, 660); x.clip();
-          x.globalCompositeOperation = "lighter";
-          var cx = 620 - 260 + easeOut(k) * 1200;
-          var g = x.createLinearGradient(cx - 120, 0, cx + 120, 0);
-          g.addColorStop(0, "rgba(255,226,160,0)");
-          g.addColorStop(.5, "rgba(255,234,180,.22)");
-          g.addColorStop(1, "rgba(255,226,160,0)");
-          x.fillStyle = g; x.fillRect(480, 0, 900, H);
-          x.restore();
+        var r = mulberry(8821);
+        x.globalAlpha = .09;
+        for (var i = 0; i < 26; i++) {
+          var px = (r() * W + t * (4 + r() * 8)) % W;
+          var py = ((r() * H + t * (6 + r() * 12)) % H);
+          x.fillStyle = "#ffe6b8";
+          x.beginPath(); x.arc(px, py, .7 + r() * 1.6, 0, 6.2832); x.fill();
         }
+        x.globalAlpha = 1;
       }
     }
   ];
 
-  /* ---------------- 积木砖块 ---------------- */
-  function drawBrick(x, px, py, w, col, k) {
-    var pad = w * 0.055, s = w - pad * 2;
-    x.save();
-    /* 落影 */
-    x.fillStyle = "rgba(6,12,30,.28)";
-    rr(x, px + pad, py + pad + w * 0.08, s, s, w * 0.17); x.fill();
-    /* 主体 */
-    var g = x.createLinearGradient(px, py, px, py + w);
-    g.addColorStop(0, shade(col, .22)); g.addColorStop(.55, rgb(col)); g.addColorStop(1, shade(col, -.24));
-    x.fillStyle = g;
-    rr(x, px + pad, py + pad, s, s, w * 0.17); x.fill();
-    /* 上缘高光 */
-    x.strokeStyle = "rgba(255,255,255,.42)"; x.lineWidth = Math.max(1, w * .05);
-    x.beginPath(); x.moveTo(px + pad + s * .18, py + pad + s * .12); x.lineTo(px + pad + s * .82, py + pad + s * .12); x.stroke();
-    /* 凸点 */
-    var cr = s * 0.19, cx = px + w / 2, cy = py + w / 2;
-    var g2 = x.createRadialGradient(cx - cr * .35, cy - cr * .45, cr * .1, cx, cy, cr);
-    g2.addColorStop(0, shade(col, .45)); g2.addColorStop(.7, shade(col, .08)); g2.addColorStop(1, shade(col, -.18));
-    x.fillStyle = g2;
-    x.beginPath(); x.arc(cx, cy, cr, 0, 6.2832); x.fill();
-    x.strokeStyle = "rgba(0,0,0,.18)"; x.lineWidth = Math.max(1, w * .025); x.stroke();
-    x.restore();
+  /* 色相/明度互转：彩窗按明暗调色相要用 */
+  function rgb2hsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    var h = 0, s2 = 0, l = (mx + mn) / 2;
+    if (d > 1e-6) {
+      s2 = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+      if (mx === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+      else if (mx === g) h = ((b - r) / d + 2) / 6;
+      else h = ((r - g) / d + 4) / 6;
+    }
+    return [h, s2, l];
+  }
+  function hsl2rgb(h, s2, l) {
+    h = ((h % 1) + 1) % 1;
+    var c = (1 - Math.abs(2 * l - 1)) * s2;
+    var x2 = c * (1 - Math.abs((h * 6) % 2 - 1));
+    var m = l - c / 2, r = 0, g = 0, b = 0;
+    var hi = Math.floor(h * 6) % 6;
+    if (hi === 0) { r = c; g = x2; }
+    else if (hi === 1) { r = x2; g = c; }
+    else if (hi === 2) { g = c; b = x2; }
+    else if (hi === 3) { g = x2; b = c; }
+    else if (hi === 4) { r = x2; b = c; }
+    else { r = c; b = x2; }
+    return [clamp((r + m) * 255, 0, 255) | 0, clamp((g + m) * 255, 0, 255) | 0, clamp((b + m) * 255, 0, 255) | 0];
   }
 
-  /* ---------------- 文字层（十一套共用） ---------------- */
+  /* 拱窗路径：彩窗要它裁边 */
+  function archPath(x, px, py, w, h) {
+    var r = w / 2;
+    x.beginPath();
+    x.moveTo(px, py + h);
+    x.lineTo(px, py + r);
+    x.arc(px + r, py + r, r, Math.PI, 0);
+    x.lineTo(px + w, py + h);
+    x.closePath();
+  }
+
+  /* ---------------- 文字层（十套共用） ---------------- */
   function typeBlock(x, st, p, sm) {
     var L = sm ? {
       brand: 17, kick: 21, kGap: 4.2, title: 108, line: 27, lineGap: 34, tag: 19,
@@ -2692,7 +2194,7 @@
     return '<div class="sd-wrap">' +
       '<header class="sd-head">' +
         '<div class="sd-kicker">影棚 · STUDIO</div>' +
-        '<h1 class="sd-title">一件文物，十七道工艺</h1>' +
+        '<h1 class="sd-title">一件文物，十道工艺</h1>' +
         '<p class="sd-lead">挑一个精灵，选一道工序——<b>每一帧都由代码现算</b>，五秒成片，可以录下来带走。</p>' +
       '</header>' +
 
@@ -2724,7 +2226,7 @@
       '<section class="sd-how">' +
         '<h3>它为什么不卡</h3>' +
         '<p>换精灵只换一张“版”，换工艺只换一套算法。重活（像素扫描、网点、笔触、砖块）在选中的那一刻算一次并缓存，' +
-        '之后每帧只做“贴版 + 生长 + 光扫 + 颗粒”，所以 74 件文物 × 17 道工艺都是现算的，站里不存一个视频文件。</p>' +
+        '之后每帧只做“贴版 + 生长 + 光扫 + 颗粒”，所以 74 件文物 × 10 道工艺都是现算的，站里不存一个视频文件。</p>' +
         '<p class="sd-dim">同样的做法可以换到任意画面：片头、章节卡、海报。它是“程序化视频”的最小可玩版本。</p>' +
       '</section>' +
 

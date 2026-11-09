@@ -1,6 +1,6 @@
 /* ============================================================
    AI 微电影 · 六种工艺，一件文物
-   选一件好画的精灵 → 从 17 种动态工艺里选 6 种 →
+   选一件好画的精灵 → 从 10 种动态工艺里选 6 种 →
    连成一部带旁白的短片：每段先出一张统一标识卡（NO.xx / 工艺名 /
    两行说明 / 题材·工序），再放这件工艺真的在动的那 5 秒。
    全部由影棚的渲染器逐帧画出来，站里不存一个视频文件。
@@ -76,7 +76,7 @@
       '<header class="fm-head">' +
         '<div class="fm-kick">AI 微电影 · MICRO FILM</div>' +
         '<h2>六种工艺，一件文物</h2>' +
-        '<p>挑一件好画的精灵，再从 17 种动态工艺里选 6 种。点开始放映，它会自己演一部带旁白的短片 —— ' +
+        '<p>挑一件好画的精灵，再从 10 种动态工艺里选 6 种。点开始放映，它会自己演一部带旁白的短片 —— ' +
           '每一段都从一张统一标识卡起头，接着是这件工艺真的在动的 5 秒。</p>' +
       '</header>' +
 
@@ -255,10 +255,9 @@
       var i = Math.floor(Math.random() * L.length);
       var k = L[i].key;
       L.splice(i, 1);
-      var fam = k === "chalk" || k === "sand" ? "a" : (k === "ink" || k === "rubbing" ? "b" :
-                (k === "oil" || k === "foil" || k === "brick" ? "c" :
-                (k === "riso" || k === "crayon" || k === "papercut" ? "d" :
-                (k === "stitch" || k === "cloisonne" || k === "cobalt" ? "e" : "f"))));
+      var fam = k === "chalk" || k === "sand" || k === "stained" || k === "foil" ? "a" :
+                (k === "wood" || k === "crayon" || k === "riso" ? "b" :
+                (k === "stitch" || k === "popup" ? "c" : "d"));
       if (used[fam] && out.length < PICK - 1) continue;
       used[fam] = 1;
       out.push(k);
