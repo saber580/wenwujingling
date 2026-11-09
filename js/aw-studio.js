@@ -268,6 +268,85 @@
   }
 
   /* 摩尔邻域追踪：沿二值剪影走一圈，返回扁平的 [x,y,...] */
+  /* 亮度等值线：marching squares 出小线段，再按端点接成折线。
+     照片逐点提边缘只会得到碎屑；把明暗糊平之后取等高线，才有
+     "顺着形体走的一整笔"。返回若干条 G 空间折线。 */
+  function isoCurves(f, G, lv, data, S) {
+    var segs = [];
+    function ip(a, b) { var d = b - a; return Math.abs(d) < 1e-6 ? .5 : (lv - a) / d; }
+    function inside(x, y) {
+      var qx = clamp(Math.round(x * 2), 0, S - 1), qy = clamp(Math.round(y * 2), 0, S - 1);
+      return data[(qy * S + qx) * 4 + 3] > 175;
+    }
+    for (var y = 0; y < G - 1; y++) {
+      for (var x = 0; x < G - 1; x++) {
+        var a = f[y * G + x], b = f[y * G + x + 1], c = f[(y + 1) * G + x + 1], d = f[(y + 1) * G + x];
+        var id = (a > lv ? 8 : 0) | (b > lv ? 4 : 0) | (c > lv ? 2 : 0) | (d > lv ? 1 : 0);
+        if (id === 0 || id === 15) continue;
+        var Tx = x + ip(a, b), Ty = y;
+        var Rx = x + 1, Ry = y + ip(b, c);
+        var Bx = x + ip(d, c), By = y + 1;
+        var Lx = x, Ly = y + ip(a, d);
+        function add(x1, y1, x2, y2) {
+          if (!inside(x1, y1) || !inside(x2, y2)) return;
+          segs.push(x1, y1, x2, y2);
+        }
+        if (id === 1 || id === 14) add(Lx, Ly, Bx, By);
+        else if (id === 2 || id === 13) add(Bx, By, Rx, Ry);
+        else if (id === 3 || id === 12) add(Lx, Ly, Rx, Ry);
+        else if (id === 4 || id === 11) add(Tx, Ty, Rx, Ry);
+        else if (id === 6 || id === 9) add(Tx, Ty, Bx, By);
+        else if (id === 7 || id === 8) add(Tx, Ty, Lx, Ly);
+        else if (id === 5) { add(Tx, Ty, Rx, Ry); add(Lx, Ly, Bx, By); }
+        else if (id === 10) { add(Tx, Ty, Lx, Ly); add(Bx, By, Rx, Ry); }
+      }
+    }
+    var n = segs.length / 4;
+    if (!n) return [];
+    var kf = function (x, y) { return (Math.round(x * 8) + 20000) * 90000 + (Math.round(y * 8) + 20000); };
+    var ka = new Array(n), kb = new Array(n), map = {};
+    for (var i = 0; i < n; i++) {
+      var o = i * 4;
+      ka[i] = kf(segs[o], segs[o + 1]);
+      kb[i] = kf(segs[o + 2], segs[o + 3]);
+      (map[ka[i]] || (map[ka[i]] = [])).push(i);
+      (map[kb[i]] || (map[kb[i]] = [])).push(i);
+    }
+    var used = new Uint8Array(n), out = [];
+    function nextAt(k) {
+      var L = map[k];
+      if (!L) return -1;
+      for (var i = 0; i < L.length; i++) if (!used[L[i]]) return L[i];
+      return -1;
+    }
+    for (var i0 = 0; i0 < n; i0++) {
+      if (used[i0]) continue;
+      used[i0] = 1;
+      var pts = [segs[i0 * 4], segs[i0 * 4 + 1], segs[i0 * 4 + 2], segs[i0 * 4 + 3]];
+      var cur = kb[i0], g1 = 0;
+      while (g1++ < 5000) {
+        var nx = nextAt(cur);
+        if (nx < 0) break;
+        used[nx] = 1;
+        if (ka[nx] === cur) { pts.push(segs[nx * 4 + 2], segs[nx * 4 + 3]); cur = kb[nx]; }
+        else { pts.push(segs[nx * 4], segs[nx * 4 + 1]); cur = ka[nx]; }
+      }
+      var front = [], cur2 = ka[i0], g2 = 0;
+      while (g2++ < 5000) {
+        var nx2 = nextAt(cur2);
+        if (nx2 < 0) break;
+        used[nx2] = 1;
+        if (kb[nx2] === cur2) { front.push(segs[nx2 * 4], segs[nx2 * 4 + 1]); cur2 = ka[nx2]; }
+        else { front.push(segs[nx2 * 4 + 2], segs[nx2 * 4 + 3]); cur2 = kb[nx2]; }
+      }
+      var all = [];
+      for (var q = front.length - 2; q >= 0; q -= 2) all.push(front[q], front[q + 1]);
+      for (var q2 = 0; q2 < pts.length; q2++) all.push(pts[q2]);
+      if (all.length >= 8) out.push(all);
+    }
+    return out;
+  }
+
   function traceEdge(mask, S) {
     var start = -1;
     for (var i = 0; i < S * S; i++) if (mask[i]) { start = i; break; }
@@ -350,8 +429,9 @@
           ex = Q[j - 2] + dvx * f; ey = Q[j - 1] + dvy * f;
           ac = av; fin = true;
         } else ac += sg;
-        var jx = (_h2(m * 3.7 + bkey, j) - .5) * 1.2;
-        var jy = (_h2(m * 5.1 + bkey, j + 1) - .5) * 1.2;
+        var jb = j >> 3;                    /* 低频手抖：每 4 个点才换一次 */
+        var jx = (_h2(m * 3.7 + bkey, jb) - .5) * 1.7;
+        var jy = (_h2(m * 5.1 + bkey, jb + 7) - .5) * 1.7;
         var X = ox + (ex + bx + jx) * sc, Y = oy + (ey + by + jy) * sc;
         if (_h2(m * 9.3 + 71, j) < .035) x.moveTo(X, Y);   /* 飞白断口 */
         else x.lineTo(X, Y);
@@ -375,6 +455,8 @@
     x.beginPath();
     for (var i = 0; i < pl.strokes.length; i++) {
       if (pl.soff[i] >= limit) break;
+      /* 底光只跟主笔走：几十根内部线各自带一圈 6px 光晕，叠起来就是灰雾 */
+      if (pl.swid && pl.swid[i] < 1.8) continue;
       var P = pl.strokes[i];
       var av0 = Math.min(pl.slen[i], (limit - pl.soff[i]) / pl.sw[i]);
       var bx0 = (_h2(i * 3.1 + bkey * 7.7, 11) - .5) * 2.4;
@@ -405,6 +487,32 @@
     /* ③ 草稿第二遍：同一笔错开一点、更淡 —— 手画的东西从来不是一稿 */
     chalkRun(x, pl, limit, ox + 1.9, oy - 1.2, sc, alpha * .20, 1.35, bkey + 5, false);
     return head;
+  }
+
+  /* 调子：粉笔侧锋顺着形体扫出来的明暗。分三档，越暗叠得越多。
+     frac 0..1 控制"扫了多少"，用来做逐笔出现的动画。 */
+  function chalkTone(x, pl, frac, ox, oy, sc, bkey) {
+    if (!pl.hatch || !pl.hatch.length || frac <= 0) return;
+    var hn = Math.floor(frac * pl.hatch.length / 5);
+    var lw = [1.25, 1.55, 1.9], al = [.12, .17, .23];
+    x.lineCap = "round";
+    for (var tier = 0; tier < 3; tier++) {
+      var any = false;
+      x.beginPath();
+      for (var hi = 0; hi < hn; hi++) {
+        var o5 = hi * 5;
+        if (pl.hatch[o5 + 4] !== tier) continue;
+        var jx = (_h2(hi * 2.7 + bkey, 5) - .5) * 2.4;
+        var jy = (_h2(hi * 4.1 + bkey, 9) - .5) * 2.4;
+        x.moveTo(ox + (pl.hatch[o5] + jx) * sc, oy + (pl.hatch[o5 + 1] + jy) * sc);
+        x.lineTo(ox + (pl.hatch[o5 + 2] + jx) * sc, oy + (pl.hatch[o5 + 3] + jy) * sc);
+        any = true;
+      }
+      if (!any) continue;
+      x.lineWidth = lw[tier] * sc;
+      x.strokeStyle = "rgba(234,243,229," + al[tier] + ")";
+      x.stroke();
+    }
   }
 
   var STYLES = [
@@ -1031,7 +1139,7 @@
         var raw = traceEdge(mask, S);
         var strokes = [], sw = [], sa = [], swid = [];
         if (raw && raw.length >= 24) {
-          var poly = rdp(raw, 1.4);
+          var poly = rdp(raw, 2.1);
           /* 从最高点起笔：现实里没人从脚开始画 */
           if (poly.length >= 8) {
             var n0 = poly.length / 2, top = 0;
@@ -1054,58 +1162,69 @@
           var a = sp.data[q + 3] / 255;
           return (sp.data[q] * .114 + sp.data[q + 1] * .587 + sp.data[q + 2] * .299) / 255 * a;
         }
-        var edge = new Uint8Array(S * S), ew = new Float32Array(S * S);
-        for (var y = 1; y < S - 1; y++) {
-          for (var x = 1; x < S - 1; x++) {
-            var gx = (lum2(x + 1, y - 1) + 2 * lum2(x + 1, y) + lum2(x + 1, y + 1)) - (lum2(x - 1, y - 1) + 2 * lum2(x - 1, y) + lum2(x - 1, y + 1));
-            var gy = (lum2(x - 1, y + 1) + 2 * lum2(x, y + 1) + lum2(x + 1, y + 1)) - (lum2(x - 1, y - 1) + 2 * lum2(x, y - 1) + lum2(x + 1, y - 1));
-            var g = Math.sqrt(gx * gx + gy * gy);
-            /* 阈值抬到 0.30：只要"结构性"的线（衣褶、灯罩棱、五官） */
-            if (g > 0.34) { edge[y * S + x] = 1; ew[y * S + x] = g; }
-          }
-        }
-        var vis = new Uint8Array(S * S), seeds = [];
-        for (var i2 = 0; i2 < S * S; i2++) if (edge[i2]) seeds.push(i2);
-        seeds.sort(function (a, b) { return ew[b] - ew[a]; });
-        if (seeds.length > 14000) seeds.length = 14000;
-        var inner = [];
-        for (var si = 0; si < seeds.length; si++) {
-          var s0 = seeds[si];
-          if (vis[s0]) continue;
-          var cx = s0 % S, cy = (s0 / S) | 0, pts = [cx, cy], dx = 0, dy = 0;
-          vis[s0] = 1;
-          for (var step = 0; step < 260; step++) {
-            var best = -1, bs = 99, bx = 0, by = 0;
-            for (var oy2 = -2; oy2 <= 2; oy2++) {
-              for (var ox2 = -2; ox2 <= 2; ox2++) {
-                if (!ox2 && !oy2) continue;
-                var nx = cx + ox2, ny = cy + oy2;
-                if (nx < 1 || ny < 1 || nx >= S - 1 || ny >= S - 1) continue;
-                var id = ny * S + nx;
-                if (!edge[id] || vis[id]) continue;
-                var d2 = ox2 * ox2 + oy2 * oy2;
-                var cont = (dx * ox2 + dy * oy2) / Math.sqrt(d2);
-                var sc2 = d2 - cont * 2.0 + (1 - ew[id]) * 3;
-                if (sc2 < bs) { bs = sc2; best = id; bx = ox2; by = oy2; }
+        /* ② 内部：亮度等值线。先把明暗糊平（照片的噪声全在这里被抹掉），
+           再取几道等高线 —— 出来的是顺着形体走的长曲线，不是碎渣。 */
+        var sm = new Float32Array(S * S);
+        for (var sy2 = 0; sy2 < S; sy2++) for (var sx2 = 0; sx2 < S; sx2++) sm[sy2 * S + sx2] = lum2(sx2, sy2);
+        for (var pass = 0; pass < 4; pass++) {
+          var tmp = new Float32Array(S * S);
+          for (var yy = 1; yy < S - 1; yy++) {
+            for (var xx = 1; xx < S - 1; xx++) {
+              var acc = 0;
+              for (var oy3 = -1; oy3 <= 1; oy3++) {
+                var row3 = (yy + oy3) * S + xx;
+                acc += sm[row3 - 1] + sm[row3] + sm[row3 + 1];
               }
+              tmp[yy * S + xx] = acc / 9;
             }
-            if (best < 0) break;
-            cx += bx; cy += by; vis[best] = 1;
-            pts.push(cx, cy);
-            var mm = Math.sqrt(bx * bx + by * by);
-            dx = bx / mm; dy = by / mm;
           }
-          if (pts.length < 150) continue;         /* 短于 75px 的碎屑不要：留白比细节重要 */
-          var pl2 = rdp(pts, 1.5);
-          if (pl2.length >= 12) inner.push(pl2);
+          sm = tmp;
         }
-        /* 从上往下落笔：先头顶、再脸、再衣摆 */
+        /* 四道线取在剪影内亮度的分位数上：深色青铜和浅色白瓷都合适 */
+        var hist = new Uint32Array(48), hcount = 0;
+        for (var i3 = 0; i3 < S * S; i3++) {
+          if (sp.data[i3 * 4 + 3] < 180) continue;
+          hist[clamp(sm[i3] * 47.999, 0, 47) | 0]++; hcount++;
+        }
+        var levels = [], accN = 0, want = [.34, .60, .80], wi = 0;
+        for (var bi = 0; bi < 48 && wi < want.length; bi++) {
+          accN += hist[bi];
+          if (accN >= hcount * want[wi]) { levels.push((bi + .5) / 48); wi++; }
+        }
+        var G = S >> 1;
+        var f2 = new Float32Array(G * G);
+        for (var gy = 0; gy < G; gy++) {
+          for (var gx2 = 0; gx2 < G; gx2++) {
+            f2[gy * G + gx2] = sm[clamp(gy * 2 + 1, 0, S - 1) * S + clamp(gx2 * 2 + 1, 0, S - 1)];
+          }
+        }
+        var inner = [];
+        for (var li = 0; li < levels.length; li++) {
+          var curves = isoCurves(f2, G, levels[li], sp.data, S);
+          for (var ci = 0; ci < curves.length; ci++) {
+            var cc = curves[ci], L3 = 0;
+            for (var k3 = 2; k3 < cc.length; k3 += 2) {
+              var ddx = (cc[k3] - cc[k3 - 2]) * 2, ddy = (cc[k3 + 1] - cc[k3 - 1]) * 2;
+              L3 += Math.sqrt(ddx * ddx + ddy * ddy);
+            }
+            if (L3 < 150) continue;                  /* 只留最长的几根：它们才是结构线 */
+            var sp2 = [];
+            for (var k4 = 0; k4 < cc.length; k4 += 2) sp2.push(cc[k4] * 2, cc[k4 + 1] * 2);
+            var sm2 = rdp(sp2, 2.0);
+            if (sm2.length >= 8) inner.push({ p: sm2, lv: li, len: L3 });
+          }
+        }
+        /* 从上往下落笔：跟人画画的顺序一致 */
         inner.sort(function (a, b) {
-          var ya = Math.min(a[1], a[3]), yb = Math.min(b[1], b[3]);
-          return ya - yb;
+          var ya = Math.min(a.p[1], a.p[3]), yb = Math.min(b.p[1], b.p[3]);
+          return Math.abs(ya - yb) > 26 ? ya - yb : a.lv - b.lv;
         });
-        if (inner.length > 14) inner.length = 14;   /* 留白：最多再补 14 笔 */
-        for (var q = 0; q < inner.length; q++) { strokes.push(inner[q]); sw.push(1.0); sa.push(.46); swid.push(1.7); }
+        if (inner.length > 10) inner.length = 10;
+        for (var q = 0; q < inner.length; q++) {
+          strokes.push(inner[q].p); sw.push(1.0);
+          sa.push(.52 + inner[q].lv * .09);
+          swid.push(1.2 + inner[q].lv * .12);
+        }
 
         /* ③ 计时：按"加权长度"分配时间，轮廓先走完 */
         var soff = [], slen = [], total = 0;
@@ -1119,30 +1238,86 @@
         }
         var pl = { strokes: strokes, soff: soff, slen: slen, sw: sw, sa: sa, swid: swid, total: total || 1 };
 
-        /* 暗部排线：只在影子里扫，越暗越密。画完线再补，才有"上了一层调子"的意思 */
-        var hatch = [];
-        var rh = mulberry(523);
-        for (var hy = 6; hy < S - 6; hy += 7) {
-          for (var hx = 6; hx < S - 6; hx += 7) {
-            var jx0 = (rh() - .5) * 5, jy0 = (rh() - .5) * 5;
-            var px0 = clamp(hx + jx0, 0, S - 1) | 0, py0 = clamp(hy + jy0, 0, S - 1) | 0;
-            if (sp.data[(py0 * S + px0) * 4 + 3] < 190) continue;
-            var hl = lum2(px0, py0);
-            if (hl > .42) continue;
-            /* 越暗越密：不是铺一张网点，是有的地方扫两笔、有的地方空着 */
-            if (rh() > Math.pow(1 - hl / .42, 1.25)) continue;
-            var len = 6 + rh() * 9;
-            var ang = -0.72 + (rh() - .5) * 0.34;      /* 角度也各不相同 */
-            var ca = Math.cos(ang), sa2 = Math.sin(ang);
-            hatch.push(hx + jx0 - ca * len * .5, hy + jy0 - sa2 * len * .5,
-                       hx + jx0 + ca * len * .5, hy + jy0 + sa2 * len * .5);
+        pl.hatch = [];
+
+        /* ⑤ 粉笔底子：立绘按亮度压成四档，再撒颗粒 —— 器物这才有体积，
+           不然只剩一条轮廓。切成横条，动画时一条条蹭上去。 */
+        var tone = off(sz, sz), ttx = C(tone);
+        ttx.drawImage(sp.art, 0, 0, sz, sz);
+        var td = ttx.getImageData(0, 0, sz, sz), tq = td.data;
+        var rh2 = mulberry(9071);
+        /* 黑板上的粉笔是"加白"：越亮的地方粉越多，暗部干脆留出黑板。
+           按暗部落粉会得到一张灰雾，像照片洗坏了。 */
+        var stepA = [.20, .34, .46, .58];
+        for (var ti = 0; ti < tq.length; ti += 4) {
+          var al0 = tq[ti + 3];
+          if (al0 < 24) { tq[ti + 3] = 0; continue; }
+          var l0 = (tq[ti] * .299 + tq[ti + 1] * .587 + tq[ti + 2] * .114) / 255 * (al0 / 255);
+          var st0 = l0 > .66 ? 3 : (l0 > .46 ? 2 : (l0 > .28 ? 1 : 0));
+          var a0 = stepA[st0] * (0.45 + rh2() * 0.95);
+          if (rh2() < .16) a0 *= .22;              /* 颗粒：粉笔压不实的地方就露底 */
+          tq[ti] = 238; tq[ti + 1] = 245; tq[ti + 2] = 233;
+          tq[ti + 3] = Math.min(255, a0 * 255) | 0;
+        }
+        ttx.putImageData(td, 0, 0);
+        var tsm = off(sz, sz), tsx = C(tsm);
+        if (tsx.filter !== undefined) tsx.filter = "blur(1.5px)";
+        tsx.drawImage(tone, 0, 0);
+        tsx.filter = "none";
+        /* 笔触纹理：顺着形体方向的粉笔痕。没有它，调子就是一坨雾。
+           调子乘上这层笔触，明暗才落在"一道一道实笔"上。 */
+        var tex = off(sz, sz), tex_x = C(tex);
+        var rt = mulberry(4417);
+        tex_x.lineCap = "round";
+        for (var ty2 = 4; ty2 < sz; ty2 += 8) {
+          for (var tx3 = 4; tx3 < sz; tx3 += 8) {
+            var sx3 = clamp((tx3 / sz) * S | 0, 0, S - 1), sy3 = clamp((ty2 / sz) * S | 0, 0, S - 1);
+            if (sp.data[(sy3 * S + sx3) * 4 + 3] < 180) continue;
+            /* 密度跟亮度走：亮面一笔挨一笔，暗面稀稀几道、直接露黑板。
+               等密度地铺一层，得到的是钢丝棉，不是画。 */
+            var lb = sm[sy3 * S + sx3];
+            if (rt() > .10 + .90 * Math.pow(clamp(lb, 0, 1), 1.25)) continue;
+            var gx3 = sm[sy3 * S + clamp(sx3 + 3, 0, S - 1)] - sm[sy3 * S + clamp(sx3 - 3, 0, S - 1)];
+            var gy3 = sm[clamp(sy3 + 3, 0, S - 1) * S + sx3] - sm[clamp(sy3 - 3, 0, S - 1) * S + sx3];
+            /* 形体方向 + 一条统一的手势方向，混一下：纯跟梯度会转成毛圈 */
+            var afl = Math.atan2(gy3, gx3) + 1.5708;
+            var aun = -0.62;
+            var an3 = afl * .55 + aun * .45 + (rt() - .5) * .30;
+            var ca3 = Math.cos(an3), sa3 = Math.sin(an3);
+            var ln3 = 12 + rt() * 20;
+            var ox3 = (rt() - .5) * 3.4, oy4 = (rt() - .5) * 3.4;
+            tex_x.beginPath();
+            tex_x.moveTo(tx3 + ox3 - ca3 * ln3 * .5, ty2 + oy4 - sa3 * ln3 * .5);
+            tex_x.lineTo(tx3 + ox3 + ca3 * ln3 * .5, ty2 + oy4 + sa3 * ln3 * .5);
+            tex_x.lineWidth = 1.9 + rt() * 2.0;
+            tex_x.strokeStyle = "rgba(255,255,255," + (.45 + rt() * .55).toFixed(3) + ")";
+            tex_x.stroke();
           }
         }
-        pl.hatch = hatch;
+        var toned = off(sz, sz), tdx = C(toned);
+        tdx.globalAlpha = .22; tdx.drawImage(tsm, 0, 0); tdx.globalAlpha = 1;
+        var toned2 = off(sz, sz), t2x = C(toned2);
+        t2x.drawImage(tsm, 0, 0);
+        t2x.globalCompositeOperation = "destination-in";
+        t2x.drawImage(tex, 0, 0);
+        t2x.globalCompositeOperation = "source-over";
+        tdx.globalAlpha = .92; tdx.drawImage(toned2, 0, 0); tdx.globalAlpha = 1;
+        var tsm2 = toned;
+        var STR = 10, SH = Math.ceil(sz / STR);
+        pl.tone = [];
+        for (var si2 = 0; si2 < STR; si2++) {
+          var hh = Math.min(SH, sz - si2 * SH);
+          var sc2 = off(sz, hh), scx = C(sc2);
+          scx.drawImage(tsm2, 0, si2 * SH, sz, hh, 0, 0, sz, hh);
+          pl.tone.push(sc2);
+        }
+        pl.toneH = SH;
 
         /* ④ 画完那一版烘好，最后一帧直接贴 */
         var fc = off(sz, sz), fx2 = C(fc);
         chalkDraw(fx2, pl, 1, 0, 0, sz / S, 1);
+        if (pl.tone) { fx2.globalAlpha = .96; fx2.drawImage(tsm2, 0, 0, sz, sz); fx2.globalAlpha = 1; }
+        chalkTone(fx2, pl, 1, 0, 0, sz / S, 0);
         var rr2 = mulberry(311);
         for (var m2 = 0; m2 < 2200; m2++) {
           fx2.globalAlpha = .04 + rr2() * .13;
@@ -1182,7 +1357,7 @@
       art: function (x, p, pl) {
         if (!pl) return;
         var ox = 650, oy = 66, sc = 588 / PLATE;
-        var k = seg(p, 0.02, 0.74);
+        var k = seg(p, 0.02, 0.64);
         if (k >= 0.999) {
           x.globalAlpha = .97;
           x.drawImage(pl.full, ox, oy, 588, 588);
@@ -1206,24 +1381,21 @@
             x.globalAlpha = 1;
           }
         }
-        /* 排线：暗部的调子，一条条扫上去 */
-        var hk = seg(p, 0.40, 0.80);
-        if (hk > 0 && pl.hatch && pl.hatch.length) {
-          var hn = Math.floor(hk * pl.hatch.length / 4);
-          var bkey2 = Math.floor((ST.t || 0) * 12);
-          x.beginPath();
-          for (var hi = 0; hi < hn; hi++) {
-            var o4 = hi * 4;
-            var jx4 = (_h2(hi * 2.7 + bkey2, 5) - .5) * 2.2;
-            var jy4 = (_h2(hi * 4.1 + bkey2, 9) - .5) * 2.2;
-            x.moveTo(ox + (pl.hatch[o4] + jx4) * sc, oy + (pl.hatch[o4 + 1] + jy4) * sc);
-            x.lineTo(ox + (pl.hatch[o4 + 2] + jx4) * sc, oy + (pl.hatch[o4 + 3] + jy4) * sc);
+        /* 粉笔底子：一条条蹭上去，跟手上真的在铺粉笔一个节奏 */
+        if (pl.tone && pl.tone.length) {
+          for (var bi2 = 0; bi2 < pl.tone.length; bi2++) {
+            var ap = seg(p, 0.24 + bi2 * 0.032, 0.24 + bi2 * 0.032 + 0.12);
+            if (ap <= 0) continue;
+            x.globalAlpha = ap * .95;
+            var dy2 = Math.round(oy + bi2 * pl.toneH * sc);
+            var dy3 = Math.round(oy + (bi2 + 1) * pl.toneH * sc);
+            x.drawImage(pl.tone[bi2], ox, dy2, 588, dy3 - dy2);
+            x.globalAlpha = 1;
           }
-          x.lineWidth = 1.5 * sc;
-          x.strokeStyle = "rgba(232,242,228,.17)";
-          x.lineCap = "round";
-          x.stroke();
         }
+        /* 调子：顺着形体一层层扫上去 —— 最后 1/3 的时间都花在这里 */
+        var hk = seg(p, 0.36, 0.88);
+        chalkTone(x, pl, hk, ox, oy, sc, Math.floor((ST.t || 0) * 12));
         /* 板书记号：文物纪年，像老师随手标的一行 */
         var a = seg(p, 0.64, 0.80);
         if (a > 0) {
@@ -2356,7 +2528,7 @@
     plateCache[key] = pl;
     /* 只留最近 6 个，手机内存吃紧 */
     var ks = Object.keys(plateCache);
-    if (ks.length > 6) { delete plateCache[ks[0]]; }
+    if (ks.length > 8) { delete plateCache[ks[0]]; }
     return pl;
   }
 
@@ -2648,8 +2820,149 @@
   window.STUDIO_STYLES = STYLES;
   /* 调试/验收用：把进度拨到第 t 秒，方便逐帧截图核对 */
   window.sdSeek = function (t) { ST.paused = true; ST.t = t; drawFrame(); };
+
+  /* 封面帧：版式对齐参考片的那一帧 —— 右上编号，中间大字工艺名，
+     下面两行说明，再一行"题材 / 工序"。p 0..1 控制逐字升起。 */
+  function drawCover(p) {
+    var st = ST.style || STYLES[0];
+    var cv = ST.cv; if (!cv) return;
+    var x = ST.ctx;
+    var tx = st.tx;
+    x.clearRect(0, 0, W, H);
+    st.bg(x);
+
+    /* 画好的那件，半透明压在左边，像黑板上擦剩的旧画 */
+    if (ST.plate && ST.plate.full) {
+      x.save();
+      x.globalAlpha = .13;
+      x.drawImage(ST.plate.full, 40, 96, 470, 470);
+      x.globalAlpha = .05;
+      x.drawImage(ST.plate.full, 52, 108, 470, 470);
+      x.restore();
+    }
+
+    /* 角标 */
+    x.textBaseline = "alphabetic";
+    x.globalAlpha = .5;
+    x.font = "600 13px " + HEI; x.fillStyle = tx.sub; x.textAlign = "left";
+    spaced(x, "文物精灵 · RELIC SOUL", 56, 52, 4.4);
+    x.globalAlpha = 1;
+
+    x.globalAlpha = .95;
+    x.font = "700 15px " + HEI; x.fillStyle = tx.accent; x.textAlign = "right";
+    var en = "NO. " + st.no + "  " + st.en;
+    spaced(x, en, W - 56 - spacedW(x, en, 6), 52, 6);
+    x.globalAlpha = 1;
+
+    /* 主标题：工艺名，逐字升起 */
+    var chars = (st.cn || "").split("");
+    x.font = "900 " + 150 + "px " + SERIF;
+    x.textAlign = "left";
+    var tw = 0, i;
+    for (i = 0; i < chars.length; i++) tw += x.measureText(chars[i]).width + 10;
+    var cxx = W * .5 - tw * .5 + 10;
+    for (i = 0; i < chars.length; i++) {
+      var a = seg(p, .02 + i * .055, .17 + i * .055);
+      if (a > 0) {
+        var e = easeOut(a);
+        x.save();
+        x.globalAlpha = e;
+        x.fillStyle = tx.main;
+        x.translate(cxx, 316 + (1 - e) * 26);
+        x.fillText(chars[i], 0, 0);
+        x.restore();
+      }
+      cxx += x.measureText(chars[i]).width + 10;
+    }
+
+    /* 标题下的一道粉笔线 */
+    var r = mulberry(77);
+    var la = seg(p, .14, .34);
+    if (la > 0) {
+      x.globalAlpha = la * .55;
+      x.strokeStyle = tx.accent; x.lineWidth = 1.4; x.lineCap = "round";
+      x.beginPath();
+      for (var k = 0; k <= 26; k++) {
+        var px = W * .5 - 210 + k * (420 / 26);
+        var py = 340 + Math.sin(k * 1.7) * 1.2 + (r() - .5) * 1.6;
+        if (k === 0) x.moveTo(px, py); else x.lineTo(px, py);
+      }
+      x.stroke();
+      x.globalAlpha = 1;
+    }
+
+    /* 两行说明 */
+    x.textAlign = "center";
+    x.font = "500 23px " + HEI; x.fillStyle = tx.sub;
+    var l1 = seg(p, .20, .44), l2 = seg(p, .28, .52);
+    if (l1 > 0) { x.globalAlpha = l1 * .92; x.fillText(st.line1, W * .5, 396); }
+    if (l2 > 0) { x.globalAlpha = l2 * .92; x.fillText(st.line2, W * .5, 432); }
+    x.globalAlpha = 1;
+
+    /* 题材 / 工序 */
+    var ta = seg(p, .40, .62);
+    if (ta > 0) {
+      x.globalAlpha = ta * .85;
+      x.font = "600 14px " + HEI; x.fillStyle = tx.accent;
+      var line = (st.tags || []).join("      ");
+      spaced(x, line, W * .5 - spacedW(x, line, 2.6) * .5, 486, 2.6);
+      x.globalAlpha = 1;
+    }
+
+    /* 文物是哪一件：一行小字，跟参考的"15 m"一样是板书式标注 */
+    var info = (window.SPIRITS && SPIRITS[ST.spiritId]) || {};
+    var ia = seg(p, .52, .72);
+    if (ia > 0 && info.name) {
+      x.globalAlpha = ia * .55;
+      x.font = "500 15px " + HEI; x.fillStyle = tx.sub;
+      var s2 = info.name + (info.era ? "　·　" + info.era : "");
+      spaced(x, s2, W * .5 - spacedW(x, s2, 1.6) * .5, 522, 1.6);
+      x.globalAlpha = 1;
+    }
+
+    filmFinish(x, st, 7);
+  }
+  window.sdSeekCover = function (t, dur) { ST.paused = true; drawCover(clamp(t / (dur || 1), 0, 1)); };
+
+  /* ---------- 微电影用的接口：把渲染器借给别的页面 ---------- */
+  function styleByKey(key) {
+    for (var i = 0; i < STYLES.length; i++) if (STYLES[i].key === key) return STYLES[i];
+    return null;
+  }
+  window.sdSpriteURL = function (id) { return spriteUrl(id); };
+  window.sdFilmAttach = function (cv) {
+    ST.cv = cv; ST.ctx = cv.getContext("2d");
+    ST.k = 1; ST.sm = false;
+    cv.width = W; cv.height = H;
+  };
+  /* 依次把 6 段工艺的"版"算出来（重活只做一次，之后每帧只贴版） */
+  window.sdFilmBuild = function (spiritId, keys, onStep, done) {
+    ST.spiritId = spiritId;
+    loadSpirit(spiritId, function (sp) {
+      ST.spirit = sp;
+      var i = 0;
+      (function step() {
+        if (i >= keys.length) { done && done(); return; }
+        var st = styleByKey(keys[i]);
+        if (st) plateFor(st, sp);
+        i++;
+        onStep && onStep(i, keys.length, keys[i - 1]);
+        setTimeout(step, 16);
+      })();
+    });
+  };
+  window.sdFilmUse = function (key) {
+    var st = styleByKey(key);
+    if (!st || !ST.spirit) return false;
+    ST.style = st;
+    ST.plate = plateFor(st, ST.spirit);
+    return true;
+  };
+  window.sdFilmCover = function (p) { drawCover(p); };
+  window.sdFilmArt = function (t) { ST.paused = true; ST.t = t; drawFrame(); };
+  window.sdCoverReady = function () { return !!(ST.plate && ST.plate.full); };
   window.sdResume = function () { ST.paused = false; ST.t0 = 0; ST.t = 0; };
-  window.__sd = { ST: ST, STYLES: STYLES, masked: masked, maskRight: maskRight, maskDown: maskDown, maskBlots: maskBlots, sobel: sobel, alphaAt: alphaAt, traceEdge: traceEdge, rdp: rdp, PLATE: PLATE };
+  window.__sd = { ST: ST, STYLES: STYLES, masked: masked, maskRight: maskRight, maskDown: maskDown, maskBlots: maskBlots, sobel: sobel, alphaAt: alphaAt, traceEdge: traceEdge, rdp: rdp, isoCurves: isoCurves, chalkDraw: chalkDraw, PLATE: PLATE };
   window.sdPlateURL = function () {
     var pl = ST.plate; if (!pl) return null;
     var c = pl.plate || (pl.layers && pl.layers[0]) || null;
