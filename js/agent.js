@@ -119,6 +119,10 @@
     if (/和|与|相比|哪个更|谁更|区别|不同/.test(s) && has("compare_relics")) {
       steps.push({ action: "查两件文物的预设对比", tool: "compare_relics" });
     }
+    /* 关系/多跳问题优先走知识图谱（「XX和XX什么关联」「同墓出土」） */
+    if (/关系|关联|同墓|同遗址|一起出土|同一墓|出土了哪些|出土了什么/.test(s) && has("graph_query")) {
+      steps.push({ action: "在文物关系图谱上做多跳推理", tool: "graph_query" });
+    }
     if (/工艺|怎么铸|怎么做|什么叫|是什么法|技法/.test(s) && has("lookup_craft")) {
       steps.push({ action: "查工艺词条", tool: "lookup_craft" });
     }
@@ -179,6 +183,7 @@
     }
     if (tool === "lookup_craft") return { name: s.replace(/[？?是什么呢怎么做怎么铸]/g, "").slice(0, 16) };
     if (tool === "check_misconception") return { name: s.slice(0, 20) };
+    if (tool === "graph_query") return { question: s };
     if (tool === "verify_citation") return { answer: s, refs: [] };
     return {};
   }

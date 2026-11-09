@@ -404,6 +404,35 @@
           note: "共收录 " + Object.keys(bag).length + " 件，本次列出 " + out.length + " 件"
         };
       }
+    },
+
+    {
+      name: "graph_query",
+      title: "文物关系图谱 · 多跳推理",
+      scope: "read",
+      description:
+        "在文物知识图谱上做多跳关系推理，回答纯检索答不了的问题：" +
+        "「这件鼎和那件簋什么关联」「同一墓葬还出土了哪些」「这件文物和谁同时代/同材质」。" +
+        "凡是问「XX 和 XX 什么关系 / 什么关联」「XX 同墓 / 同遗址出土了哪些」「XX墓出土了哪些文物」时用它。" +
+        "图谱关系包括：同墓出土、同遗址、同文化、同时代、同材质、同用途、同站收藏。",
+      inputSchema: {
+        type: "object",
+        properties: {
+          question: {
+            type: "string",
+            description: "用户的原始关系问题，例如「错金铜壶和温炉什么关系」「满城汉墓出土了哪些」"
+          }
+        },
+        required: ["question"]
+      },
+      run: function (a) {
+        var G = W.GRAPH || (typeof GRAPH !== "undefined" ? GRAPH : null);
+        if (!G) return { ok: false, error: "知识图谱未加载" };
+        var q = String(a.question || "").trim();
+        if (!q) return { ok: false, error: "question 不能为空" };
+        var r = G.query(q);
+        return { ok: true, data: r, note: "关系图谱查询完成（kind=" + r.kind + "）" };
+      }
     }
   ];
 

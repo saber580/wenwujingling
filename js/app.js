@@ -3445,7 +3445,17 @@ async function identFlow(dataURL) {
   const matches = identMatchSpirits(feats);
   const form = identForm(feats, matches);
   const pat = identPattern(feats.edge);
-  const html = identResultHTML(feats, pRank, sRank, matches, form, pat);
+  /* —— 端侧剪影识别(Hu 不变矩形状匹配,离线可用) —— */
+  let silhouette = null;
+  try {
+    if (window.OFFLINE_IDENT && typeof window.OFFLINE_IDENT.identify === "function") {
+      const sk = document.createElement("canvas");
+      sk.width = w0; sk.height = h0;
+      sk.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(orig), w0, h0), 0, 0);
+      silhouette = window.OFFLINE_IDENT.identify(sk);
+    }
+  } catch (e) { silhouette = null; }
+  const html = identResultHTML(feats, pRank, sRank, matches, form, pat, silhouette);
   IDENT.wk = wk; IDENT.up = up; IDENT.matches = matches;
   IDENT.ready = true; IDENT.busy = false;
   identShow(html);
@@ -4353,7 +4363,7 @@ function identPattern(edge) {
   if (edge < .09) return { level: "细密纹样", note: "中等密度纹饰,线条规整" };
   return { level: "繁缛华丽", note: "纹饰高密繁复,层次多" };
 }
-function identResultHTML(f, pRank, sRank, matches, form, pat) {
+function identResultHTML(f, pRank, sRank, matches, form, pat, silhouette) {
   const rel = rk => { const t = rk.slice(0, 3), sum = t.reduce((a, x) => a + x[2], 0) || 1; return Math.round(Math.max(55, Math.min(93, 52 + 90 * (t[0][2] / sum)))); };
   const pc = rel(pRank);
   const p1 = pRank[0];
@@ -4399,6 +4409,22 @@ function identResultHTML(f, pRank, sRank, matches, form, pat) {
     <div class="ident-match">
       <b>🎯 相近候选与档案(共 ${matches.length} 个 · 点开进精灵档案)</b>
       <div class="im-list">${mCards}</div>
+    </div>
+    ${silhouetteCardHTML(silhouette)}
+  `;
+}
+
+/* 端侧剪影识别卡片（Hu 不变矩 · 离线可用） */
+function silhouetteCardHTML(sil) {
+  if (!sil || !sil.ok || !sil.top || !sil.top.length) return "";
+  const rows = sil.top.map(t =>
+    `<div class="sil-row"><span class="sil-name">${t.name}</span><i><s style="width:${Math.round(t.score * 100)}%"></s></i><em>${Math.round(t.score * 100)}%</em></div>`
+  ).join("");
+  return `
+    <div class="ident-match ident-silhouette">
+      <b>🧩 端侧剪影识别 <span class="sil-badge">离线可用 · 不联网</span></b>
+      <p class="sil-desc">本机用 Hu 不变矩对文物剪影做形状匹配（旋转/缩放不敏感），${sil.templateCount ? "比对 " + sil.templateCount + " 件站内剪影" : "模板按需生成"}。断网也能跑，是浏览器端 AI 推理的体现。</p>
+      <div class="sil-list">${rows}</div>
     </div>
   `;
 }
@@ -4512,7 +4538,30 @@ function viewSpirit(id) {
       <div class="kb-item"><b>主属性 · ${ATTRIBUTES.primary[s.primary].name}</b><p>${ATTRIBUTES.primary[s.primary].desc}</p></div>
       <div class="kb-item"><b>副属性 · ${ATTRIBUTES.secondary[s.secondary].name}</b><p>${ATTRIBUTES.secondary[s.secondary].desc}</p></div>
     </div>
+
+    <div class="section-title">🔗 关系图谱</div>
+    <div class="card" id="graph-card-${id}">${graphCardHTML(id)}</div>
   `;
+}
+
+/* 关系图谱卡片：展示一件文物在知识图谱里的邻居（同墓/同遗址/同时代/同材质） */
+function graphCardHTML(id) {
+  if (!window.GRAPH || !window.GRAPH.neighbors) return `<div class="muted">关系图谱未加载</div>`;
+  try {
+    const nb = window.GRAPH.neighbors(id);
+    if (!nb.found) return `<div class="muted">暂无关系数据</div>`;
+    const rows = nb.groups.slice(0, 5).map(g => {
+      const items = g.items.slice(0, 4).map(it =>
+        `<a class="graph-chip" href="#/spirit/${it.sid}">${it.name}</a>`
+      ).join("");
+      const more = g.items.length > 4 ? `<span class="muted">…等 ${g.items.length} 件</span>` : "";
+      return `<div class="graph-row"><span class="graph-rel">${g.cn}</span>${items}${more}</div>`;
+    }).join("");
+    return `<div class="graph-wrap">${rows}</div>
+      <p class="graph-tip">这是「${nb.name}」在文物知识图谱里的关联（点击可跳转）。试试问小答：「${nb.name}同墓出土了哪些？」</p>`;
+  } catch (e) {
+    return `<div class="muted">关系数据读取失败</div>`;
+  }
 }
 
 /* 拍照唤醒的精灵:简化档案页(没有回忆/对话/对战,重在展示与做海报) */

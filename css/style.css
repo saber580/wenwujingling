@@ -193,6 +193,25 @@ h1,h2,h3{margin:0}
 .kb-item b{font-size:13.5px}
 .kb-item p{margin:2px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.65}
 
+/* ---------- 知识图谱卡片 ---------- */
+.graph-wrap{display:flex;flex-direction:column;gap:10px}
+.graph-row{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.graph-rel{flex-shrink:0;font-size:12px;color:var(--red);font-weight:600;padding:2px 8px;border-radius:12px;background:rgba(196,42,42,.08);line-height:1.6}
+.graph-chip{display:inline-block;font-size:12.5px;color:var(--ink);text-decoration:none;padding:3px 10px;border:1px solid var(--line);border-radius:14px;transition:.15s}
+.graph-chip:hover{border-color:var(--red);color:var(--red)}
+.graph-tip{font-size:11.5px;color:var(--ink-2);margin:12px 0 0}
+
+/* ---------- 端侧剪影识别 ---------- */
+.ident-silhouette{margin-top:14px}
+.sil-badge{font-size:11px;color:#fff;background:var(--red);padding:2px 8px;border-radius:10px;font-weight:600;margin-left:6px}
+.sil-desc{font-size:12px;color:var(--ink-2);margin:8px 0 10px;line-height:1.6}
+.sil-list{display:flex;flex-direction:column;gap:6px}
+.sil-row{display:flex;align-items:center;gap:8px}
+.sil-name{flex-shrink:0;font-size:13px;color:var(--ink);min-width:100px}
+.sil-row i{flex:1;height:6px;background:rgba(0,0,0,.06);border-radius:3px;overflow:hidden;display:block}
+.sil-row i s{display:block;height:100%;background:linear-gradient(90deg,var(--red),#d47b3a);border-radius:3px}
+.sil-row em{font-size:12px;color:var(--ink-2);font-style:normal;min-width:40px;text-align:right}
+
 /* ---------- 图鉴 ---------- */
 .codex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
 .codex-card{background:var(--paper-2);border:1px solid var(--line);border-radius:18px;padding:12px;box-shadow:var(--shadow)}
