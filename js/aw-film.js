@@ -35,6 +35,10 @@
     built: false
   };
 
+  /* 导出用的状态 */
+  var EX = { on: false, raf: 0, rec: null, chunks: [], actx: null, dest: null,
+             gain: null, src: null, t0: 0, bufs: [], mime: "", limit: 0, discard: false };
+
   function $(id) { return document.getElementById(id); }
   function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
   function seg(p, a, b) { if (b <= a) return p >= b ? 1 : 0; return clamp((p - a) / (b - a), 0, 1); }
@@ -105,6 +109,8 @@
         '<div class="fm-ctl">' +
           '<button class="fm-play" id="fmPlay">▶ 开始放映</button>' +
           '<button class="fm-mini" id="fmStop" disabled>停止</button>' +
+          '<button class="fm-mini fm-save" id="fmSave" disabled>⬇ 存成视频</button>' +
+          '<button class="fm-mini" id="fmPoster" disabled>存海报</button>' +
           '<span class="fm-tip" id="fmTip">还要选 6 种工艺</span>' +
         '</div>' +
       '</section>' +
@@ -112,14 +118,42 @@
       '<p class="fm-note">' +
         '说明：这不是剪辑，是逐帧程序化渲染 —— 六段画面全部由 canvas 现算，旁白由站内的 edge-tts 现场合成。' +
         '同一件文物换个工艺，等于换一套算法，不需要重拍。' +
+        '「存成视频」会把整部片子连同旁白录成一个文件带走（浏览器能录 mp4 就录 mp4，否则 webm），' +
+        '录制时请让这一页留在前台。' +
       '</p>' +
     '</div>';
   };
 
   /* ---------------- 装页面 ---------------- */
+  var REDONE = false;
+
+  /* 直接打开 #/film（分享链接、刷新）时，aw-studio.js 排在 app.js 后面：
+     这一页会先被画成空壳（0 个工艺 chip）。等工艺表到齐，把这一页重画一次。
+     —— 必须自己重画 #app，不能只叫 render()：那时空壳已经落进 DOM 了。 */
+  function redrawFilm() {
+    if (REDONE) return;
+    REDONE = true;
+    var host = document.getElementById("app");
+    if (!host) return;
+    host.innerHTML = viewFilm();
+    window.filmInit();
+  }
+
   window.filmInit = function () {
     F.cv = $("fmCanvas");
     if (!F.cv) return;
+
+    if (!(window.STUDIO_STYLES || []).length) {
+      var tries = 0;
+      (function waitStyles() {
+        if ((window.STUDIO_STYLES || []).length) { redrawFilm(); return; }
+        if (++tries > 80) return;
+        setTimeout(waitStyles, 100);
+      })();
+      return;
+    }
+    /* 工艺表有了，但这页是空壳（渲染时机比脚本早）→ 重画 */
+    if (!document.querySelectorAll(".fm-chip").length) { redrawFilm(); return; }
     F.ctx = F.cv.getContext("2d");
     F.spiritId = EASY[0][0];
     F.segs = [];
@@ -179,6 +213,15 @@
     });
     var stp = $("fmStop");
     if (stp) stp.addEventListener("click", function () { stop(); });
+    var sv = $("fmSave");
+    if (sv) sv.addEventListener("click", function () {
+      fmExport().then(null, function (e) {
+        var tip = $("fmTip");
+        if (tip) tip.textContent = "没能导出：" + (e && e.message ? e.message : "未知原因");
+      });
+    });
+    var ps = $("fmPoster");
+    if (ps) ps.addEventListener("click", function () { savePoster(); });
 
     syncCount();
     paintIdle();
@@ -195,6 +238,9 @@
     if (c) c.textContent = F.segs.length;
     var play = $("fmPlay");
     if (play) play.disabled = F.segs.length !== PICK;
+    var sv = $("fmSave"), ps = $("fmPoster");
+    if (sv) sv.disabled = F.segs.length !== PICK || EX.on;
+    if (ps) ps.disabled = F.segs.length !== PICK;
     syncTip();
   }
 
@@ -284,6 +330,7 @@
   }
 
   function stop(silent) {
+    if (EX.on) abortExport();
     F.playing = false;
     if (F.raf) cancelAnimationFrame(F.raf);
     F.raf = 0;
@@ -327,8 +374,12 @@
     if (F.cur !== r.i) {
       F.cur = r.i;
       if (it.type === "cover" || it.type === "art") sdFilmUse(it.key);
-      speak(it, p);
+      if (EX.on) playBuf(r.i); else speak(it, p);
     }
+    paintScene(it, lt, p);
+  }
+
+  function paintScene(it, lt, p) {
     if (it.type === "intro") drawIntro(p);
     else if (it.type === "outro") drawOutro(p);
     else if (it.type === "cover") sdFilmCover(p);
@@ -515,8 +566,254 @@
     return true;
   };
   window.fmState = function () {
-    return { total: F.total, segs: F.segs.slice(), spirit: F.spiritId, built: F.built, playing: F.playing };
+    return { total: F.total, segs: F.segs.slice(), spirit: F.spiritId, built: F.built,
+             playing: F.playing, exporting: EX.on, mime: EX.mime,
+             chunks: EX.chunks.length, bytes: EX.chunks.reduce(function (n, b) { return n + b.size; }, 0) };
   };
+
+  /* ================= 导出 =================
+     不另做编码：canvas 现画，用 captureStream 取帧，旁白走 WebAudio 混进同一条流，
+     MediaRecorder 直接录。录制是实时的，46 秒就是 46 秒，这样时间轴才和画面严丝合缝。 */
+
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function stamp() {
+    var d = new Date();
+    return "" + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) +
+           "-" + pad2(d.getHours()) + pad2(d.getMinutes());
+  }
+  function fmt(sec) {
+    sec = Math.max(0, Math.round(sec));
+    return pad2(Math.floor(sec / 60)) + ":" + pad2(sec % 60);
+  }
+
+  function recMime() {
+    if (!window.MediaRecorder) return "";
+    /* 首选 H.264 的 mp4（声轨是 opus，Chrome/VLC/浏览器都认）。
+       别贪 vp9+mp4a 那条：实测 Chrome 只录到 2 秒、且丢声轨，是个坑。 */
+    var cands = ["video/mp4;codecs=avc1.42E01E", "video/mp4",
+                 "video/webm;codecs=vp9,opus", "video/webm;codecs=vp9",
+                 "video/webm;codecs=vp8", "video/webm"];
+    for (var i = 0; i < cands.length; i++) {
+      try { if (MediaRecorder.isTypeSupported(cands[i])) return cands[i]; } catch (e) {}
+    }
+    return "";
+  }
+
+  /* 语音：直接问站内的 /api/tts 要 mp3，解码成 AudioBuffer，录制时按段落开火 */
+  function ttsBytes(text) {
+    return fetch("/api/tts", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text, scene: "dialog" })
+    }).then(function (r) {
+      if (!r.ok) throw new Error("tts " + r.status);
+      return r.arrayBuffer();
+    });
+  }
+
+  function voiceBuffers(actx) {
+    var jobs = lines().map(function (l) {
+      return ttsBytes(l.t).then(function (ab) {
+        return new Promise(function (res) {
+          try {
+            actx.decodeAudioData(ab, function (b) { res(b); }, function () { res(null); });
+          } catch (e) { res(null); }
+        });
+      })["catch"](function () { return null; });
+    });
+    return Promise.all(jobs);
+  }
+
+  function playBuf(i) {
+    if (!EX.actx || !EX.gain) return;
+    if (EX.src) { try { EX.src.stop(); } catch (e) {} EX.src = null; }
+    var b = EX.bufs[i];
+    if (!b) return;
+    var s = EX.actx.createBufferSource();
+    s.buffer = b;
+    s.connect(EX.gain);
+    s.start();
+    EX.src = s;
+  }
+
+  function exLoop(now) {
+    if (!EX.on) return;
+    if (!document.getElementById("fmCanvas")) { abortExport(); return; }
+    var t = (now - EX.t0) / 1000;
+    var lim = EX.limit > 0 ? Math.min(EX.limit, F.total) : F.total;
+    if (t >= lim) {
+      drawAt(Math.min(F.total - 0.001, lim - 0.001));
+      endExport();
+      return;
+    }
+    drawAt(t);
+    var prog = $("fmProg");
+    if (prog) prog.style.width = (t / F.total * 100).toFixed(2) + "%";
+    var tip = $("fmTip");
+    if (tip) tip.textContent = "正在录制 " + fmt(t) + " / " + fmt(F.total) + "，别切走这一页";
+    EX.raf = requestAnimationFrame(exLoop);
+  }
+
+  function endExport() {
+    if (!EX.on) return;
+    EX.on = false;
+    if (EX.raf) cancelAnimationFrame(EX.raf);
+    EX.raf = 0;
+    if (EX.src) { try { EX.src.stop(); } catch (e) {} EX.src = null; }
+    try { if (EX.rec && EX.rec.state !== "inactive") EX.rec.stop(); } catch (e) {}
+  }
+
+  function abortExport() {
+    if (!EX.on) return;
+    EX.discard = true;
+    endExport();
+    var tip = $("fmTip");
+    if (tip) tip.textContent = "已经停下，没录成片";
+  }
+
+  function finishExport() {
+    var mime = EX.mime || "video/webm";
+    var blob = new Blob(EX.chunks, { type: mime.split(";")[0] });
+    EX.chunks = [];
+    var wasDiscard = EX.discard;
+    EX.discard = false;
+    if (EX.actx) { try { EX.actx.close(); } catch (e) {} }
+    EX.actx = null; EX.dest = null; EX.gain = null; EX.bufs = [];
+
+    var sv = $("fmSave"), ps = $("fmPoster"), stp = $("fmStop");
+    if (sv) { sv.disabled = false; sv.textContent = "⬇ 存成视频"; }
+    if (stp) stp.disabled = true;
+    if (ps) ps.disabled = F.segs.length !== PICK;
+    var tip = $("fmTip");
+
+    if (wasDiscard || !blob.size || blob.size < 4096) {
+      if (tip) tip.textContent = wasDiscard ? "已经停下，没录成片" : "录制失败：录到的内容太小，换个浏览器试试";
+      return;
+    }
+    var ext = mime.indexOf("mp4") >= 0 ? "mp4" : "webm";
+    var sp = spiritOf(F.spiritId);
+    var name = "文物精灵-六种工艺-" + (sp.name || F.spiritId) + "-" + stamp() + "." + ext;
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { a.remove(); }, 100);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    if (tip) tip.textContent = "已存下 " + name + "（" + (blob.size / 1048576).toFixed(1) + " MB）";
+  }
+
+  /* 导出整部片子：返回 Promise，方便自测与自动化 */
+  window.fmExport = function (opt) {
+    opt = opt || {};
+    if (EX.on) return Promise.reject(new Error("正在导出中"));
+    if (F.segs.length !== PICK) return Promise.reject(new Error("先选满 6 种工艺"));
+    if (!window.MediaRecorder || !F.cv.captureStream) return Promise.reject(new Error("这个浏览器不支持录制"));
+
+    F.plan = buildPlan();
+    var tip = $("fmTip"), sv = $("fmSave");
+
+    /* 音频上下文必须在这一拍（用户刚点下去）同步建出来并 resume：
+       等到 Promise 里再建，浏览器认为不是用户手势，上下文会一直 suspended，
+       录出来的片子就没人声了。 */
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) {
+      if (!EX.actx) EX.actx = new AC();
+      if (EX.actx.state === "suspended") { try { EX.actx.resume(); } catch (e) {} }
+    }
+
+    stop(true);            /* 如果正在放映，先掐掉，别两套时钟打架 */
+    F.plan = buildPlan();
+
+    var ready = F.built ? Promise.resolve() : new Promise(function (res) {
+      if (tip) tip.textContent = "正在算 6 段工艺…";
+      sdFilmBuild(F.spiritId, F.segs, function (n, all, key) {
+        var s2 = styleOf(key);
+        if (tip) tip.textContent = "正在算 " + n + "/" + all + " 段：" + (s2 ? s2.cn : key);
+      }, function () { F.built = true; res(); });
+    });
+
+    return ready.then(function () {
+      if (tip) tip.textContent = "正在准备旁白…";
+      var actx = EX.actx;
+      if (actx && actx.state === "suspended") { try { actx.resume(); } catch (e) {} }
+      if (!actx || F.mute) return [];
+      return voiceBuffers(actx);
+    }).then(function (bufs) {
+      EX.bufs = bufs || [];
+      /* resume() 是异步的：多等最多 0.9 秒确认上下文真的跑起来了再挂声轨 */
+      return new Promise(function (res) {
+        var t0 = Date.now();
+        (function chk() {
+          if (!EX.actx || EX.actx.state === "running" || Date.now() - t0 > 900) return res();
+          try { EX.actx.resume(); } catch (e) {}
+          setTimeout(chk, 80);
+        })();
+      });
+    }).then(function () {
+      EX.mime = recMime();
+      EX.chunks = [];
+      EX.discard = false;
+      EX.limit = opt.seconds || 0;
+
+      var stream = F.cv.captureStream(30);
+      var audioOK = !!(EX.actx && EX.actx.state === "running");
+      if (audioOK) {
+        EX.gain = EX.actx.createGain();
+        EX.gain.gain.value = 1;
+        EX.dest = EX.actx.createMediaStreamDestination();
+        EX.gain.connect(EX.dest);
+        try { EX.gain.connect(EX.actx.destination); } catch (e) {}
+        var at = EX.dest.stream.getAudioTracks();
+        for (var i = 0; i < at.length; i++) stream.addTrack(at[i]);
+      }
+
+      try {
+        EX.rec = EX.mime
+          ? new MediaRecorder(stream, { mimeType: EX.mime, videoBitsPerSecond: 8000000, audioBitsPerSecond: 128000 })
+          : new MediaRecorder(stream);
+      } catch (e) {
+        EX.rec = new MediaRecorder(stream);
+      }
+      EX.rec.ondataavailable = function (e) { if (e.data && e.data.size) EX.chunks.push(e.data); };
+      EX.rec.onstop = finishExport;
+
+      F.cur = null;
+      EX.on = true;
+      if (sv) { sv.disabled = true; sv.textContent = "录制中…"; }
+      var stp = $("fmStop");
+      if (stp) stp.disabled = false;
+      if (tip) tip.textContent = "正在录制 00:00 / " + fmt(F.total);
+      EX.rec.start(250);
+      EX.t0 = performance.now();
+      drawTicks();
+      EX.raf = requestAnimationFrame(exLoop);
+      if (!audioOK && !F.mute) {
+        if (tip) tip.textContent = "浏览器没放开声音，这段会录成无声版（先点一下页面再试）";
+      }
+      return true;
+    });
+  };
+
+  /* 存海报：把当前这一帧原样存成 png */
+  function savePoster() {
+    if (!F.cv) return;
+    var sp = spiritOf(F.spiritId);
+    var name = "文物精灵-微电影-" + (sp.name || F.spiritId) + "-" + stamp() + ".png";
+    try {
+      F.cv.toBlob(function (b) {
+        if (!b) return;
+        var url = URL.createObjectURL(b);
+        var a = document.createElement("a");
+        a.href = url; a.download = name;
+        document.body.appendChild(a); a.click();
+        setTimeout(function () { a.remove(); URL.revokeObjectURL(url); }, 30000);
+        var tip = $("fmTip");
+        if (tip) tip.textContent = "已存下 " + name;
+      }, "image/png");
+    } catch (e) {
+      var tip2 = $("fmTip");
+      if (tip2) tip2.textContent = "存海报失败：" + (e.message || "画布被保护");
+    }
+  }
 
   function drawTicks() {
     var box = $("fmTicks");

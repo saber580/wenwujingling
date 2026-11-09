@@ -103,6 +103,9 @@
 .fm-play:hover{filter:brightness(1.06)}
 .fm-play:disabled{opacity:.38;cursor:not-allowed;box-shadow:none}
 .fm-ctl .fm-mini{background:rgba(255,255,255,.06);border-color:rgba(214,178,110,.3);color:#e9dcc4}
+.fm-ctl .fm-mini:disabled{opacity:.34}
+.fm-ctl .fm-save{border-color:rgba(232,205,147,.55);color:#f0d9a8}
+.fm-ctl .fm-save:not(:disabled):hover{background:rgba(232,205,147,.14)}
 .fm-ctl .fm-mini:hover{background:rgba(214,178,110,.14)}
 .fm-ctl .fm-mini:disabled{opacity:.3}
 .fm-tip{font:500 13px/1.5 "PingFang SC",sans-serif;color:rgba(233,220,196,.62)}
@@ -127,7 +130,9 @@
   .fm-chip b{font-size:14px}
   .fm-chip em{display:none}
   .fm-ctl{padding:10px 12px 14px;gap:9px}
-  .fm-play{flex:1;text-align:center}
-  .fm-tip{width:100%}
+  /* 放映键占满一行，其余三个按钮排第二行：三列挤一行会把"开始放映"挤成两行字 */
+  .fm-play{flex:1 1 100%;text-align:center;white-space:nowrap;padding:12px 18px}
+  .fm-ctl .fm-mini{flex:1 1 0;min-width:0;white-space:nowrap;text-align:center;padding:10px 6px;font-size:12.5px}
+  .fm-tip{width:100%;font-size:12px}
   .fm-switch{margin-left:0}
 }
