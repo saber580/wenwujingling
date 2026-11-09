@@ -151,6 +151,96 @@ const STATIONS = [
     intro: "从二里头的第一缕铜光,到清宫案头的碧玉凤鸟——十六件镇馆之宝,牵着华夏五千年的心跳。集齐其余十二站的精灵,这条「历史长河」才会向你开启。",
     slots: ["夏", "商", "西周", "东周", "秦", "汉", "三国", "西晋", "南北朝", "隋", "唐", "五代", "宋", "元", "明", "清"],
     spiritIds: ["xiapaishi", "fuxiaozun", "dengxizun", "shuangyangzun", "bingmayong", "shuanglongbi", "pianjiangjunyin", "jinhouniaozun", "longfengpei", "duoguxinyin", "zoulong", "daoliuhu", "yunlongpei", "shuangchibei", "longfenglu", "yanshidi"]
+  },
+  {
+    id: "gugong",
+    order: 13,
+    name: "第十三站 · 故宫",
+    subtitle: "紫禁城 · 六百年家国",
+    place: "北京 · 故宫博物院",
+    intro: "中轴线上,红墙黄瓦之间,住着六百年家国。从金瓯永固杯到《清明上河图》,再到青玉大禹治水图山子——故宫的文物,是皇家的雅趣,更是天下的匠心。",
+    spiritIds: ["jinouyonggubei", "qingmingshanghetu", "dayuzhishui"]
+  },
+  {
+    id: "shaanxi",
+    order: 14,
+    name: "第十四站 · 陕西历史博物馆",
+    subtitle: "十三朝古都的宝藏",
+    place: "陕西 · 西安",
+    intro: "西安,十三朝古都。陕西历史博物馆里,藏着从周秦汉唐走来的国宝:兽首玛瑙杯、舞马衔杯纹银壶、杜虎符——件件都是丝绸之路与盛世大唐的见证。",
+    spiritIds: ["shoushoumanao", "wumaxianbei", "duhufu"]
+  },
+  {
+    id: "henan",
+    order: 15,
+    name: "第十五站 · 河南博物院",
+    subtitle: "华夏文明的摇篮",
+    place: "河南 · 郑州",
+    intro: "河南,华夏文明的摇篮。河南博物院里,贾湖骨笛吹响九千年前的乐音,云纹铜禁诉说失蜡法的鬼斧神工,莲鹤方壶展翅欲飞——一部中原,半部中国。",
+    spiritIds: ["jiahugudi", "yunwentongjin", "lianhefanghu"]
+  },
+  {
+    id: "nanjing",
+    order: 16,
+    name: "第十六站 · 南京博物院",
+    subtitle: "六朝烟雨 · 千年文脉",
+    place: "江苏 · 南京",
+    intro: "六朝古都南京,南京博物院里,竹林七贤的砖画流传千年,错银铜牛灯照见东汉的光,明鎏金喇嘛塔金光流转——江南的文脉,在这里绵延不绝。",
+    spiritIds: ["zhulinqixian", "tongniudeng", "lama_ta"]
+  },
+  {
+    id: "shanghai",
+    order: 17,
+    name: "第十七站 · 上海博物馆",
+    subtitle: "海纳百川 · 器藏古今",
+    place: "上海 · 上海博物馆",
+    intro: "上海博物馆,海纳百川。大克鼎铭记西周礼制,商鞅方升度量一个统一的大秦,缂丝莲塘乳鸭图纤毫毕现——器物里,藏着中华文明的精魂。",
+    spiritIds: ["dakeding", "shangyangfangsheng", "kesilian"]
+  },
+  {
+    id: "hubei",
+    order: 18,
+    name: "第十八站 · 湖北省博物馆",
+    subtitle: "荆楚大地 · 钟鸣鼎食",
+    place: "湖北 · 武汉",
+    intro: "武汉,湖北省博物馆。越王勾践剑寒光凛冽,曾侯乙编钟一鸣惊人,鹿角立鹤展翅欲飞——荆楚大地的礼乐文明,跨越两千年依然余音绕梁。",
+    spiritIds: ["goujianjian", "zenghouyibianzhong", "lujiaolihe"]
+  },
+  {
+    id: "hunan",
+    order: 19,
+    name: "第十九站 · 湖南博物院",
+    subtitle: "马王堆 · 千年不腐",
+    place: "湖南 · 长沙",
+    intro: "长沙,湖南博物院。马王堆汉墓出土的素纱襌衣轻若蝉翼,T型帛画描绘天上人间,人面纹方鼎神秘莫测——两千年前的西汉,在这里纤毫毕现。",
+    spiritIds: ["sushadanyi", "tbo_hua", "renmianfangding"]
+  },
+  {
+    id: "sanxingdui",
+    order: 20,
+    name: "第二十站 · 三星堆",
+    subtitle: "古蜀 · 青铜纵目",
+    place: "四川 · 广汉",
+    intro: "广汉,三星堆博物馆。青铜大立人庄严神秘,纵目面具瞪大眼睛望向苍穹,金杖闪耀王权——三千年前的古蜀文明,惊艳了整个中国。",
+    spiritIds: ["dali_ren", "zongmumianju", "jinzhang"]
+  },
+  {
+    id: "liaoning",
+    order: 21,
+    name: "第二十一站 · 辽宁省博物馆",
+    subtitle: "白山黑水 · 丹青国宝",
+    place: "辽宁 · 沈阳",
+    intro: "沈阳,辽宁省博物馆。《簪花仕女图》丹青流转,鸭形玻璃注晶莹剔透,鎏金铜卧羊静卧千年——白山黑水之间,藏着中华丹青与丝路器物的瑰宝。",
+    spiritIds: ["zanhuashinv", "yaxingboli", "liujintongwoyang"]
+  },
+  {
+    id: "suzhou",
+    order: 22,
+    name: "第二十二站 · 苏州博物馆",
+    subtitle: "姑苏雅韵 · 秘色瓷光",
+    place: "江苏 · 苏州",
+    intro: "苏州,苏州博物馆。秘色瓷莲花碗如玉似冰,真珠舍利宝幢宝光流转,文衡山手植紫藤年年花开——姑苏的雅韵,在一件件文物里静静流淌。",
+    spiritIds: ["misecilianhuawan", "zhenzhushielibaochuang", "wenzhengshan"]
   }
 ];
 
@@ -1045,6 +1135,198 @@ const SPIRITS = {
     era: "清代 · 宫廷文房",
     relicName: "清 · 碧玉凤鸟形砚滴",
     intro: "一只卧伏的碧玉凤鸟:腹部掏空贮水,口部藏着滴水的孔——它是皇帝书案上的砚滴,一滴一滴,给砚台续水。"
+  },
+
+  /* ================= 全国大地图 · 新增精灵（十三站起） ================= */
+  /* 故宫 */
+  jinouyonggubei: {
+    id: "jinouyonggubei", name: "金瓯永固杯", dir: "故宫",
+    alias: "乾隆的元旦酒杯", primary: "gold", secondary: "ritual",
+    era: "清代 · 乾隆年间", relicName: "清 · 金瓯永固杯",
+    intro: "一只满身珠宝的金杯,是乾隆皇帝每逢元旦开笔仪式必用的酒杯——「金瓯永固」,祈愿江山像金子一样稳固长久。"
+  },
+  qingmingshanghetu: {
+    id: "qingmingshanghetu", name: "清明上河图", dir: "故宫",
+    alias: "北宋汴京的长卷", primary: "painting", secondary: "document",
+    era: "北宋 · 张择端", relicName: "北宋 · 清明上河图",
+    intro: "一幅五米多长的画卷,画尽了北宋汴京的市井繁华:八百多人、六十多匹牲口,还有数不清的店铺与舟车。"
+  },
+  dayuzhishui: {
+    id: "dayuzhishui", name: "青玉大禹治水图山子", dir: "故宫",
+    alias: "治水的大禹山子", primary: "jade", secondary: "ritual",
+    era: "清代 · 乾隆年间", relicName: "清 · 青玉大禹治水图山子",
+    intro: "一块重逾五吨的巨型青玉,雕着大禹率众治水的壮阔场景——它是中国玉器史上体量最大的玉雕之一。"
+  },
+  /* 陕西历史博物馆 */
+  shoushoumanao: {
+    id: "shoushoumanao", name: "镶金兽首玛瑙杯", dir: "陕西",
+    alias: "丝路来的玛瑙杯", primary: "jade", secondary: "household",
+    era: "唐代 · 何家村窖藏", relicName: "唐 · 镶金兽首玛瑙杯",
+    intro: "一只兽首形状的玛瑙杯,口沿镶着金边——它是唐代何家村窖藏里的珍品,更是丝绸之路东西交流的见证。"
+  },
+  wumaxianbei: {
+    id: "wumaxianbei", name: "舞马衔杯纹银壶", dir: "陕西",
+    alias: "会跳舞的马银壶", primary: "gold", secondary: "household",
+    era: "唐代", relicName: "唐 · 舞马衔杯纹银壶",
+    intro: "壶身上的鎏金纹饰,是一匹随着音乐起舞、口中衔杯的马——「舞马衔杯」,是大唐宫廷的顶级节目。"
+  },
+  duhufu: {
+    id: "duhufu", name: "杜虎符", dir: "陕西",
+    alias: "调兵的虎符", primary: "bronze", secondary: "tool",
+    era: "战国 · 秦", relicName: "战国 · 秦杜虎符",
+    intro: "一分为二的青铜虎符,合在一起才能调兵遣将——「符合」一词,就是从它而来。"
+  },
+  /* 河南博物院 */
+  jiahugudi: {
+    id: "jiahugudi", name: "贾湖骨笛", dir: "河南",
+    alias: "九千年前的笛子", primary: "wood", secondary: "instrument",
+    era: "新石器时代 · 贾湖遗址", relicName: "新石器 · 贾湖骨笛",
+    intro: "用仙鹤翅骨制成的笛子,吹响九千年前的乐音——它是中国迄今发现最早的乐器,改写了中国音乐史。"
+  },
+  yunwentongjin: {
+    id: "yunwentongjin", name: "云纹铜禁", dir: "河南",
+    alias: "青铜器的铜禁", primary: "bronze", secondary: "ritual",
+    era: "春秋 · 楚国", relicName: "春秋 · 云纹铜禁",
+    intro: "一件镂空的云纹青铜器,是盛放酒器的「禁」——它用失蜡法铸成,证明两千多年前中国就有了这门绝技。"
+  },
+  lianhefanghu: {
+    id: "lianhefanghu", name: "莲鹤方壶", dir: "河南",
+    alias: "展翅欲飞的方壶", primary: "bronze", secondary: "ritual",
+    era: "春秋 · 郑国", relicName: "春秋 · 莲鹤方壶",
+    intro: "方壶的莲瓣顶上,立着一只振翅欲飞的鹤——它打破了商周青铜的肃穆,是春秋新风的开篇之作。"
+  },
+  /* 南京博物院 */
+  zhulinqixian: {
+    id: "zhulinqixian", name: "竹林七贤与荣启期砖画", dir: "南京",
+    alias: "竹林里的名士", primary: "stone", secondary: "document",
+    era: "南朝", relicName: "南朝 · 竹林七贤与荣启期砖画",
+    intro: "用数百块砖拼出的画像,画着竹林七贤与荣启期八位名士——它是中国现存最早、最完整的砖画之一。"
+  },
+  tongniudeng: {
+    id: "tongniudeng", name: "错银铜牛灯", dir: "南京",
+    alias: "会呼吸的牛灯", primary: "bronze", secondary: "household",
+    era: "东汉", relicName: "东汉 · 错银铜牛灯",
+    intro: "一头错银的铜牛驮着灯盘,烟气顺着牛腹里的水被「洗」净——它是东汉的「环保灯」。"
+  },
+  lama_ta: {
+    id: "lama_ta", name: "明鎏金喇嘛塔", dir: "南京",
+    alias: "鎏金的喇嘛塔", primary: "gold", secondary: "religion",
+    era: "明代", relicName: "明 · 鎏金喇嘛塔",
+    intro: "一座通体鎏金的喇嘛塔,塔身嵌着宝石,藏着舍利——它是明代宫廷赐给藏传佛教的宝物。"
+  },
+  /* 上海博物馆 */
+  dakeding: {
+    id: "dakeding", name: "大克鼎", dir: "上海",
+    alias: "刻着长篇铭文的鼎", primary: "bronze", secondary: "ritual",
+    era: "西周", relicName: "西周 · 大克鼎",
+    intro: "鼎内壁刻着两百九十多字的铭文,记录了一位叫「克」的贵族受赏的事迹——它是西周青铜器的重器。"
+  },
+  shangyangfangsheng: {
+    id: "shangyangfangsheng", name: "商鞅方升", dir: "上海",
+    alias: "统一度量衡的方升", primary: "bronze", secondary: "tool",
+    era: "战国 · 秦", relicName: "战国 · 商鞅方升",
+    intro: "一个小小的青铜方升,是商鞅变法时统一度量衡的标准器——它见证了大秦「车同轨、书同文」的开端。"
+  },
+  kesilian: {
+    id: "kesilian", name: "缂丝莲塘乳鸭图", dir: "上海",
+    alias: "缂丝织出的莲塘", primary: "textile", secondary: "document",
+    era: "南宋 · 朱克柔", relicName: "南宋 · 缂丝莲塘乳鸭图",
+    intro: "用缂丝技法织出的莲塘图,莲花、乳鸭纤毫毕现——朱克柔的缂丝,是「一寸缂丝一寸金」的极品。"
+  },
+  /* 湖北省博物馆 */
+  goujianjian: {
+    id: "goujianjian", name: "越王勾践剑", dir: "湖北",
+    alias: "千年不锈的宝剑", primary: "bronze", secondary: "weapon",
+    era: "春秋 · 越国", relicName: "春秋 · 越王勾践剑",
+    intro: "一柄历经两千四百年依然寒光凛冽的宝剑,剑身上铸着「越王鸠浅自作用剑」——它就是越王勾践的佩剑。"
+  },
+  zenghouyibianzhong: {
+    id: "zenghouyibianzhong", name: "曾侯乙编钟", dir: "湖北",
+    alias: "会唱歌的编钟", primary: "bronze", secondary: "instrument",
+    era: "战国 · 曾侯乙墓", relicName: "战国 · 曾侯乙编钟",
+    intro: "六十五件青铜编钟,一钟双音,音域跨五个半八度——它是迄今发现规模最大、保存最完整的编钟。"
+  },
+  lujiaolihe: {
+    id: "lujiaolihe", name: "鹿角立鹤", dir: "湖北",
+    alias: "鹿角仙鹤", primary: "bronze", secondary: "religion",
+    era: "战国 · 曾侯乙墓", relicName: "战国 · 鹿角立鹤",
+    intro: "一只青铜仙鹤头顶鹿角、昂首展翅,是曾侯乙墓里引导墓主升天的神鸟——楚人的浪漫,尽在其中。"
+  },
+  /* 湖南博物院 */
+  sushadanyi: {
+    id: "sushadanyi", name: "素纱襌衣", dir: "湖南",
+    alias: "轻若蝉翼的纱衣", primary: "textile", secondary: "household",
+    era: "西汉 · 马王堆", relicName: "西汉 · 素纱襌衣",
+    intro: "一件重仅四十九克的纱衣,薄如蝉翼、轻若烟雾——它是马王堆汉墓出土的稀世珍品,代表了汉代织造的最高水平。"
+  },
+  tbo_hua: {
+    id: "tbo_hua", name: "T型帛画", dir: "湖南",
+    alias: "天上人间的帛画", primary: "textile", secondary: "document",
+    era: "西汉 · 马王堆", relicName: "西汉 · T型帛画",
+    intro: "一幅T字形的帛画,描绘了天上、人间、地下三界——它是墓主人升仙的「通行证」。"
+  },
+  renmianfangding: {
+    id: "renmianfangding", name: "人面纹方鼎", dir: "湖南",
+    alias: "长着人脸的鼎", primary: "bronze", secondary: "ritual",
+    era: "商代晚期", relicName: "商 · 人面纹方鼎",
+    intro: "鼎腹四面各铸着一张人脸,神情肃穆——它是中国唯一一件以人面为饰的商代青铜方鼎。"
+  },
+  /* 三星堆 */
+  dali_ren: {
+    id: "dali_ren", name: "青铜大立人像", dir: "三星堆",
+    alias: "青铜巨人", primary: "bronze", secondary: "religion",
+    era: "商代 · 古蜀", relicName: "商 · 青铜大立人像",
+    intro: "一尊高近三米的青铜巨人,双手环握、神情威严——它是三星堆最神秘的器物,也许是古蜀王或大祭司。"
+  },
+  zongmumianju: {
+    id: "zongmumianju", name: "青铜纵目面具", dir: "三星堆",
+    alias: "瞪大眼睛的面具", primary: "bronze", secondary: "religion",
+    era: "商代 · 古蜀", relicName: "商 · 青铜纵目面具",
+    intro: "一双向外凸出十六厘米的「纵目」,配上一对招风耳——这是古蜀人想象中「千里眼、顺风耳」的神明。"
+  },
+  jinzhang: {
+    id: "jinzhang", name: "金杖", dir: "三星堆",
+    alias: "王权的金杖", primary: "gold", secondary: "ritual",
+    era: "商代 · 古蜀", relicName: "商 · 金杖",
+    intro: "一根纯金打造的手杖,杖身刻着鱼、鸟、箭与人面——它是古蜀王权的象征,中国出土最早的金杖之一。"
+  },
+  /* 辽宁省博物馆 */
+  zanhuashinv: {
+    id: "zanhuashinv", name: "簪花仕女图", dir: "辽宁",
+    alias: "簪花的贵妇人", primary: "painting", secondary: "document",
+    era: "唐代 · 周昉", relicName: "唐 · 簪花仕女图",
+    intro: "一幅描绘唐代贵妇簪花游园的画卷,衣袂飘飘、丰颊蛾眉——周昉的仕女,是大唐雍容的写照。"
+  },
+  yaxingboli: {
+    id: "yaxingboli", name: "鸭形玻璃注", dir: "辽宁",
+    alias: "鸭子形状的玻璃器", primary: "glass", secondary: "household",
+    era: "辽代 · 丝路传入", relicName: "辽 · 鸭形玻璃注",
+    intro: "一只鸭形的玻璃器,晶莹剔透——它是从西亚经丝绸之路传入的珍品,见证了中外交流。"
+  },
+  liujintongwoyang: {
+    id: "liujintongwoyang", name: "鎏金铜卧羊", dir: "辽宁",
+    alias: "卧着的鎏金羊", primary: "bronze", secondary: "household",
+    era: "唐代", relicName: "唐 · 鎏金铜卧羊",
+    intro: "一只通体鎏金的铜羊静静卧着,安详温顺——它是唐代宫廷的席镇,压着席角,也压着千年的祥瑞。"
+  },
+  /* 苏州博物馆 */
+  misecilianhuawan: {
+    id: "misecilianhuawan", name: "秘色瓷莲花碗", dir: "苏州",
+    alias: "如冰似玉的莲花碗", primary: "ceramic", secondary: "household",
+    era: "五代 · 越窑", relicName: "五代 · 秘色瓷莲花碗",
+    intro: "一只莲花状的青瓷碗,釉色如冰似玉——「秘色瓷」曾是个千古之谜,直到它出土,才揭开了谜底。"
+  },
+  zhenzhushielibaochuang: {
+    id: "zhenzhushielibaochuang", name: "真珠舍利宝幢", dir: "苏州",
+    alias: "珍珠舍利的宝幢", primary: "gold", secondary: "religion",
+    era: "宋代", relicName: "宋 · 真珠舍利宝幢",
+    intro: "一座用金银、珍珠、水晶、玛瑙打造的宝幢,层层叠叠、宝光流转——它是宋代能工巧匠的极致之作。"
+  },
+  wenzhengshan: {
+    id: "wenzhengshan", name: "文衡山手植紫藤", dir: "苏州",
+    alias: "文徵明的紫藤", primary: "wood", secondary: "household",
+    era: "明代 · 文徵明", relicName: "明 · 文衡山手植紫藤",
+    intro: "明代才子文徵明亲手栽下的一株紫藤,四百多年后依然年年开花——它是苏州博物馆里唯一「活着」的藏品。"
   }
 };
 
@@ -1279,6 +1561,78 @@ const MUSEUMS = [
     intro: "2021 年 9 月建成并对外免费开放,位于衡水市文化艺术中心,建筑面积 11182 平方米,设序厅、衡水历史文化展厅、衡水历史名人展厅、衡水红色文化展厅等 8 个展厅,是衡水第一家地市级综合类国有博物馆。馆藏青铜器、石器、陶瓷器、玉器、佛造像、钱币等文物 2199 件(套),一级文物包括汉代黑石熨斗架、黑石豆形器、北齐「天保三年」一佛二菩萨立形白石像、唐代邢窑白釉剔花凤首皮囊式瓷壶、北齐至隋四面佛造像塔等,镇馆之宝「唐邢窑白釉剔花凤首皮囊式瓷壶」同类器全国仅发现 4 件。",
     highlights: ["唐邢窑白釉剔花凤首皮囊式瓷壶", "汉代黑石熨斗架", "汉代黑石豆形器", "北齐至隋四面佛造像塔"],
     station: "hengshui"
+  },
+
+  /* ===== 全国大地图 · 新增十馆 ===== */
+  {
+    id: "gugongmuseum", name: "故宫博物院", city: "北京", level: "国家一级博物馆",
+    tags: ["明清皇宫", "186 万件藏品"],
+    intro: "故宫博物院成立于 1925 年,以明清两代皇宫紫禁城为馆址,是中国现存规模最大、保存最完整的古代宫殿建筑群。现有藏品总量 186 万余件(套),涵盖书画、陶瓷、玉器、金银器、钟表等门类,是中华优秀传统文化最重要的收藏与研究机构之一。",
+    highlights: ["金瓯永固杯", "清明上河图", "青玉大禹治水图山子", "太和殿龙椅"],
+    station: "gugong"
+  },
+  {
+    id: "sxhmuseum", name: "陕西历史博物馆", city: "西安", level: "国家一级博物馆",
+    tags: ["十三朝古都", "何家村窖藏"],
+    intro: "陕西历史博物馆位于西安,是中国第一座大型现代化国家级博物馆,1991 年建成开放。馆藏文物 170 余万件,以周秦汉唐文物最具特色,何家村窖藏出土的金银器、唐墓壁画、唐代陶俑等皆为世所瞩目。",
+    highlights: ["镶金兽首玛瑙杯", "舞马衔杯纹银壶", "杜虎符", "唐墓壁画"],
+    station: "shaanxi"
+  },
+  {
+    id: "henanmuseum", name: "河南博物院", city: "郑州", level: "国家一级博物馆",
+    tags: ["华夏之源", "九大镇馆之宝"],
+    intro: "河南博物院始建于 1927 年,是中国成立较早的博物馆之一。馆藏文物 17 万余件,以史前文物、商周青铜器、历代陶瓷器最具特色,贾湖骨笛、云纹铜禁、莲鹤方壶等九大镇馆之宝享誉海内外。",
+    highlights: ["贾湖骨笛", "云纹铜禁", "莲鹤方壶", "妇好鸮尊"],
+    station: "henan"
+  },
+  {
+    id: "njmuseum", name: "南京博物院", city: "南京", level: "国家一级博物馆",
+    tags: ["六朝古都", "中国三大博物馆"],
+    intro: "南京博物院前身为 1933 年设立的国立中央博物院筹备处,是中国创建最早的博物馆之一。馆藏文物 43 万余件,设有历史馆、艺术馆、民国馆等六大展馆,竹林七贤砖画、错银铜牛灯等为代表性藏品。",
+    highlights: ["竹林七贤与荣启期砖画", "错银铜牛灯", "明鎏金喇嘛塔", "釉里红岁寒三友纹梅瓶"],
+    station: "nanjing"
+  },
+  {
+    id: "shmuseum", name: "上海博物馆", city: "上海", level: "国家一级博物馆",
+    tags: ["海纳百川", "青铜陶瓷书画"],
+    intro: "上海博物馆 1952 年创建,1959 年迁入人民广场现址。馆藏文物 102 万余件,以中国古代青铜器、陶瓷器、书法、绘画为特色,大克鼎、商鞅方升、缂丝莲塘乳鸭图等皆为稀世珍品。",
+    highlights: ["大克鼎", "商鞅方升", "缂丝莲塘乳鸭图", "晋侯稣钟"],
+    station: "shanghai"
+  },
+  {
+    id: "hubeimuseum", name: "湖北省博物馆", city: "武汉", level: "国家一级博物馆",
+    tags: ["荆楚文化", "曾侯乙"],
+    intro: "湖北省博物馆位于武汉东湖之滨,1953 年筹建。馆藏文物 24 万余件,以屈家岭文化、楚文化、曾侯乙墓、明代梁庄王墓出土文物最具特色,越王勾践剑、曾侯乙编钟为镇馆之宝。",
+    highlights: ["越王勾践剑", "曾侯乙编钟", "鹿角立鹤", "元青花四爱图梅瓶"],
+    station: "hubei"
+  },
+  {
+    id: "hunanmuseum", name: "湖南博物院", city: "长沙", level: "国家一级博物馆",
+    tags: ["马王堆汉墓", "辛追夫人"],
+    intro: "湖南博物院始建于 1951 年,馆藏文物 18 万余件,以马王堆汉墓出土文物、商周青铜器、楚文物、历代陶瓷书画为特色。素纱襌衣、T 型帛画等马王堆珍品举世闻名。",
+    highlights: ["素纱襌衣", "T型帛画", "人面纹方鼎", "辛追夫人"],
+    station: "hunan"
+  },
+  {
+    id: "sanxingduimuseum", name: "三星堆博物馆", city: "广汉", level: "国家一级博物馆",
+    tags: ["古蜀文明", "青铜面具"],
+    intro: "三星堆博物馆位于四川广汉,1997 年建成开放,2023 年新馆落成。馆藏文物 1.5 万余件,以商代古蜀青铜器、金器、玉器最具特色,青铜大立人像、纵目面具、金杖等展现了神秘灿烂的古蜀文明。",
+    highlights: ["青铜大立人像", "青铜纵目面具", "金杖", "青铜神树"],
+    station: "sanxingdui"
+  },
+  {
+    id: "lnmuseum", name: "辽宁省博物馆", city: "沈阳", level: "国家一级博物馆",
+    tags: ["书画大馆", "辽代文物"],
+    intro: "辽宁省博物馆前身为 1949 年成立的东北博物馆,是新中国建立的第一座博物馆。馆藏文物近 12 万件,以历代书画、辽代文物、陶瓷、缂丝刺绣最具特色,簪花仕女图、鸭形玻璃注等为镇馆之宝。",
+    highlights: ["簪花仕女图", "鸭形玻璃注", "鎏金铜卧羊", "万岁通天帖"],
+    station: "liaoning"
+  },
+  {
+    id: "szmuseum", name: "苏州博物馆", city: "苏州", level: "国家一级博物馆",
+    tags: ["贝聿铭设计", "吴地文脉"],
+    intro: "苏州博物馆成立于 1960 年,本馆由建筑大师贝聿铭设计,2006 年建成开放。馆藏文物 3 万余件,以吴地文化、明清书画、出土文物最具特色,秘色瓷莲花碗、真珠舍利宝幢为镇馆之宝,馆内还植有文徵明手植紫藤。",
+    highlights: ["秘色瓷莲花碗", "真珠舍利宝幢", "文衡山手植紫藤", "文徵明书画"],
+    station: "suzhou"
   }
 ];
 
@@ -1339,7 +1693,18 @@ const MAP_MARKS = {
     { id: "langfang",     x: 50.7, y: 47.3 },
     { id: "handan",       x: 20.5, y: 86.8 },
     { id: "hengshui",     x: 37.2, y: 70.4 },
-    { id: "guobo",        x: 46.0, y: 38.5 }
+    { id: "guobo",        x: 46.0, y: 38.5 },
+    /* ---- 全国大地图 · 新增站点（百分比坐标，基于全国地图） ---- */
+    { id: "gugong",       x: 62.0, y: 34.0 },
+    { id: "shaanxi",      x: 56.0, y: 52.0 },
+    { id: "henan",        x: 58.0, y: 48.0 },
+    { id: "nanjing",      x: 68.0, y: 56.0 },
+    { id: "shanghai",     x: 72.0, y: 58.0 },
+    { id: "hubei",        x: 60.0, y: 60.0 },
+    { id: "hunan",        x: 60.0, y: 66.0 },
+    { id: "sanxingdui",   x: 44.0, y: 62.0 },
+    { id: "liaoning",     x: 72.0, y: 22.0 },
+    { id: "suzhou",       x: 70.0, y: 55.0 }
   ],
   cities: [
     { name: "秦皇岛", x: 91.1, y: 41.6 },
@@ -1777,7 +2142,39 @@ const POSTER_HALL_EX = {
   yunlongpei:    null,
   shuangchibei:  null,
   longfenglu:    { hall: "中国国家博物馆", city: "北京市" },
-  yanshidi:      { hall: "故宫博物院", city: "北京市" }
+  yanshidi:      { hall: "故宫博物院", city: "北京市" },
+
+  /* ---- 全国大地图 · 新增精灵 ---- */
+  jinouyonggubei:        { hall: "故宫博物院", city: "北京市" },
+  qingmingshanghetu:     { hall: "故宫博物院", city: "北京市" },
+  dayuzhishui:           { hall: "故宫博物院", city: "北京市" },
+  shoushoumanao:         { hall: "陕西历史博物馆", city: "西安市" },
+  wumaxianbei:           { hall: "陕西历史博物馆", city: "西安市" },
+  duhufu:                { hall: "陕西历史博物馆", city: "西安市" },
+  jiahugudi:             { hall: "河南博物院", city: "郑州市" },
+  yunwentongjin:         { hall: "河南博物院", city: "郑州市" },
+  lianhefanghu:          { hall: "河南博物院", city: "郑州市" },
+  zhulinqixian:          { hall: "南京博物院", city: "南京市" },
+  tongniudeng:           { hall: "南京博物院", city: "南京市" },
+  lama_ta:               { hall: "南京博物院", city: "南京市" },
+  dakeding:              { hall: "上海博物馆", city: "上海市" },
+  shangyangfangsheng:    { hall: "上海博物馆", city: "上海市" },
+  kesilian:              { hall: "上海博物馆", city: "上海市" },
+  goujianjian:           { hall: "湖北省博物馆", city: "武汉市" },
+  zenghouyibianzhong:    { hall: "湖北省博物馆", city: "武汉市" },
+  lujiaolihe:            { hall: "湖北省博物馆", city: "武汉市" },
+  sushadanyi:            { hall: "湖南博物院", city: "长沙市" },
+  tbo_hua:               { hall: "湖南博物院", city: "长沙市" },
+  renmianfangding:       { hall: "湖南博物院", city: "长沙市" },
+  dali_ren:              { hall: "三星堆博物馆", city: "四川 · 广汉" },
+  zongmumianju:          { hall: "三星堆博物馆", city: "四川 · 广汉" },
+  jinzhang:              { hall: "三星堆博物馆", city: "四川 · 广汉" },
+  zanhuashinv:           { hall: "辽宁省博物馆", city: "沈阳市" },
+  yaxingboli:            { hall: "辽宁省博物馆", city: "沈阳市" },
+  liujintongwoyang:      { hall: "辽宁省博物馆", city: "沈阳市" },
+  misecilianhuawan:      { hall: "苏州博物馆", city: "苏州市" },
+  zhenzhushielibaochuang:{ hall: "苏州博物馆", city: "苏州市" },
+  wenzhengshan:          { hall: "苏州博物馆", city: "苏州市" }
 };
 
 /* ---------------------------------------------------------

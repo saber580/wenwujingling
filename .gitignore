@@ -63,3 +63,12 @@ audio/*/
 .opencode/
 tools/bridge.log
 *.log
+
+# ---------- 8. 本机生成的中间图（成品入库，原图/截图不入库） ----------
+# AI 生成的原图（35MB）与抠图前的底图，成品在 装饰/vn_bg_*.png
+装饰/vn_bg_generated/
+精灵/_raw/
+# 素材参考截图
+shiyilu/
+# tools 下的临时截图（脚本本身仍入库）
+tools/_*.png

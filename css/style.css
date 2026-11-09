@@ -2662,3 +2662,178 @@ body[data-page="biz"] .wj-tech-pill{display:none}
 
 /* 档案包(data-deep.js)加载中的占位:只在用户抢在预取之前点进图鉴时出现 */
 .pg-wait{padding:88px 20px;text-align:center;color:#8a7a63;font-size:13.5px;letter-spacing:1.5px}
+
+/* =========================================================
+   精灵物语 · 视觉小说（galgame 形态）
+   复刻参考图风格：暖米黄宣纸底 + 深蓝紫对话框 + 青绿挂牌 + 朱红标签 + UI蓝
+   ========================================================= */
+.tea-modebar{display:flex;gap:10px;margin:4px 0 6px;flex-wrap:wrap}
+.tea-mode{padding:8px 16px;border-radius:999px;border:1px solid rgba(180,140,60,.4);background:transparent;color:#8a6a3a;font-size:13.5px;cursor:pointer;transition:all .15s}
+.tea-mode.on{background:#5c3317;color:#fff;border-color:#5c3317}
+.tea-mode:hover{border-color:#5c3317}
+
+.vn-host{max-width:760px;margin:18px auto 0}
+
+/* --- 选精灵页 --- */
+.vn-pick-head h3{font-size:17px;color:#5c3317;letter-spacing:1px;margin:0 0 6px}
+.vn-pick-head p{font-size:13px;color:var(--ink-2);line-height:1.7;margin:0 0 16px}
+.vn-pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.vn-pick-card{position:relative;display:flex;flex-direction:column;align-items:center;padding:14px 10px 12px;border-radius:16px;border:1px solid rgba(180,140,60,.35);background:linear-gradient(170deg,#fffdf6,#faf2df);cursor:pointer;transition:transform .18s,box-shadow .18s}
+.vn-pick-card:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(120,80,20,.14)}
+.vn-pick-card.lock{opacity:.5;cursor:not-allowed}
+.vpc-img{width:88px;height:88px;object-fit:contain;margin-bottom:8px}
+.vpc-nm{font-size:14px;color:#5c3317;font-weight:500}
+.vpc-sub{font-size:11.5px;color:#8a6a3a;margin:2px 0 4px}
+.vpc-end{font-size:10.5px;color:#b08a4a}
+
+/* --- 视觉小说舞台 --- */
+.vn-stage{position:relative;overflow:hidden;border-radius:20px;border:1px solid rgba(180,140,60,.4);box-shadow:0 18px 44px rgba(90,60,20,.18);background:#f6ecd6;height:560px}
+.vn-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+/* 提亮后的米黄宣纸底（无图时兜底） */
+.vn-stage::before{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(175deg,#f7e8c8,#eeddb8 55%,#e6d2a8)}
+
+/* 顶部栏 */
+.vn-topbar{position:absolute;top:0;left:0;right:0;z-index:6;display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+.vn-minibtn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.5);background:rgba(40,40,50,.35);color:#fff;font-size:12px;cursor:pointer;backdrop-filter:blur(2px)}
+.vn-title{font-size:14px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);letter-spacing:1px}
+
+/* 中央立绘 */
+.vn-sprite{position:absolute;left:50%;bottom:0;transform:translateX(-50%);z-index:3;width:44%;max-width:340px;display:flex;flex-direction:column;align-items:center}
+.vn-sprite img{width:100%;height:auto;max-height:78%;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(60,40,10,.25));animation:vnFloat 3.6s ease-in-out infinite}
+@keyframes vnFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.vn-sprite-name{display:none}
+
+/* 菱形挂牌（章节吊牌） */
+.vn-plaques{position:absolute;top:24px;left:0;right:0;z-index:5;display:flex;justify-content:space-around;padding:0 8%}
+.vn-plaque{display:flex;flex-direction:column;align-items:center;width:56px}
+.vn-plaque .vnp-diamond{width:44px;height:44px;transform:rotate(45deg);background:#e8dfc8;border:3px solid #4a8c7a;border-radius:6px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(40,50,40,.25)}
+.vn-plaque .vnp-diamond b{transform:rotate(-45deg);font-size:20px;color:#5a3a2a;font-weight:500}
+.vn-plaque .vnp-rope{width:2px;height:10px;background:#8a6a3a}
+.vn-plaque .vnp-tag{padding:2px 5px;background:#4a8c7a;color:#fff;font-size:10px;writing-mode:vertical-rl;letter-spacing:1px;border-radius:3px}
+.vn-plaque.done .vnp-tag{background:#c04030}
+.vn-plaque .vnp-done{display:inline-block;margin-top:4px;padding:1px 4px;background:#c04030;color:#fff;font-size:9px;border-radius:3px;letter-spacing:1px}
+
+/* 对话历史区（记录） */
+.vn-lines{position:absolute;left:0;right:0;top:120px;bottom:170px;z-index:2;overflow-y:auto;padding:10px 18px;scrollbar-width:none}
+.vn-lines::-webkit-scrollbar{display:none}
+.vn-line{margin:6px 0}
+.vn-narr{text-align:center;color:#6a5438;font-size:13px;letter-spacing:1px;background:rgba(255,250,235,.55);border-radius:8px;padding:6px 10px;max-width:72%;margin-left:auto;margin-right:auto}
+.vn-say{display:flex;align-items:flex-start;gap:8px}
+.vn-avatar{flex:0 0 40px;width:40px;height:40px;border-radius:8px;overflow:hidden;border:2px solid #3fa8d8;background:#fff}
+.vn-avatar img{width:100%;height:100%;object-fit:contain}
+.vn-bubble{background:rgba(255,250,240,.9);border-radius:10px;padding:6px 12px;max-width:75%}
+.vn-bubble b{display:block;font-size:12px;color:#8a5a20;margin-bottom:2px}
+.vn-bubble p{margin:0;font-size:13px;color:#4a3620;line-height:1.6}
+
+/* 底部对话框（复刻参考图深蓝紫） */
+.vn-dialog{position:absolute;left:0;right:0;bottom:0;z-index:4;min-height:120px;background:linear-gradient(180deg,rgba(49,46,96,.92),rgba(40,38,82,.96));border-top:2px solid #5a56a0;display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer}
+.vn-dialog-avatar{flex:0 0 64px;width:64px;height:64px;border-radius:10px;border:2px solid #3fa8d8;overflow:hidden;background:#fff}
+.vn-dialog-avatar img{width:100%;height:100%;object-fit:contain}
+.vn-dialog-box{flex:1}
+.vn-dialog-box b{display:block;color:#ffd88a;font-size:15px;margin-bottom:6px;letter-spacing:1px}
+.vn-dialog-box p{margin:0;color:#e8e8f0;font-size:15px;line-height:1.7}
+.vn-typing{display:inline-block;margin-top:6px;color:#9fb0d8;font-size:12px;animation:vnBlink 1.2s infinite}
+@keyframes vnBlink{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* 分支选项 */
+.vn-choices{position:absolute;left:0;right:0;bottom:120px;z-index:5;display:flex;flex-direction:column;gap:8px;padding:0 24px}
+.vn-choice{display:flex;flex-direction:column;gap:2px;padding:10px 16px;border-radius:12px;border:2px solid #4a8c7a;background:rgba(250,244,230,.94);cursor:pointer;text-align:left;transition:all .15s}
+.vn-choice:hover{background:#4a8c7a;border-color:#3e7f6e}
+.vn-choice:hover *{color:#fff}
+.vn-choice{font-size:14px;color:#5a3a2a;font-weight:500}
+.vn-choice span{font-size:12px;color:#8a6a3a;font-weight:400}
+
+/* 结局卡 */
+.vn-endcard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:7;width:80%;max-width:420px;padding:24px;border-radius:18px;background:linear-gradient(170deg,#fffdf6,#f6ecd6);border:2px solid #c04030;text-align:center;box-shadow:0 16px 40px rgba(60,30,10,.3)}
+.vn-end-title{font-size:19px;color:#c04030;letter-spacing:2px;margin-bottom:10px}
+.vn-endcard p{font-size:13.5px;color:#5a3a2a;line-height:1.8;margin-bottom:16px}
+.vn-endcard .btn{margin:4px}
+
+/* 结局徽章 */
+.vn-badge{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;font-size:11px;background:rgba(74,140,122,.15);color:#4a8c7a}
+.vn-badge.on{background:#4a8c7a;color:#fff}
+
+/* 成就提示（右下角，复刻参考图） */
+.vn-tip{position:absolute;right:14px;bottom:128px;z-index:5;color:#c8c8d0;font-size:12px;letter-spacing:1px;opacity:.75}
+
+/* 手机端适配 */
+@media(max-width:620px){
+  .vn-stage{height:78vh;min-height:480px}
+  .vn-sprite{width:56%;max-width:280px}
+  .vn-plaques{padding:0 4%}
+  .vn-plaque{width:44px}
+  .vn-plaque .vnp-diamond{width:34px;height:34px;border-width:2px}
+  .vn-plaque .vnp-diamond b{font-size:16px}
+  .vn-plaque .vnp-tag{font-size:8px}
+  .vn-lines{top:104px;bottom:150px}
+  .vn-dialog{min-height:100px;padding:10px 14px;gap:10px}
+  .vn-dialog-avatar{flex-basis:50px;width:50px;height:50px}
+  .vn-dialog-box b{font-size:13px}
+  .vn-dialog-box p{font-size:13.5px}
+  .vn-choices{bottom:100px}
+}
+
+/* =========================================================
+ * 主线剧情 · 分支流程图（底特律·变人式大地图）
+ * ========================================================= */
+.vn-map-wrap{position:relative;max-width:100%;margin:6px auto 0;border-radius:18px;overflow:hidden;border:1px solid rgba(180,140,60,.4);background:linear-gradient(160deg,#f7efe0,#eee4d0);box-shadow:0 12px 32px rgba(90,60,20,.15)}
+.vn-map-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:linear-gradient(180deg,#fffdf6,#f6ecd6);border-bottom:1px solid rgba(180,140,60,.35)}
+.vn-minibtn.dark{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:999px;border:1px solid rgba(92,51,23,.5);background:#5c3317;color:#fff;font-size:12px;cursor:pointer;transition:all .15s}
+.vn-minibtn.dark:hover{background:#7a4520}
+.vn-map-legend{display:inline-flex;align-items:center;gap:6px;margin-left:auto;font-size:12px;color:#8a6a3a;flex-wrap:wrap}
+.vn-map-legend .lg{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:2px}
+.vn-map-legend .lg-done{background:#9a9a9a}
+.vn-map-legend .lg-cur{background:#3fa8d8}
+.vn-map-legend .lg-todo{background:#e8e2d0;border:1px solid #c0a060}
+.vn-map-legend .lg-event{background:#b8863a;opacity:.8}
+.vn-map-canvas{height:520px;overflow:hidden;cursor:grab;position:relative;background:radial-gradient(circle at 20% 20%,#fbf3e2,#efe5d0 70%)}
+.vn-map-canvas:active{cursor:grabbing}
+.vn-map-canvas svg{display:block;transform-origin:center;transition:transform .12s ease-out}
+.vn-node text{pointer-events:none;font-family:inherit}
+.vn-node:hover rect{filter:brightness(1.06)}
+.vn-node.vn-cur rect{animation:vnCurPulse 2s ease-in-out infinite}
+@keyframes vnCurPulse{0%,100%{filter:none}50%{filter:brightness(1.15) drop-shadow(0 0 6px rgba(63,168,216,.6))}}
+
+/* 流程图页头部说明 */
+.vn-map-head{padding:14px 18px 6px}
+.vn-map-head h3{font-size:18px;color:#5c3317;letter-spacing:1px;margin:0 0 6px}
+.vn-map-head p{font-size:13px;color:var(--ink-2);line-height:1.7;margin:0}
+.vn-map-progress{display:flex;align-items:center;gap:8px;padding:8px 18px 12px;font-size:12.5px;color:#8a6a3a}
+.vn-map-progress .bar{flex:1;height:6px;border-radius:999px;background:#e8dfc8;overflow:hidden}
+.vn-map-progress .bar i{display:block;height:100%;background:linear-gradient(90deg,#4a8c7a,#3fa8d8);border-radius:999px}
+
+@media(max-width:620px){
+  .vn-map-canvas{height:420px}
+  .vn-map-legend{margin-left:0;width:100%}
+}
+
+/* ===== 主线流程图 · 底特律式改版（覆盖旧米黄主题，见 aw-vn.js vnMapHTML） ===== */
+.vn-map-wrap{max-width:100%;border-radius:6px;border:1px solid #c9cdd1;background:#f2f3f4;box-shadow:0 10px 30px rgba(20,40,60,.13)}
+.vn-map-toolbar{padding:9px 14px;background:linear-gradient(180deg,#fbfbfc,#eceff1);border-bottom:1px solid #d3d7da}
+.vn-minibtn.dark{border-radius:3px;border:1px solid #9aa4ac;background:#fff;color:#1c3a4e;letter-spacing:.5px}
+.vn-minibtn.dark:hover{background:#1c6ba6;border-color:#1c6ba6;color:#fff}
+.vn-map-legend{font-size:12px;color:#5b6770}
+.vn-map-legend .lg{width:15px;height:9px;border-radius:2px}
+.vn-map-legend .lg-done{background:linear-gradient(90deg,#124668,#1e6d9c)}
+.vn-map-legend .lg-cur{background:linear-gradient(90deg,#1c6ba6,#5cabdf);border:1px solid #ffe3a0}
+.vn-map-legend .lg-todo{background:linear-gradient(90deg,#d6d9dc,#c1c6ca);border:1px solid #c6cacd}
+.vn-map-legend .lg-event{background:#c79a44}
+.vn-map-canvas{height:540px;background:#edecea}
+.vn-map-hud{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:7px 14px;background:rgba(22,28,34,.84);color:#dee3e7;font-size:11.5px;letter-spacing:.5px;backdrop-filter:blur(3px);z-index:3;pointer-events:none}
+.vn-map-hud b{color:#ffe3a0;font-weight:700;margin-right:4px}
+.vn-map-hud .hud-sp{margin-left:auto;color:#9fb0bc}
+.vn-map-head h3{color:#1c3a4e}
+.vn-map-progress{color:#5b6770}
+.vn-map-progress .bar{background:#d8dcdf}
+.vn-map-progress .bar i{background:linear-gradient(90deg,#1c6ba6,#5cabdf)}
+
+/* ===== 主线流程图 · 远近两级显示（聚焦视图 / 站名视图） ===== */
+/* 近处：完整卡片；远处：只留站名大字。两层同时存在，靠 class 切换，不重绘 */
+.vn-map-svg.lod-far #vn-lod-detail{display:none}
+.vn-map-svg:not(.lod-far) #vn-lod-overview{display:none}
+.vn-ovband{transition:opacity .16s ease}
+.vn-ovband:hover{opacity:.84}
+.vn-lod-hint{position:absolute;left:14px;top:12px;padding:5px 11px;border-radius:3px;
+  background:rgba(22,34,44,.82);color:#ffdca8;font-size:11.5px;letter-spacing:.6px;
+  z-index:3;pointer-events:none;display:none}
+.vn-map-canvas{position:relative}

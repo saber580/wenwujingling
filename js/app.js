@@ -454,8 +454,8 @@ const FRAME_ORDER = ["fr-hui", "fr-chanzhi", "fr-rendong", "fr-taotie", "fr-ruyi
 function viewMuseums() {
   return `
     <div class="page-head">
-      <h2>🏛 河北的博物馆</h2>
-      <p>沿着十二站打卡的足迹,认识这些收藏燕赵故事的地方。资料以各馆官方公开信息为准。</p>
+      <h2>🏛 从燕赵到全国的博物馆</h2>
+      <p>沿着${STATIONS.length}站打卡的足迹,从河北的燕赵故地一路走到全国十大馆。资料以各馆官方公开信息为准。</p>
     </div>
     <div class="museum-list">
       ${MUSEUMS.map((m, i) => `
@@ -1174,7 +1174,7 @@ function rsToast(msg) {
    选 3~6 只已捕获精灵 → 读年代 / 出土地 / 知识库 → 本地串讲一场跨时空小故事
    解锁:图鉴收集 ≥ 3(含初始精灵);只展不捉的「燕赵名片」不参与
    ========================================================= */
-const TEA = { picks: [], story: null, busy: false, cloudFail: false, cloudDone: 0, lastSrc: "", lastModel: "" };
+const TEA = { picks: [], story: null, busy: false, cloudFail: false, cloudDone: 0, lastSrc: "", lastModel: "", mode: "group" };
 /* 年代 → 朝代序(对齐 开场画卷的 夏→清 十六朝;新石器等史前为 -1) */
 const TEA_ERA_RULES = [
   ["新石器", -1], ["红山", -1],
@@ -1445,10 +1445,22 @@ function teaCloudKeyPaste() {
 }
 /* 进入茶话会页:点亮状态条,并顺手探一次小桥(有网才探) */
 function teaInitView() {
+  if (TEA.mode === "vn") {
+    if (window.VN && typeof VN.paint === "function") VN.paint();
+    return;
+  }
   teaChipPaint();
   relicClockStart();          // 表针:页面不在时自己停,切回来再起
   if (typeof fetch !== "function") return;
   if (IDENT.cloud !== "on") { try { identCloudPing().then(teaChipPaint); } catch (e) {} }
+}
+/* 切换茶话会模式：群聊 / 视觉小说 */
+function teaSetMode(m) {
+  if (m === TEA.mode) return;
+  TEA.mode = m;
+  render();
+  if (m === "vn") { setTimeout(() => { if (window.VN && typeof VN.paint === "function") VN.paint(); }, 30); }
+  else { setTimeout(() => teaInitView(), 30); }
 }
 /* 随机取一项 / 填充模板占位符 */
 function teaR(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -2363,7 +2375,20 @@ function viewTea() {
   const pool = teaPool();
   const open = pool.length >= 3;
   const story = TEA.story;
+  /* 主线剧情模式：整页独立渲染（大地图分支流程图） */
+  if (TEA.mode === "vn") {
+    return `
+    <div class="tea-modebar">
+      <button type="button" class="tea-mode" onclick="teaSetMode('group')">🍵 群聊茶话会</button>
+      <button type="button" class="tea-mode on" onclick="teaSetMode('vn')">🗺 主线剧情 · 大地图</button>
+    </div>
+    <div class="vn-host" id="vn-host"></div>`;
+  }
   return `
+    <div class="tea-modebar">
+      <button type="button" class="tea-mode on" onclick="teaSetMode('group')">🍵 群聊茶话会</button>
+      <button type="button" class="tea-mode" onclick="teaSetMode('vn')">🗺 主线剧情 · 大地图</button>
+    </div>
     <div class="page-head">
       <h2>🍵 AI 精灵茶话会</h2>
       <p>闭馆之后,把几只文物精灵请到一桌:读它们的年代、出土地和知识库,生成一段跨时空的对话小故事——看看后周的铁狮子,和战国中山国的小伙伴,隔着千年聊些什么。联网登录后,每一幕由云端 AI 现场写词;断网自动切回本机台词库,怎么都不会冷场。</p>
