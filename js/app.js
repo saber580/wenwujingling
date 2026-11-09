@@ -4375,6 +4375,10 @@ function identResultHTML(f, pRank, sRank, matches, form, pat) {
         <span class="iv-tag">✨ 识别结果</span><b>《${s0.name}》</b>${s0.alias ? `<i>又称「${s0.alias}」</i>` : ""}<span class="iv-pct">候选接近度 ${m0.pct}%</span>
         <span class="iv-sub">${s0.era || "年代待考"} · ${pa0.name} / ${sa0.name}</span>
         <p class="iv-intro">${s0.intro || ""}</p>
+        <div class="ident-loop">
+          <button class="btn" onclick="identLoopSpeak('${s0.id}')">🎧 听它亲口讲解</button>
+          <button class="btn" onclick="identLoopPoster('${s0.id}')">🎨 生成专属赋彩海报</button>
+        </div>
       </div>
     </div>
     <div class="ident-lore">
@@ -4397,6 +4401,22 @@ function identResultHTML(f, pRank, sRank, matches, form, pat) {
       <div class="im-list">${mCards}</div>
     </div>
   `;
+}
+
+/* —— 多模态闭环：识宝 → 语音讲解 → 赋彩海报 —— */
+function identLoopSpeak(id) {
+  const s = SPIRITS[id];
+  if (!s) return;
+  const txt = (s.intro || "") + (s.history ? "。 " + s.history : "");
+  if (window.Voice && window.Voice.say) {
+    const tone = (window.Voice.toneFor && s.primary) ? window.Voice.toneFor(s.primary) : undefined;
+    window.Voice.say(txt, tone ? { tone: tone } : {});
+  } else {
+    location.hash = "#/spirit/" + id;
+  }
+}
+function identLoopPoster(id) {
+  location.hash = "#/spirit/" + id;
 }
 
 /* ---------------- 站点页 ---------------- */
