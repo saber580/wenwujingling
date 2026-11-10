@@ -72,3 +72,17 @@ tools/bridge.log
 shiyilu/
 # tools 下的临时截图（脚本本身仍入库）
 tools/_*.png
+
+# ---------- 9. 2026-11-10 整理 ----------
+# 成就小像的合成底纹（2 张 ImageGen 原图，5.3MB）；成品 ach_*.jpg 已入库，底纹不入库
+成就/_plates/
+# 片头/海报实验素材（26 个 AI 生成片段与参考图，52MB），成品在 装饰/ 与 展望/
+修复验收/foil/
+# 主线流程图预览的临时产出（sed 生成，跑一次就丢）
+_vn_test.html
+# 一次性截图/定位脚本：验证时用完即弃，只保留可复用的校验与推送工具
+tools/_shot_*.py
+tools/_seek_*.py
+tools/_find_starter.py
+tools/_dump_st.js
+tools/_verify_*.py
