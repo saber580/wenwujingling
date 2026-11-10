@@ -7,7 +7,7 @@
 (function () {
   "use strict";
 
-  var KEY = "relic_nb_v2";          /* 看过就记一笔，之后不再自动弹（v2：第 6 步换成「捕捉精灵」） */
+  var KEY = "relic_nb_v3";          /* 看过就记一笔，之后不再自动弹（v3：第 2 步补「主线剧情 · 大地图」） */
 
   var STEPS = [
     {
@@ -16,13 +16,18 @@
       sel: [".rh-hero"]
     },
     {
+      t: "先走一遍主线 · 大地图",
+      d: "首屏右边这颗<em>「🗺 主线剧情 · 大地图」</em>就是整部作品的主线：从沧州出发，走遍全国 <em>22 站</em>，每站三条道选一只结缘，最后落一个结局（一共四个，其中一个是隐藏的）。<br>进去是一张流程图，<em>所有节点都能点</em>——没走到的也能点开预览，看完按右上角<em>「🗺 返回流程图」</em>接着走。这是全站最该先看的一屏。",
+      sel: [".rh-hero-cta .is-ghost", ".rh-hero-cta button:last-child", ".rh-hero-cta", ".rh-hero"]
+    },
+    {
       t: "这里收着你的精灵与文物",
       d: "顶部<em>「精灵」</em>里分三块：我的精灵、文物图鉴、属性图鉴。<br>点开任意一件文物，能读它的来历与属性。",
       sel: ['[data-nav="codex"]', '.mtab [data-key="codex"]', ".rh-mine", ".rh-codex"]
     },
     {
       t: "两个栏目 · AI 文物奇境与文物新玩法",
-      d: "AI 文物奇境里是打卡海报、茶话会、识别这些 AI 玩法；文物新玩法里是修复、赋彩、漫画、旅游攻略，还有<em>「向考古」</em>——<br>先当先民埋下一座墓，三千年后再亲手挖开。",
+      d: "AI 文物奇境里是打卡海报、茶话会、识别这些 AI 玩法；文物新玩法里是<em>拟人漫画</em>、修复、赋彩、旅游攻略，还有<em>「向考古」</em>——<br>先当先民埋下一座墓，三千年后再亲手挖开。",
       sel: [".rh-tools"]
     },
     {
@@ -82,7 +87,7 @@
 
     card = el("div", "nb-card");
     card.innerHTML =
-      '<div class="nb-step"><span>第</span><b data-nb="no">1</b><span>步</span><i data-nb="all">/ 共 6 步</i></div>' +
+      '<div class="nb-step"><span>第</span><b data-nb="no">1</b><span>步</span><i data-nb="all">/ 共 ' + STEPS.length + ' 步</i></div>' +
       '<h3 class="nb-title" data-nb="t"></h3>' +
       '<p class="nb-desc" data-nb="d"></p>' +
       '<div class="nb-dots" data-nb="dots"></div>' +

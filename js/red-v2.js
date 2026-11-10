@@ -40,9 +40,9 @@
   ];
 
   const EDU_TOOLS = [
-    { no: "01", big: "壹", em: "🧩", title: "文物修复", desc: "去划痕、补缺口、恢复原色，再认一遍。", href: "#/restore" },
-    { no: "02", big: "贰", em: "🎨", title: "文物赋彩", desc: "把 36 幅黑白文物稿，亲手还上颜色。", href: "#/dye" },
-    { no: "03", big: "叁", em: "🖌", title: "文物拟人漫画", desc: "国宝化作萌系角色，讲自己的故事。", href: "#/shiyilu" },
+    { no: "01", big: "壹", em: "🖌", title: "文物拟人漫画", desc: "国宝化作萌系角色，讲自己的故事。", href: "#/shiyilu" },
+    { no: "02", big: "贰", em: "🧩", title: "文物修复", desc: "去划痕、补缺口、恢复原色，再认一遍。", href: "#/restore" },
+    { no: "03", big: "叁", em: "🎨", title: "文物赋彩", desc: "把 36 幅黑白文物稿，亲手还上颜色。", href: "#/dye" },
     { no: "04", big: "肆", em: "🗺", title: "文博旅游攻略", desc: "几天、爱看什么、和谁去，排成一条路线。", href: "#/guide" },
     { no: "05", big: "伍", em: "🃏", title: "心仪卡工坊", desc: "把心头好调成一张全息典藏卡，可存图。", href: "#/heart" },
     { no: "06", big: "陆", em: "⛏", title: "向考古", desc: "先当先民埋下一座墓，三千年后再亲手挖开。", href: "向考古-我埋下的三千年.html?v=1024" }

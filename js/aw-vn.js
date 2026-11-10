@@ -2069,7 +2069,7 @@
       const locked = !!n.locked && !vnChoiceOpen({ need: n.locked });
       if (locked) icMark = "?";
 
-      const parts = String(locked ? "结局 · ？？？" : n.title).split(" · ");
+      const parts = String(locked ? "结局 · 未点亮" : n.title).split(" · ");
       const l1 = parts.length > 1 ? parts[0] : "";
       let l2 = parts.length > 1 ? parts.slice(1).join("·") : parts[0];
       if (l2.length > 9) l2 = l2.slice(0, 8) + "…";
@@ -2386,11 +2386,9 @@
   function vnOpen(id) {
     const n = vnNode(id);
     if (!n || String(id).endsWith("_ev")) return;
-    /* 隐藏结局：条件没到，流程图上的这张卡就是锁着的——不解锁、不解密 */
-    if (n.locked && !vnChoiceOpen({ need: n.locked })) {
-      vnTip("这一页还空着。等你真的跟它们说过话，它自己会亮。");
-      return;
-    }
+    /* 隐藏结局：条件没到也能点开看（流程图上的卡是给评委随手点的，拦一下像坏了）；
+       但只算「预览」——不写结局、不进路径，卡片上仍留未点亮标记 */
+    const preview = !!n.locked && !vnChoiceOpen({ need: n.locked });
     /* 首次进开场：先问家乡（玩家不是透明人） */
     if (id === "open" && !VN.player.hometown && !VN.playerAsked) {
       VN.playerAsked = true;
@@ -2402,11 +2400,11 @@
       return;
     }
     VN.current = id;
-    VN.lastNode = id;
+    VN.lastNode = preview ? VN.lastNode : id;
     VN.cam = null;
     VN.sideMode = null;
-    if (n.ending) { VN.endings[n.ending] = true; vnSave(); }
-    if (!VN.path.includes(id)) VN.path.push(id);
+    if (n.ending && !preview) { VN.endings[n.ending] = true; vnSave(); }
+    if (!preview && !VN.path.includes(id)) VN.path.push(id);
     VN.view = "node";
     VN.nodeLines = n.lines.slice();
     /* 支线做完再结缘，会多一句回响 */
@@ -2417,6 +2415,8 @@
     }
     VN.nodeCursor = 1;
     vnSave(); vnPaint();
+    /* 预览态：让玩家知道「看得见 ≠ 点亮了」，并给出点亮它的条件 */
+    if (preview) vnTip("这一页还没点亮 · 你可以先看。想让它真的亮起来：支线 + 问它一句，合计三次。");
   }
 
   /* 家乡站专属质问：走到自己家门口，才发现最陌生的是自己人 */
