@@ -99,9 +99,14 @@
     return starters.concat(others);
   }
 
+  /* 隐藏站（第零站 · 华夏）不计入首页站数，否则 "22 / 23" 会剧透它 */
+  function shownStations() {
+    if (typeof STATIONS === "undefined") return [];
+    return STATIONS.filter(function (st) { return !st.secret; });
+  }
+
   function doneStationCount() {
-    if (typeof STATIONS === "undefined") return 0;
-    return STATIONS.filter(function (st) {
+    return shownStations().filter(function (st) {
       return (st.spiritIds || []).length > 0 && st.spiritIds.every(isGot);
     }).length;
   }
@@ -116,16 +121,133 @@
     return "精灵/透明/" + s.id + ".webp";
   }
 
+  /* ---------------- 成就册 ----------------
+     一枚成就 = 一张小照 + 一行记事（形制照「一成就一照片，旁附文字」的册页排法）。
+     解锁条件全部读站内真实进度，不另存一套状态：
+     唤醒数 / 站点数 / 属性覆盖 / VN 结局、支线、问它一句的次数。
+     照片用该成就对应的文物精灵立绘（精灵/透明/<id>.webp），不是另画的插图。 */
+  function achievementList() {
+    const mine = mineList();
+    const total = allSpirits().length || 104;
+    const sts = shownStations();
+    const stTotal = sts.length || 22;
+    const done = doneStationCount();
+    const hbSts = sts.filter(function (st) { return /河北/.test(st.place || ""); });
+    const hbDone = hbSts.filter(function (st) {
+      const ids = st.spiritIds || [];
+      return ids.length > 0 && ids.every(isGot);
+    }).length;
+
+    const attrs = {};
+    mine.forEach(function (s) {
+      if (s.primary) attrs[s.primary] = 1;
+      if (s.secondary) attrs[s.secondary] = 1;
+    });
+    const attrGot = Object.keys(attrs).length;
+
+    let ends = 0, asks = 0;
+    /* 首页比 aw-vn.js 早一拍渲染，那时 window.VN 可能还没挂上；
+       拿不到就跑存档（键名与 aw-vn.js 的 VN_SAVE_KEY / VN_PLAYER_KEY 对齐），
+       这样首屏就能显示真实的结局数、问话数，不必等第二次进首页 */
+    try {
+      const vn = window.VN && window.VN._state;
+      if (vn) {
+        ends = Object.keys(vn.endings || {}).length;
+        asks = vn.askCount || 0;
+      } else {
+        const pl = JSON.parse(localStorage.getItem("wjwl_vn_player_v2") || "null");
+        if (pl && pl.askCount) asks = pl.askCount;
+        const ed = JSON.parse(localStorage.getItem("wjwl_vn_endings_v4") || "null");
+        if (ed && ed.endings) ends = Object.keys(ed.endings).length;
+      }
+    } catch (e) {}
+
+    const list = [
+      { id: "open",   img: "wuzhuqian",   n: "入册",       d: "你推开了这本册子，第一页写下了你的名字。", cur: 1, need: 1, unit: "页" },
+      { id: "first",  img: "tielion",     n: "初入燕赵",   d: "拍下第一件文物，册上落了第一笔。",       cur: mine.filter(function (s) { return !s.starter; }).length, need: 1, unit: "件" },
+      { id: "one",    img: "changxin",    n: "一站到底",   d: "把一站里的精灵全收齐，才算真的到过。",   cur: done, need: 1, unit: "站" },
+      { id: "eleven", img: "jinyuyi",     n: "十一城记",   d: "河北十一个馆，一个不落。",               cur: hbDone, need: Math.max(1, hbSts.length), unit: "站" },
+      { id: "nine",   img: "yuzhulong",   n: "九州行",     d: "十一个站亮起来，地图上开始有路可走。",   cur: done, need: 11, unit: "站" },
+      { id: "attr",   img: "yubi",        n: "见器知性",   d: "十四种属性在手，看器物先看它是什么做的。", cur: attrGot, need: 14, unit: "种属性" },
+      { id: "half",   img: "qinghuaci",   n: "半壁",       d: "过半的国宝，都跟着你回了家。",           cur: mine.length, need: Math.ceil(total / 2), unit: "只" },
+      { id: "all",    img: "houmuwuding", n: "满架",       d: total + " 件国宝收齐，一架摆满。",        cur: mine.length, need: total, unit: "只" },
+      { id: "story",  img: "yanyudeng",   n: "说书人",     d: "问它一句满十次，它们开始主动跟你搭话。", cur: asks, need: 10, unit: "次" },
+      { id: "ends",   img: "hushilu",     n: "四种收梢",   d: "四条路都走到头，才知道哪个是自己选的。", cur: ends, need: 4, unit: "个结局" },
+      { id: "all22",  img: "lianhuazun",  n: "走遍二十二站", d: "二十二站全亮，你的地图再没有暗处。",   cur: done, need: stTotal, unit: "站" }
+    ];
+
+    list.forEach(function (a) {
+      a.on = a.cur >= a.need;
+      a.pct = Math.max(0, Math.min(100, Math.round(a.cur / a.need * 100)));
+      a.left = Math.max(0, a.need - a.cur);
+    });
+    return list;
+  }
+
+  /* ---------------- 成就册的九宫／十二格 ----------------
+     一格一枚：编号 + 一张 16:10 小像 + 名字与一段记事（收集档案的排法）。
+     小像是 成就/ach_<id>.jpg（站内文物立绘叠在朱红/青绿底纹上合成）；
+     没解锁的同款画面压暗加印「未收录」，记事换成「还差多少」。
+     首页不再放这一整块——它有自己的页面（#/achieve），这里只做拼装。 */
+  function achGridHTML() {
+    const list = achievementList();
+    const on = list.filter(function (a) { return a.on; }).length;
+    const cards = list.map(function (a, i) {
+      const note = a.on ? a.d : "还差 " + a.left + " " + a.unit + " · " + a.d;
+      const no = "No." + (i + 1 < 10 ? "0" : "") + (i + 1);
+      const shot = '<img src="成就/ach_' + esc(a.id) + '.jpg?v=1" alt="' + esc(a.n) +
+        '" loading="lazy" decoding="async" draggable="false">';
+      return '<article class="rh-ach-card' + (a.on ? " is-on" : " is-off") + '">' +
+        '<span class="rh-ach-no">' + no + "</span>" +
+        '<span class="rh-ach-photo">' + shot + (a.on ? '<i class="rh-ach-seal">已</i>' : "") + "</span>" +
+        '<div class="rh-ach-cap"><b>' + esc(a.n) + "</b><small>" + esc(note) + "</small></div>" +
+        "</article>";
+    }).join("");
+    /* 十一枚在三列里会空出最后一格——补一枚「留白」的空格，
+       把「灰着的格子，空着等你」这句话真的做成一个格子，不留突兀的破口 */
+    const blank = (on < list.length)
+      ? '<article class="rh-ach-card is-blank" aria-hidden="true">' +
+          '<span class="rh-ach-no">No.——</span>' +
+          '<span class="rh-ach-photo"><i>空</i></span>' +
+          '<div class="rh-ach-cap"><b>还差 ' + (list.length - on) + ' 枚</b>' +
+          "<small>这一格空着，等你回来落笔。</small></div>" +
+        "</article>"
+      : "";
+    return { html: cards + blank, on: on, total: list.length };
+  }
+
+  /* ---------------- 成就册（独立页 #/achieve）---------------- */
+  function achieveHTML() {
+    const g = achGridHTML();
+    const pct = g.total ? Math.round(g.on / g.total * 100) : 0;
+    return '<div class="ach-page">' +
+      '<div class="ach-top">' +
+        '<a class="ach-back" href="#/">← 回到首页</a>' +
+        '<div class="ach-kicker">ACHIEVEMENTS · 成就册</div>' +
+        "<h1>走过的每一站，都在册上留了一笔</h1>" +
+        "<p>一格一枚：一张小像，一段记事。小像里是那件文物的样子，旁边记着你是怎么把它领回来的。" +
+          "没走到的格子里没有照片，只有编号——它还在路上等你。</p>" +
+        '<div class="ach-meter"><span><b>' + g.on + "</b> / " + g.total + " 已解锁</span>" +
+          '<i class="ach-meter-bar"><i style="width:' + pct + '%"></i></i>' +
+          '<span class="ach-meter-pct">' + pct + "%</span></div>" +
+      "</div>" +
+      '<div class="rh-ach-grid ach-grid-page">' + g.html + "</div>" +
+      "</div>";
+  }
+
   /* ---------------- 首页 HTML ---------------- */
   function homeHTML() {
     const all = allSpirits();
     const mine = mineList();
     const done = doneStationCount();
     const total = all.length || 14;
-    const stTotal = (typeof STATIONS === "undefined" ? 13 : STATIONS.length);
+    const stTotal = (typeof STATIONS === "undefined" ? 13 : (shownStations().length || 13));
     const pct = Math.min(100, Math.round(mine.length / total * 100));
     const attrTotal = (typeof ATTRIBUTES !== "undefined")
       ? Object.keys(ATTRIBUTES.primary).length + Object.keys(ATTRIBUTES.secondary).length : 20;
+    const achList = achievementList();
+    const achOn = achList.filter(function (a) { return a.on; }).length;
+
 
     const avatars = mine.slice(0, 7).map(function (s) {
       return '<a class="rh-ava" href="#/spirit/' + esc(s.id) + '" title="' + esc(s.name) + '">' +
@@ -146,7 +268,7 @@
         '<span class="pin-label"><span class="pin-sign" data-icon="🏛">' + esc(stationShort(st)) + "</span></span></a>";
     }).join("");
 
-    const stationRows = (typeof STATIONS === "undefined" ? [] : STATIONS).map(function (st, i) {
+    const stationRows = shownStations().map(function (st, i) {
       const got = (st.spiritIds || []).filter(isGot).length;
       const totalSt = (st.spiritIds || []).length;
       const ok = totalSt > 0 && got >= totalSt;
@@ -226,6 +348,9 @@
             <div><b>${total}</b><span>件 国 宝</span></div>
             <div><b>${stTotal}</b><span>个 打 卡 站</span></div>
             <div><b>${attrTotal}</b><span>种 属 性</span></div>
+            <a class="rh-num-go" href="#/achieve" title="打开成就册">
+              <b>${achOn}</b><span>枚 成 就<i aria-hidden="true"> →</i></span>
+            </a>
           </div>
           <div class="rh-hero-cta">
             <button type="button" class="btn starbtn" onclick="openPhoto()">
@@ -233,11 +358,11 @@
               <div class="stars-box"><div class="stars"></div></div>
               <div class="glow"><div class="circle"></div><div class="circle"></div></div>
             </button>
-            <a class="btn starbtn is-ghost" href="#/codex">
-              <strong>翻一翻图鉴 →</strong>
+            <button type="button" class="btn starbtn is-ghost" onclick="openStory()">
+              <strong>🗺 主线剧情 · 大地图</strong>
               <div class="stars-box"><div class="stars"></div></div>
               <div class="glow"><div class="circle"></div><div class="circle"></div></div>
-            </a>
+            </button>
           </div>
         </div>
 
@@ -315,20 +440,22 @@
             <div class="rh-head">
               <span class="rh-no" aria-hidden="true">贰</span>
               <div class="rh-head-txt">
-                <span class="rh-kicker">EXPLORE · 十三站</span>
-                <h2>一张地图，走完十三站</h2>
-                <p>从沧州的铁狮子，到满城汉墓的长信宫灯；从红山玉龙，到后母戊鼎。点亮一站，就多一段燕赵故事。</p>
+                <span class="rh-kicker">EXPLORE · 二十二站</span>
+                <h2>一张地图，走完二十二站</h2>
+                <p>河北 11 站落在燕赵，全国 11 馆散在九州：从沧州铁狮子到三星堆的纵目，点一枚标记，进一段故事。</p>
               </div>
             </div>
             <div class="rh-station-list">${stationRows}</div>
           </div>
           <div class="rh-map-card" id="home-map">
-            <div class="rh-card-t"><b>河北地图</b><span>已点亮 ${done} / ${stTotal} 站</span></div>
+            <div class="rh-card-t"><b>全国地图</b><span>已点亮 ${done} / ${stTotal} 站</span></div>
             <div class="rh-map">
-              <img src="装饰/河北地图.webp" alt="河北地图">
-              <div class="rh-marks">${marks}</div>
+              ${(typeof ChinaMap !== "undefined") ? ChinaMap.render() : ""}
             </div>
-            <div class="rh-map-foot">点一枚站点标记，直达那一站 →</div>
+            <div class="rh-map-foot">
+              <span>点标记直达那一站 · 河北 11 城可放大</span>
+              <button type="button" class="cmap-enter" data-act="zoom">放大河北 ▸</button>
+            </div>
           </div>
         </div>
       </section>
@@ -758,16 +885,38 @@
       app.innerHTML = homeHTML();
       initFan();
       bindReveal();
+      if (typeof ChinaMap !== "undefined") {
+        const mapCard = document.getElementById("home-map");
+        if (mapCard) ChinaMap.bind(mapCard);
+      }
     }
     paintNav();
   }
 
+  /* 成就册是一页独立的册子：app.js 的路由表里没有这条，
+     它的 hashchange 直接调内部 render()（绕过 window.render），
+     所以这里自己接一次——认的是 body[data-page]，谁先跑都不怕 */
+  function renderAchieve() {
+    if (document.body.dataset.page !== "achieve") return;
+    const app = document.getElementById("app");
+    if (!app || app.querySelector(".ach-page")) return;
+    app.innerHTML = achieveHTML();
+    window.scrollTo(0, 0);
+    paintNav();
+  }
+
+  window.addEventListener("hashchange", renderAchieve);
   window.addEventListener("hashchange", renderHome);
 
   const originalRender = window.render;
   if (typeof originalRender === "function") {
     window.render = function () {
       const result = originalRender.apply(this, arguments);
+      /* 成就册是一页独立的册子：app.js 里没有这条路由，这里接住 #/achieve */
+      if (document.body.dataset.page === "achieve") {
+        const app = document.getElementById("app");
+        if (app) app.innerHTML = achieveHTML();
+      }
       renderHome();
       return result;
     };
@@ -794,4 +943,5 @@
   });
 
   renderHome();
+  renderAchieve();
 })();

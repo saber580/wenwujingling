@@ -292,14 +292,26 @@ body[data-page="home"] #app{max-width:none;width:100%;margin:0;padding:0}
   color:rgba(255,244,226,.86);letter-spacing:.7px;
 }
 .rh-lede b{color:#FFE7BC;font-weight:800}
-.rh-nums{display:flex;margin:0 0 22px;max-width:420px}
+.rh-nums{display:flex;margin:0 0 22px;max-width:520px}
 .rh-nums>div{flex:1;padding:0 15px;border-left:1px solid rgba(255,236,200,.22)}
 .rh-nums>div:first-child{padding-left:0;border-left:none}
 .rh-nums b{
   display:block;font-family:var(--rh-serif);
-  font-size:clamp(25px,2.8vw,34px);line-height:1;color:#FFEEC6;letter-spacing:1px;
+  font-size:clamp(23px,2.5vw,31px);line-height:1;color:#FFEEC6;letter-spacing:1px;
 }
-.rh-nums span{display:block;margin-top:7px;font-size:10.5px;letter-spacing:1.8px;color:rgba(255,238,206,.58)}
+.rh-nums span{display:block;margin-top:7px;font-size:10px;letter-spacing:1.2px;color:rgba(255,238,206,.60)}
+/* 第四格「枚成就」是入口：点它翻到独立的成就册那一页 */
+.rh-num-go{
+  position:relative;flex:1;padding:0 12px;
+  border-left:1px solid rgba(255,236,200,.22);
+  text-decoration:none;color:inherit;cursor:pointer;
+  transition:transform .18s ease-out;
+}
+.rh-num-go:hover{transform:translateY(-2px)}
+.rh-num-go:hover b{color:#FFF8E2;text-shadow:0 0 16px rgba(255,186,104,.55)}
+.rh-num-go span i{font-style:normal;color:rgba(255,238,206,.40);transition:color .2s,transform .2s;display:inline-block}
+.rh-num-go:hover span i{color:#FFD79A;transform:translateX(2px)}
+.rh-num-go span{color:rgba(255,238,206,.74)}
 .rh-hero-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .rh-btn-solid{
   all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:9px;
@@ -746,6 +758,129 @@ body[data-page="home"] #app{max-width:none;width:100%;margin:0;padding:0}
 }
 .rh-station.done .rh-st-prog{color:#FFF6E4;background:#C2141C;border-color:#C2141C}
 
+/* ===== 成就册（#home-ach）=====
+   一格一枚：编号 + 一张 16:10 小像 + 名字与一段记事（收集档案的排法）。
+   小像 = 站内文物立绘叠在朱红/青绿底纹上合成的「器物小像」（成就/ach_*.jpg），
+   同一册的十一页，翻到同一页不重样；未解锁压暗加印「未收录」，看得见影子，认不出是谁。 */
+.rh-ach-count{
+  display:flex;align-items:baseline;gap:6px;margin-left:auto;
+  font-family:var(--rh-serif);font-size:11.5px;letter-spacing:1.4px;color:#8A5B47;
+  padding-bottom:4px;
+}
+.rh-ach-count b{font-size:30px;line-height:1;color:#A50F17;letter-spacing:0;font-weight:700}
+.rh-ach-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:24px 18px;
+}
+.rh-ach-card{display:block;position:relative;margin:0}
+/* 档案编号：No.01 … No.11，压在照片上沿外面，像卡片上的钢印 */
+.rh-ach-no{
+  display:block;margin-bottom:7px;
+  font-size:9.5px;font-weight:700;letter-spacing:2.2px;color:#A5886B;
+  font-variant-numeric:tabular-nums;
+}
+.rh-ach-photo{
+  position:relative;display:block;aspect-ratio:16/10;border-radius:3px;overflow:hidden;
+  background:#2A1410;
+  border:1px solid rgba(120,60,20,.30);
+  box-shadow:0 3px 11px rgba(120,60,20,.17),inset 0 0 0 1px rgba(255,240,210,.20);
+}
+.rh-ach-photo img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform .5s cubic-bezier(.2,.7,.3,1);
+}
+.rh-ach-card.is-on:hover .rh-ach-photo img{transform:scale(1.045)}
+/* 已收录：右上角一枚朱印 */
+.rh-ach-seal{
+  position:absolute;right:7px;top:7px;width:17px;height:17px;border-radius:2px;
+  display:grid;place-items:center;font-style:normal;font-size:9.5px;font-weight:800;
+  background:#C2141C;color:#FFF6E4;letter-spacing:0;
+  box-shadow:0 1px 4px rgba(60,10,6,.45),inset 0 0 0 1px rgba(255,240,210,.35);
+}
+/* 未收录：同款画面压暗，中间压一行「未收录」 */
+.rh-ach-card.is-off .rh-ach-photo img{filter:grayscale(1) brightness(.34) contrast(.92)}
+/* 压一条暗带再落字，字才站得住 */
+.rh-ach-card.is-off .rh-ach-photo::before{
+  content:"";position:absolute;inset:0;z-index:1;
+  background:radial-gradient(ellipse 78% 34% at 50% 50%,rgba(26,8,6,.62),rgba(26,8,6,0) 72%);
+}
+.rh-ach-card.is-off .rh-ach-photo::after{
+  content:"未 收 录";position:absolute;inset:0;z-index:2;display:grid;place-items:center;
+  font-family:var(--rh-serif);font-size:13.5px;letter-spacing:.36em;text-indent:.36em;
+  color:rgba(246,232,206,.62);text-shadow:0 1px 4px rgba(0,0,0,.7);
+}
+.rh-ach-cap{margin-top:10px}
+.rh-ach-cap b{
+  display:block;font-family:var(--rh-serif);font-size:15px;letter-spacing:1.7px;
+  color:#2B1411;font-weight:700;
+}
+.rh-ach-cap small{
+  display:block;margin-top:5px;font-size:11px;line-height:1.74;color:#8A5B47;
+}
+.rh-ach-card.is-off .rh-ach-cap b{color:#8A5B47}
+.rh-ach-card.is-off .rh-ach-cap small{color:#A08A72}
+/* 第十二格：空着的那一页。虚线框 + 一个淡印，把「灰着的格子」说成一句实话 */
+.rh-ach-card.is-blank .rh-ach-photo{
+  background:rgba(255,253,247,.55);
+  border:1.5px dashed rgba(165,15,23,.30);
+  box-shadow:inset 0 0 22px rgba(190,150,90,.10);
+}
+.rh-ach-card.is-blank .rh-ach-photo i{
+  position:absolute;inset:0;display:grid;place-items:center;font-style:normal;
+  font-family:var(--rh-serif);font-size:30px;color:rgba(165,15,23,.17);letter-spacing:0;
+}
+.rh-ach-card.is-blank .rh-ach-cap b{color:#A5906F;letter-spacing:2px}
+.rh-ach-card.is-blank .rh-ach-cap small{color:#B0A088}
+
+/* ===== 成就册独立页（#/achieve）=====
+   从首屏第四格「枚 成 就」进来，一页只放这一册，照片可以做大一点。 */
+.ach-page{max-width:1260px;margin:0 auto;padding:30px 26px 90px}
+.ach-back{
+  display:inline-block;margin-bottom:16px;font-size:12px;letter-spacing:1.2px;
+  color:#8A5B47;text-decoration:none;transition:color .18s;
+}
+.ach-back:hover{color:#A50F17}
+.ach-kicker{font-size:10.5px;letter-spacing:3.2px;color:#B08A63;font-weight:700}
+.ach-top h1{
+  margin:10px 0 0;font-family:var(--rh-serif);letter-spacing:2.4px;
+  font-size:clamp(25px,3.1vw,35px);line-height:1.35;color:#2B1411;font-weight:700;
+}
+.ach-top p{
+  margin:12px 0 0;max-width:780px;font-size:13px;line-height:2;color:#7A5A46;
+}
+.ach-meter{
+  display:flex;align-items:center;gap:14px;margin-top:20px;
+  font-size:11.5px;letter-spacing:1.2px;color:#8A5B47;
+}
+.ach-meter b{
+  font-family:var(--rh-serif);font-size:26px;letter-spacing:0;color:#A50F17;line-height:1;
+  margin-right:2px;
+}
+.ach-meter-bar{
+  display:block;width:100%;max-width:300px;height:3px;border-radius:2px;
+  background:rgba(165,15,23,.13);overflow:hidden;
+}
+.ach-meter-bar>i{display:block;height:100%;border-radius:2px;background:#C2141C;transition:width .5s ease-out}
+.ach-meter-pct{color:#A5886B;font-variant-numeric:tabular-nums}
+.ach-grid-page{margin-top:34px}
+
+@media (max-width:1100px){
+  .rh-ach-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 16px}
+}
+@media (max-width:700px){
+  .rh-ach-grid{grid-template-columns:1fr;gap:18px}
+  .rh-ach-count{margin-left:0;width:100%;justify-content:flex-end;border-top:1px solid rgba(165,15,23,.10);margin-top:6px;padding-top:8px}
+  .rh-ach-count b{font-size:24px}
+  .rh-ach-count span{font-size:10.5px}
+  .rh-ach-cap b{font-size:14.5px}
+  .ach-page{padding:18px 16px 72px}
+  .ach-meter{flex-wrap:wrap;gap:8px 12px}
+  .ach-meter-bar{max-width:100%;flex:1;order:3;width:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  .rh-ach-card,.rh-ach-pic img,.rh-ach-bar i{transition:none}
+}
+
 .rh-map-card{
   padding:13px;border-radius:5px;
   background:linear-gradient(180deg,#FFFCF4,#F7E9CE);
@@ -776,7 +911,112 @@ body[data-page="home"] #app{max-width:none;width:100%;margin:0;padding:0}
 .rh-mark:hover i{transform:scale(1.45)}
 .rh-mark.done i{background:#F2352B;box-shadow:0 0 0 4px rgba(242,53,43,.22),0 0 14px rgba(242,53,43,.7)}
 .rh-mark.done span{color:#A50F17;font-weight:800;border-color:rgba(165,15,23,.4)}
-.rh-map-foot{margin-top:8px;font-size:10.5px;letter-spacing:1.2px;color:#8A5B47}
+.rh-map-foot{margin-top:8px;font-size:10.5px;letter-spacing:1.2px;color:#8A5B47;
+  display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* ===== 全国分省地图（js/china-map.js）=====
+   --k 由 JS 写入：1 屏幕像素 = --k 个 viewBox 单位。
+   所有字号、线宽、圆点都乘 --k，缩放与换设备时屏幕观感恒定。 */
+.cmap{
+  position:relative;--k:1;
+  background:radial-gradient(600px 320px at 46% 34%,#FFFDF7,#F2E4C8);
+}
+.cmap-svg{display:block;width:100%;height:auto;touch-action:manipulation}
+.cmp-p{
+  fill:#F0E1C4;stroke:#C4A87A;stroke-width:calc(var(--k) * .9);
+  stroke-linejoin:round;
+  transition:fill .18s;
+}
+.cmp-p-st{fill:#F2D9C2}
+.cmp-p-home{fill:#EDC3AE;stroke:#B34A38;stroke-width:calc(var(--k) * 1.4);cursor:pointer}
+.cmap[data-zoom="cn"] .cmp-p-home:hover{fill:#E7B49C}
+/* 站点图钉 —— 形制照 Uiverse SnyDeTreves/white-newt-65「Map card」：
+   圆头（径向渐变高光）+ 锥形针脚 + 落点椭圆影；针尖扎在站点经纬度投影点上 */
+.cmp-pin-head{
+  fill:url(#cmpPinGrad);stroke:#FFFBF1;stroke-width:.9;
+  transition:filter .16s;
+}
+.cmp-pin-head.is-done{fill:url(#cmpPinGradDone)}
+.cmp-pin-needle{fill:#2B1A12;opacity:.9}
+.cmp-pin-shine{fill:#fff;opacity:.5}
+.cmp-pin-shadow{fill:rgba(96,42,22,.26)}
+.cmp-pin-ink{transition:filter .16s ease-out}
+.cmp-pin:hover .cmp-pin-ink{filter:brightness(1.12) drop-shadow(0 2px 3px rgba(110,30,14,.35))}
+/* 未点亮的图钉用描边呼吸提示可点，比整颗闪烁克制 */
+.cmp-pin .cmp-pin-head:not(.is-done){animation:cmpPinBreath 2.4s ease-in-out infinite}
+@keyframes cmpPinBreath{0%,100%{stroke-width:.9}50%{stroke-width:2.1}}
+.cmp-hit{fill:transparent;cursor:pointer}
+.cmp-lead{stroke:#B34A38;stroke-width:calc(var(--k) * .7);stroke-linecap:round}
+/* 站点路牌 —— 形制照 Uiverse SnyDeTreves/white-newt-65 的 .map-city__sign：
+   实底牌面 + 浅色描边 + data-icon 图标，悬停时牌面抬起、图标重播 grow。
+   牌面内部尺寸由 JS 按「屏幕像素」写死，再靠 .cmp-sign 的 scale(k) 换算，
+   所以这里的字号是本地 px（不是 calc(var(--k)*…)） */
+.cmp-sign{cursor:pointer}
+.cmp-sign-in{transition:transform .18s ease-out}
+.cmp-sign-sh{fill:rgba(96,42,22,.22)}
+.cmp-sign-bg{fill:#A8121B;stroke:#FFF6E4;stroke-width:1.1px;transition:fill .18s ease-out}
+.cmp-cnl.is-done .cmp-sign-bg{fill:#3F7C5A}
+.cmp-cnl.is-done .cmp-sign-sh{fill:rgba(30,70,50,.20)}
+.cmp-txt{
+  font-family:var(--rh-serif);font-size:10.5px;font-weight:700;
+  fill:#FFF6E4;letter-spacing:.02em;
+}
+.cmp-ico{font-size:10px;transform-box:fill-box;transform-origin:50% 100%}
+/* 窄屏牌面收起来：图标让位给文字，多留一个标签比多一个图标实在 */
+.cmap.cmp-compact .cmp-ico{display:none}
+.cmap.cmp-compact .cmp-txt{font-size:9.5px;letter-spacing:0}
+.cmap .cmp-cnl.is-hot .cmp-sign-in{transform:translateY(-1.4px)}
+.cmap .cmp-cnl.is-hot .cmp-sign-bg{fill:#C8151F}
+.cmap .cmp-cnl.is-done.is-hot .cmp-sign-bg{fill:#48906A}
+/* 原件的 grow：图标从地下冒出来（逐帧照搬，缩到牌面高度） */
+.cmap .cmp-cnl.is-hot .cmp-ico{animation:cmpIcoGrow .46s cubic-bezier(.25,.9,.3,1) both}
+@keyframes cmpIcoGrow{
+  0%  {transform:translateY(160%) scale(.4);opacity:0}
+  55% {transform:translateY(-10%) scale(1.08);opacity:1}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+@media (prefers-reduced-motion: reduce){
+  .cmp-sign-in,.cmp-sign-bg{transition:none}
+  .cmap .cmp-cnl.is-hot .cmp-ico{animation:none}
+}
+.cmap[data-zoom="cn"] .only-hb{opacity:0;visibility:hidden}
+.cmap[data-zoom="hb"] .only-cn{opacity:0;visibility:hidden}
+
+.cmap-enter{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 9px;border-radius:3px;cursor:pointer;
+  background:rgba(255,251,240,.94);border:1px solid rgba(190,83,64,.75);
+  box-shadow:0 2px 6px rgba(120,40,20,.14);color:#A50F17;
+  font-family:var(--rh-serif);font-size:10.5px;letter-spacing:1px;font-weight:700;
+  line-height:1.5;
+}
+.rh-map-card[data-zoom="hb"] .cmap-enter{display:none}
+.cmap-enter:hover{background:#FFF6E4;box-shadow:0 4px 10px rgba(120,40,20,.22)}
+
+/* 河北热区：铺满整个省，透明，只在「全国」视图可点 */
+.cmp-hbhit{fill:transparent;cursor:pointer}
+.cmap[data-zoom="cn"] .cmp-hbhit:hover{fill:rgba(190,83,64,.07)}
+.cmap[data-zoom="hb"] .cmp-hbhit{pointer-events:none}
+.cmap[data-zoom="hb"] .cmp-pin.is-out{display:none}
+/* 全国视图里河北 11 城的圆点挤成一小团，会顶掉「故宫／国博」两个标签，先藏起来 */
+.cmap[data-zoom="cn"] .cmp-pin.is-hb{display:none}
+
+.cmap-back{
+  position:absolute;right:7px;top:7px;display:none;
+  padding:3px 9px;border-radius:3px;cursor:pointer;
+  background:rgba(255,251,240,.96);border:1px solid rgba(165,15,23,.35);
+  color:#A50F17;font-size:10.5px;letter-spacing:1px;font-weight:700;
+  font-family:var(--rh-serif);
+}
+.cmap[data-zoom="hb"] .cmap-back{display:block}
+.cmap-back:hover{background:#FFF6E4}
+
+/* 南海诸岛附图 */
+.cmp-ins-bg{fill:#FFFDF7;stroke:#C9B091;stroke-width:calc(var(--k) * .9)}
+.cmp-ins-t{font-family:var(--rh-serif);font-size:calc(var(--k) * 7px);fill:#8A5B47;letter-spacing:.06em}
+.cmp-sea{font-family:var(--rh-serif);font-size:calc(var(--k) * 8px);fill:#A98A63;
+  letter-spacing:.14em;paint-order:stroke;stroke:#FFFBF1;stroke-width:calc(var(--k) * 2)}
+
 
 /* ---- 03 AI 文物奇境 / 文物新玩法（朱漆长廊）---- */
 .rh-ai{
@@ -950,8 +1190,10 @@ body.rh-anim .rh-sec.rh-in,body.rh-anim .rh-ai.rh-in,body.rh-anim .rh-final.rh-i
   .rh-topbar .bgm-btn{width:32px;height:32px}
   .rh-hero-wrap{padding:18px 16px 8px}
   .rh-title-cn{letter-spacing:6px}
-  .rh-nums{max-width:100%}
-  .rh-nums>div{padding:0 10px}
+  /* 四格挤在一条线上会被右下角那只精灵压住，手机上改成两行两列 */
+  .rh-nums{display:grid;grid-template-columns:1fr 1fr;gap:14px 0;max-width:100%}
+  .rh-nums>div,.rh-num-go{padding:0 12px;border-left:none}
+  .rh-nums>div:nth-child(2n){border-left:1px solid rgba(255,236,200,.20)}
   .rh-plate{width:min(330px,96%);margin-top:-18px;padding:12px 15px}
   .rh-plate h2{font-size:22px}
   .rh-fanbar-in{padding:0 12px}
