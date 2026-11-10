@@ -91,7 +91,7 @@
   padding: 0;
   transform: translateX(-50%);
   width: max-content;
-  max-width: 104px;
+  max-width: 132px;
   text-align: center;
   white-space: nowrap;
   background: none;
@@ -107,7 +107,7 @@
   justify-content: center;
   column-gap: .3em;
   width: max-content;
-  max-width: 100%;
+  max-width: 132px;
   margin: 0 auto;
   padding: .18em .44em;
   overflow: hidden;
