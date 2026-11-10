@@ -230,6 +230,9 @@
 
     document.addEventListener("keydown", onKey);
     window.addEventListener("resize", layout);
+
+    /* 调试/录屏用：?skipintro 直接跳过扉页，便于截图与演示 */
+    if (/(?:^|[?&])skipintro(?:[=&]|$)/.test(location.search)) enterSite();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

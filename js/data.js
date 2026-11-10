@@ -1680,31 +1680,35 @@ const CREATIVE = [
 ];
 
 /* 河北地图点位(与 装饰/河北地图.webp 同源线性变换,百分比定位) */
+/* 站点地理点位
+   x/y —— 百分比坐标，给「河北地图」底图（文博旅游攻略等旧页面用，勿删）
+   lng/lat —— 真实经纬度，给全国分省地图（js/china-map.js 投影后落点）
+   两套并存：全国地图只认 lng/lat，改坐标请改经纬度 */
 const MAP_MARKS = {
   stations: [
-    { id: "cangzhou",     x: 52.0, y: 64.7 },
-    { id: "baoding",      x: 32.4, y: 56.7 },
-    { id: "zhangjiakou",  x: 24.2, y: 29.9 },
-    { id: "shijiazhuang", x: 18.9, y: 68.5 },
-    { id: "xingtai",      x: 18.9, y: 82.1 },
-    { id: "chengde",      x: 67.9, y: 27.0 },
-    { id: "tangshan",     x: 74.5, y: 43.0 },
-    { id: "qinhuangdao",  x: 91.5, y: 39.0 },
-    { id: "langfang",     x: 50.7, y: 47.3 },
-    { id: "handan",       x: 20.5, y: 86.8 },
-    { id: "hengshui",     x: 37.2, y: 70.4 },
-    { id: "guobo",        x: 46.0, y: 38.5 },
-    /* ---- 全国大地图 · 新增站点（百分比坐标，基于全国地图） ---- */
-    { id: "gugong",       x: 62.0, y: 34.0 },
-    { id: "shaanxi",      x: 56.0, y: 52.0 },
-    { id: "henan",        x: 58.0, y: 48.0 },
-    { id: "nanjing",      x: 68.0, y: 56.0 },
-    { id: "shanghai",     x: 72.0, y: 58.0 },
-    { id: "hubei",        x: 60.0, y: 60.0 },
-    { id: "hunan",        x: 60.0, y: 66.0 },
-    { id: "sanxingdui",   x: 44.0, y: 62.0 },
-    { id: "liaoning",     x: 72.0, y: 22.0 },
-    { id: "suzhou",       x: 70.0, y: 55.0 }
+    { id: "cangzhou",     x: 52.0, y: 64.7, lng: 116.838, lat: 38.303 },
+    { id: "baoding",      x: 32.4, y: 56.7, lng: 115.482, lat: 38.868 },
+    { id: "zhangjiakou",  x: 24.2, y: 29.9, lng: 114.886, lat: 40.768 },
+    { id: "shijiazhuang", x: 18.9, y: 68.5, lng: 114.514, lat: 38.042 },
+    { id: "xingtai",      x: 18.9, y: 82.1, lng: 114.504, lat: 37.070 },
+    { id: "chengde",      x: 67.9, y: 27.0, lng: 117.963, lat: 40.952 },
+    { id: "tangshan",     x: 74.5, y: 43.0, lng: 118.180, lat: 39.630 },
+    { id: "qinhuangdao",  x: 91.5, y: 39.0, lng: 119.600, lat: 39.935 },
+    { id: "langfang",     x: 50.7, y: 47.3, lng: 116.704, lat: 39.538 },
+    { id: "handan",       x: 20.5, y: 86.8, lng: 114.539, lat: 36.626 },
+    { id: "hengshui",     x: 37.2, y: 70.4, lng: 115.670, lat: 37.739 },
+    { id: "guobo",        x: 46.0, y: 38.5, lng: 116.402, lat: 39.905 },
+    /* ---- 全国 11 站：经纬度为博物馆/城市实际位置 ---- */
+    { id: "gugong",       x: 62.0, y: 34.0, lng: 116.397, lat: 39.918 },
+    { id: "shaanxi",      x: 56.0, y: 52.0, lng: 108.947, lat: 34.341 },
+    { id: "henan",        x: 58.0, y: 48.0, lng: 113.672, lat: 34.788 },
+    { id: "nanjing",      x: 68.0, y: 56.0, lng: 118.826, lat: 32.043 },
+    { id: "shanghai",     x: 72.0, y: 58.0, lng: 121.476, lat: 31.231 },
+    { id: "hubei",        x: 60.0, y: 60.0, lng: 114.363, lat: 30.561 },
+    { id: "hunan",        x: 60.0, y: 66.0, lng: 112.989, lat: 28.213 },
+    { id: "sanxingdui",   x: 44.0, y: 62.0, lng: 104.196, lat: 31.006 },
+    { id: "liaoning",     x: 72.0, y: 22.0, lng: 123.440, lat: 41.750 },
+    { id: "suzhou",       x: 70.0, y: 55.0, lng: 120.627, lat: 31.324 }
   ],
   cities: [
     { name: "秦皇岛", x: 91.1, y: 41.6 },

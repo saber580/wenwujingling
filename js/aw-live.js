@@ -483,7 +483,8 @@
   box.className = "aw-chat";
   box.innerHTML =
     '<div class="aw-top">' +
-      '<img id="awImg" src="" alt="">' +
+      /* 不给初始 src：src="" 会被浏览器当成当前页地址，白发一次整页请求 */
+      '<img id="awImg" alt="">' +
       '<div><b id="awName">—</b><span id="awEra">—</span></div>' +
       '<span class="aw-via" id="awVia" hidden></span>' +
       '<span class="aw-x" id="awX">✕</span>' +

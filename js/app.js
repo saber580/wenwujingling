@@ -348,7 +348,12 @@ function viewHome() {
         ${imgTag("装饰/河北地图.webp", "map-img", "河北省地图")}
         <div class="map-layer">
           ${MAP_MARKS.cities.map(c => `<span class="map-city" style="left:${c.x}%;top:${c.y}%">${c.name}</span>`).join("")}
-          ${MAP_MARKS.stations.map(m => {
+          ${MAP_MARKS.stations.filter(m => {
+            /* 这张是河北底图：只标河北的站；省外 11 站去首页全国地图（cmp-pin），
+               否则它们的估算坐标会全挤在河北轮廓里，图钉糊成一片 */
+            const st = STATIONS.find(x => x.id === m.id);
+            return st && String(st.place || "").indexOf("河北") === 0;
+          }).map(m => {
             const st = STATIONS.find(x => x.id === m.id);
             const got = st.spiritIds.filter(isCaptured).length;
             const short = (st.name.split("·")[1] || st.name).trim();
@@ -1462,6 +1467,16 @@ function teaSetMode(m) {
   if (m === "vn") { setTimeout(() => { if (window.VN && typeof VN.paint === "function") VN.paint(); }, 30); }
   else { setTimeout(() => teaInitView(), 30); }
 }
+/* 从首页或任意入口直达主线剧情(视觉小说大地图),不经过茶话会群聊 */
+function openStory() {
+  TEA.mode = "vn";
+  if ((location.hash || "") === "#/tea") {
+    render();
+    setTimeout(() => { if (window.VN && typeof VN.paint === "function") VN.paint(); }, 30);
+  } else {
+    location.hash = "#/tea";
+  }
+}
 /* 随机取一项 / 填充模板占位符 */
 function teaR(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function teaF(tpl, map) { return tpl.replace(/\{(\w+)\}/g, (m, k) => map[k] != null ? map[k] : m); }
@@ -2379,16 +2394,11 @@ function viewTea() {
   if (TEA.mode === "vn") {
     return `
     <div class="tea-modebar">
-      <button type="button" class="tea-mode" onclick="teaSetMode('group')">🍵 群聊茶话会</button>
-      <button type="button" class="tea-mode on" onclick="teaSetMode('vn')">🗺 主线剧情 · 大地图</button>
+      <button type="button" class="tea-mode" onclick="teaSetMode('group')">← 🍵 回茶话会</button>
     </div>
     <div class="vn-host" id="vn-host"></div>`;
   }
   return `
-    <div class="tea-modebar">
-      <button type="button" class="tea-mode on" onclick="teaSetMode('group')">🍵 群聊茶话会</button>
-      <button type="button" class="tea-mode" onclick="teaSetMode('vn')">🗺 主线剧情 · 大地图</button>
-    </div>
     <div class="page-head">
       <h2>🍵 AI 精灵茶话会</h2>
       <p>闭馆之后,把几只文物精灵请到一桌:读它们的年代、出土地和知识库,生成一段跨时空的对话小故事——看看后周的铁狮子,和战国中山国的小伙伴,隔着千年聊些什么。联网登录后,每一幕由云端 AI 现场写词;断网自动切回本机台词库,怎么都不会冷场。</p>
@@ -5294,8 +5304,11 @@ function wakeDoneStep(id) {
    ========================================================= */
 let B = null;
 
+/* 随行初始七友:主线开局还没有任何收藏时,由它们临时上场 */
+const VN_STARTERS = ["wuzhuqian", "qinghuaci", "jinqi", "yinqi", "xuanzhi", "xiangqi", "yuzhui"];
+
 /* ---------------- 选择出战精灵 ---------------- */
-function openBattle(id) {
+function openBattle(id, opts) {
   const foe = SPIRITS[id];
   if (!foe) return;
   if (spiritLocked(id)) {
@@ -5305,16 +5318,21 @@ function openBattle(id) {
       <button class="btn" onclick="closeOverlay();location.hash='#/station/huaxia'">去看看第零站</button>`);
     return;
   }
-  const mine = Object.values(SPIRITS).filter(s => isCaptured(s.id) && !s.custom);
+  let mine = Object.values(SPIRITS).filter(s => isCaptured(s.id) && !s.custom);
+  /* 主线剧情里的对战:一只都没收的时候,由随行的初始七友上场 */
+  const vnMode = !!(opts && opts.vn);
+  if (vnMode && !mine.length) mine = VN_STARTERS.map(k => SPIRITS[k]).filter(Boolean);
   if (!mine.length) { alert("你还没有可出战的精灵,先去打卡唤醒一只吧!"); return; }
+  const vnArg = vnMode ? ",{vn:true}" : "";
   overlay(`
     <button class="close" onclick="closeOverlay()">✕</button>
     <h3>选择出战精灵</h3>
     <p class="muted">迎战「${foe.name}」·${ATTRIBUTES.primary[foe.primary].name}。每只精灵都有由<b>主属性</b>决定的独门特性,挑一只合适的上场吧。</p>
+    ${vnMode && !Object.values(SPIRITS).some(s => isCaptured(s.id) && !s.custom) ? `<p class="muted" style="color:#b8863a">随行的初始七友临时上场——它们不是你的收藏,只是陪你打这一场。</p>` : ""}
     <div class="pick-grid">
       ${mine.map(s => {
         const t = TRAITS[s.primary];
-        return `<div class="pick-card${decorCls(s)}" onclick="startBattle('${id}','${s.id}')">
+        return `<div class="pick-card${decorCls(s)}" onclick="startBattle('${id}','${s.id}'${vnArg})">
           ${spiritImg(s.id, "", s.name)}
           <div class="nm">${s.name}</div>
           <div class="badges">${attrBadge("primary", s.primary)}</div>
@@ -5329,8 +5347,9 @@ function openBattle(id) {
 
 /* 对战题库:精灵自己的题与通识题交替排列,保证约一半题目考它自己(出土、尺寸……) */
 function buildBattlePool(s) {
-  const own = shuffle(s.quiz.map(q => Object.assign({}, q, { self: true })));
+  const own = shuffle((s.quiz || []).map(q => Object.assign({}, q, { self: true })));
   const com = shuffle(COMMON_QUIZ.slice());
+  if (!own.length) return com;
   const out = [];
   for (let i = 0; i < Math.max(own.length, com.length); i++) {
     if (i < own.length) out.push(own[i]);
@@ -5339,17 +5358,18 @@ function buildBattlePool(s) {
   return out;
 }
 
-function startBattle(id, myId) {
+function startBattle(id, myId, opts) {
   const s = SPIRITS[id];
   if (!s) return;
-  if (!myId) { openBattle(id); return; }
+  if (!myId) { openBattle(id, opts); return; }
   const my = SPIRITS[myId], t = TRAITS[my.primary];
   const bonus = my.primary === "bronze" ? 2 : 0;
   B = {
     id, s, myId, my, trait: t, tkey: my.primary,
+    vn: !!(opts && opts.vn),
     spiritHp: BATTLE.spiritHp, spiritMax: BATTLE.spiritHp,
     myHp: BATTLE.playerHp + bonus, myMax: BATTLE.playerHp + bonus,
-    phase: "comic", comicI: 0,
+    phase: (s.comic && s.comic.length) ? "comic" : "intro", comicI: 0,
     pool: buildBattlePool(s), qIndex: 0,
     cur: null, chosen: -1,
     dice: null, diceWho: null,
@@ -5432,6 +5452,7 @@ function animUnit(elId, cls, ms = 640) {
 
 function paintBattle() {
   const s = B.s, my = B.my;
+  if (B.phase === "comic" && (!s.comic || !s.comic.length)) B.phase = "intro";
 
   if (B.phase === "comic") {
     const scenes = ["🏛️", "🖌️", "🔥", "⛵", "🌊", "📜"];
@@ -5543,24 +5564,36 @@ function battleBodyHTML() {
   }
 
   if (B.phase === "over") {
+    const vnWin = B.vn
+      ? `<div class="actions" style="justify-content:center">
+          <button class="btn gold" onclick="vnBattleBack(true)">继续剧情 ▶</button>
+          <button class="btn ghost" onclick="closeOverlay();location.hash='#/codex'">先看眼图鉴</button>
+        </div>`
+      : `<div class="actions" style="justify-content:center">
+          <button class="btn" onclick="closeOverlay();location.hash='#/codex'">查看图鉴</button>
+          <button class="btn ghost" onclick="closeOverlay()">关闭</button>
+        </div>`;
+    const vnLose = B.vn
+      ? `<div class="actions" style="justify-content:center">
+          <button class="btn" onclick="closeOverlay();startBattle('${s.id}','${B.myId}',{vn:true})">再战一次</button>
+          <button class="btn ghost" onclick="vnBattleBack(false)">先退开</button>
+        </div>`
+      : `<div class="actions" style="justify-content:center">
+          <button class="btn" onclick="startBattle('${s.id}')">再挑战一次</button>
+          <button class="btn ghost" onclick="closeOverlay()">先退出</button>
+        </div>`;
     return B.win ? `
       <div class="result-big">
         <div class="em">🏆</div>
         <h3>捕捉成功!</h3>
         <p>${my.name} 把 ${s.name} 打到了残血,它认可了你。<br>已收入你的文物图鉴。</p>
-        <div class="actions" style="justify-content:center">
-          <button class="btn" onclick="closeOverlay();location.hash='#/codex'">查看图鉴</button>
-          <button class="btn ghost" onclick="closeOverlay()">关闭</button>
-        </div>
+        ${vnWin}
       </div>` : `
       <div class="result-big">
         <div class="em">💥</div>
         <h3>捕捉失败</h3>
         <p>${my.name} 被 ${s.name} 打倒了,再接再厉!<br>换一只特性更合适的精灵试试?</p>
-        <div class="actions" style="justify-content:center">
-          <button class="btn" onclick="startBattle('${s.id}')">再挑战一次</button>
-          <button class="btn ghost" onclick="closeOverlay()">先退出</button>
-        </div>
+        ${vnLose}
       </div>`;
   }
   return "";
@@ -5660,6 +5693,12 @@ function captureNow() {
   B.win = true; B.phase = "over"; addCaptured(B.id); paintBattle();
 }
 function lose() { B.win = false; B.phase = "over"; paintBattle(); }
+
+/* 主线剧情打完这一场:把结果交回 VN,由剧情决定下一步 */
+function vnBattleBack(ok) {
+  closeOverlay();
+  if (window.VN && typeof VN.battleDone === "function") VN.battleDone(!!ok);
+}
 
 /* ================================================================
    AI 红舞狮「小答」· 全站悬浮窗(答疑 + 带路 + 出题考官 三合一)
@@ -7385,6 +7424,14 @@ function introMusicFade() {
 
 /* 启动:铺好长卷 → 自动展卷 + 开口念旁白 → 读完收卷(自检 / 静态预览环境同样安全) */
 function initIntro() {
+  /* 调试/录屏用：?skipintro 连同开场画卷一起跳过，直接落到主页 */
+  if (/(?:^|[?&])skipintro(?:[=&]|$)/.test(location.search)) {
+    var scEl = document.getElementById("intro");
+    if (scEl && scEl.parentNode) scEl.parentNode.removeChild(scEl);
+    document.body.classList.remove("intro-on");
+    document.body.classList.remove("flyleaf-on");
+    return;
+  }
   const el = scQ("intro");
   if (!el) { try { document.body.classList.remove("intro-on"); } catch (e) {} return; }
   try { introLayout(); introBuildArt(); introBuildRail(); introLayout(); introBindVideo(); } catch (e) {}

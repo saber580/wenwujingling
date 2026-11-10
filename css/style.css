@@ -2837,3 +2837,63 @@ body[data-page="biz"] .wj-tech-pill{display:none}
   background:rgba(22,34,44,.82);color:#ffdca8;font-size:11.5px;letter-spacing:.6px;
   z-index:3;pointer-events:none;display:none}
 .vn-map-canvas{position:relative}
+
+/* ===== 主线剧情 · 迎战按钮（捕捉前多一道对战） ===== */
+.vn-choice.vn-choice-battle{border-color:#a8452f;background:rgba(252,240,232,.95)}
+.vn-choice.vn-choice-battle:hover{background:#a8452f;border-color:#8e3a26}
+.vn-minibtn.vn-minibtn-quest{border:1px dashed #8a7a4a;color:#8a6a2a;background:rgba(255,246,224,.9)}
+/* 进度行：数值多了以后允许换行，别被进度条挤掉 */
+.vn-map-progress{flex-wrap:wrap}
+.vn-map-progress>span{white-space:nowrap}
+.vn-map-progress .bar{flex:1 1 120px;min-width:80px}
+
+/* ===== 玩家台词（t:"you"）：右侧对齐、暖色底、独立头像，让玩家真正「开口」 ===== */
+.vn-dialog-you{flex-direction:row-reverse;background:linear-gradient(180deg,rgba(76,58,40,.94),rgba(58,44,30,.96));border-top:2px solid #a8784a}
+.vn-dialog-you .vn-dialog-avatar{border-color:#d9a25c}
+.vn-dialog-you .vn-dialog-box{text-align:right}
+.vn-dialog-you .vn-dialog-box b{color:#ffd8a0}
+.vn-dialog-you .vn-dialog-box p{color:#f3e9dc}
+
+/* ===== 「问它一句」：捕捉节点顶栏入口 + 弹出问答面板（AI 以文物口吻答） ===== */
+.vn-minibtn.vn-minibtn-ask{border:1px solid #c04030;color:#ffdcd2;background:rgba(150,48,34,.6)}
+.vn-minibtn.vn-minibtn-ask:hover{background:#c04030;border-color:#a8452f;color:#fff}
+.vn-ask{position:absolute;left:0;right:0;bottom:120px;z-index:8;flex-direction:column;gap:8px;
+  padding:12px 20px;background:linear-gradient(180deg,rgba(30,28,58,.97),rgba(40,38,82,.97));
+  border-top:2px solid #5a56a0;backdrop-filter:blur(2px)}
+.vn-ask-log{max-height:150px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.vn-ask-log::-webkit-scrollbar{width:6px}
+.vn-ask-log::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:3px}
+.vn-ask-row{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.65}
+.vn-ask-row b{flex:0 0 auto;color:#ffd88a;font-size:12.5px;padding-top:1px;letter-spacing:1px}
+.vn-ask-row span{color:#e8e8f0}
+.vn-ask-row.you b{color:#9fd8ff}
+.vn-ask-row.you span{color:#dceffb}
+.vn-ask-bar{display:flex;gap:8px}
+.vn-ask-bar input{flex:1;padding:8px 14px;border-radius:999px;border:1px solid #5a56a0;
+  background:rgba(255,255,255,.08);color:#fff;font-size:13px;outline:none}
+.vn-ask-bar input::placeholder{color:#8a90c0}
+.vn-ask-bar input:focus{border-color:#9fb0d8}
+.vn-ask-bar button{padding:8px 18px;border-radius:999px;border:none;background:#c04030;color:#fff;
+  font-size:13px;cursor:pointer;letter-spacing:2px}
+.vn-ask-bar button:hover{background:#a8452f}
+
+/* ===== 旅途手记：终章结局页的一封私信 ===== */
+.vn-journey{margin:4px 0 14px;padding:12px 14px;border-radius:12px;background:rgba(255,246,224,.62);
+  border:1px dashed #c9a25c;text-align:left}
+.vn-journey-title{font-size:12px;color:#8a6a2a;letter-spacing:2px;margin-bottom:6px;font-weight:600}
+.vn-journey-out{font-size:13px;color:#5a3a2a;line-height:1.85;white-space:pre-wrap;min-height:1em}
+
+/* ===== 流程图「重置进度」按钮：与其它深色小按钮区分开，避免误点 ===== */
+.vn-minibtn.dark.vn-minibtn-reset{border-color:#c9a08c;color:#a8452f}
+.vn-minibtn.dark.vn-minibtn-reset:hover{background:#a8452f;border-color:#8e3a26;color:#fff}
+
+/* ===== 流程图轻提示：点锁着的结局卡时冒一句，2 秒自己走 ===== */
+.vn-tip{
+  position:fixed;left:50%;bottom:72px;transform:translate(-50%,12px);
+  max-width:min(78vw,560px);padding:10px 18px;border-radius:10px;
+  background:rgba(58,20,14,.94);color:#ffeeda;
+  font-size:13.5px;line-height:1.65;letter-spacing:.3px;
+  border:1px solid rgba(255,216,160,.34);box-shadow:0 12px 30px rgba(0,0,0,.32);
+  opacity:0;pointer-events:none;transition:opacity .24s ease,transform .24s ease;z-index:9999;
+}
+.vn-tip.on{opacity:1;transform:translate(-50%,0)}

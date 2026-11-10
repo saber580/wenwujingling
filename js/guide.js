@@ -54,7 +54,9 @@
         id: st.id, name: st.name, place: st.place, subtitle: st.subtitle,
         intro: st.intro, spirits: spirits, tags: tags, museum: museum,
         secret: !!st.secret,
-        x: mark ? mark.x : 50, y: mark ? mark.y : 50
+        x: mark ? mark.x : 50, y: mark ? mark.y : 50,
+        lng: mark && mark.lng != null ? mark.lng : null,
+        lat: mark && mark.lat != null ? mark.lat : null
       });
     });
     return out;
@@ -85,8 +87,15 @@
     return segs[segs.length - 1].replace(/市$/, "");
   }
 
-  /* 地图坐标 → 公里（河北南北约 750km、东西约 620km，粗算足够排线） */
+  /* 站点间距：有经纬度按球面算（够排线用），没有就退回百分比粗算 */
   function km(a, b) {
+    if (a.lng != null && b.lng != null) {
+      var R = 6371, rad = Math.PI / 180;
+      var dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+      var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+    }
     var dx = (a.x - b.x) * 6.2, dy = (a.y - b.y) * 7.6;
     return Math.sqrt(dx * dx + dy * dy);
   }
@@ -378,27 +387,65 @@
       + "</div>";
   }
 
-  /* ---------- 渲染：路线图 ---------- */
+  /* ---------- 渲染：路线图（全国分省底图） ---------- */
+  var MAP_W = 1000, MAP_H = 979;
+
+  /* 站点 → 底图坐标：有经纬度用同一套 Mercator 投影，没有就退回百分比 */
+  function mapXY(o) {
+    if (o && o.lng != null && o.lat != null && typeof CHINA_MAP !== "undefined" && CHINA_MAP.project) {
+      return CHINA_MAP.project(o.lng, o.lat);
+    }
+    return [o.x / 100 * MAP_W, o.y / 100 * MAP_H];
+  }
+
   function mapHTML(plan) {
-    var order = {};
     var pts = [];
     plan.route.forEach(function (r, i) {
-      order[r.st.id] = i + 1;
-      pts.push({ x: r.st.x, y: r.st.y, no: i + 1, st: r.st });
+      var p = mapXY(r.st);
+      pts.push({ x: p[0], y: p[1], no: i + 1, st: r.st });
     });
-    var startPt = { x: plan.start.x, y: plan.start.y };
+    var sp = mapXY(plan.start);
+
+    /* 视野：按本次路线的范围自动收放（河北线看河北，全国线看全国） */
+    var xs = [sp[0]], ys = [sp[1]];
+    pts.forEach(function (p) { xs.push(p.x); ys.push(p.y); });
+    var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+    var MIN = 96;                     /* 最小视野，避免同一座城放大到失真 */
+    var w = Math.max(MIN, (maxX - minX) * 1.35);
+    var h = Math.max(MIN * MAP_H / MAP_W, (maxY - minY) * 1.35);
+    var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    var vx = Math.max(0, Math.min(MAP_W - w, cx - w / 2));
+    var vy = Math.max(0, Math.min(MAP_H - h, cy - h / 2));
+    var vb = [vx, vy, w, h];
 
     /* 折线：起点 → 依次各站 */
-    var d = "M" + startPt.x + " " + startPt.y;
-    pts.forEach(function (p) { d += " L" + p.x + " " + p.y; });
+    var d = "M" + sp[0].toFixed(1) + " " + sp[1].toFixed(1);
+    pts.forEach(function (p) { d += " L" + p.x.toFixed(1) + " " + p.y.toFixed(1); });
+
+    var provs = "";
+    if (typeof CHINA_MAP !== "undefined" && CHINA_MAP.provinces) {
+      provs = CHINA_MAP.provinces.map(function (p) {
+        var cls = "gd-prov" + (p.c === "130000" ? " gd-prov-home" : "");
+        return '<path class="' + cls + '" d="' + p.d + '"/>';
+      }).join("");
+    }
 
     var lines = '<path class="gd-path" d="' + d + '" fill="none"/>';
 
-    var dots = '<span class="gd-dot start" style="left:' + startPt.x + "%;top:" + startPt.y +
+    function pct(p) {
+      return [(p[0] - vx) / w * 100, (p[1] - vy) / h * 100];
+    }
+    var s0 = pct(sp);
+
+    var dots = '<span class="gd-dot start" style="left:' + s0[0].toFixed(2) +
+      "%;top:" + s0[1].toFixed(2) +
       '%" title="' + esc(cityOf(plan.start)) + '"><i>起</i></span>';
 
     dots += pts.map(function (p) {
-      return '<span class="gd-dot" style="left:' + p.x + "%;top:" + p.y + '%" title="' +
+      var q = pct([p.x, p.y]);
+      return '<span class="gd-dot" style="left:' + q[0].toFixed(2) +
+        "%;top:" + q[1].toFixed(2) + '%" title="' +
         esc(p.st.name.replace(/^第.+站\s*·\s*/, "")) + '"><i>' + p.no + "</i></span>";
     }).join("");
 
@@ -409,9 +456,11 @@
       }).join("");
 
     return '<div class="gd-map-box">'
-      + '<div class="gd-map">'
-      + '<img src="装饰/河北地图.webp" alt="河北地图">'
-      + '<svg class="gd-svg" viewBox="0 0 100 100" preserveAspectRatio="none">' + lines + "</svg>"
+      + '<div class="gd-map" style="aspect-ratio:' + w.toFixed(0) + "/" + h.toFixed(0) + '">'
+      + '<svg class="gd-base" viewBox="' + vb.map(function (v) { return v.toFixed(1); }).join(" ") +
+        '" preserveAspectRatio="xMidYMid meet" aria-label="全国分省地图">' + provs + "</svg>"
+      + '<svg class="gd-svg" viewBox="' + vb.map(function (v) { return v.toFixed(1); }).join(" ") +
+        '" preserveAspectRatio="xMidYMid meet">' + lines + "</svg>"
       + dots
       + '<span class="gd-map-cap">' + pts.length + " 站 · 约 " + plan.km + " 公里</span>"
       + "</div>"
