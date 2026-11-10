@@ -2048,7 +2048,8 @@
     function stateOf(n) {
       if (cur === n.id) return "cur";
       if (pathSet.has(n.id)) return "done";
-      return "todo";
+      /* 未走过：若还不可达（没有前驱已走）则为锁定，否则为「可走未走」 */
+      return vnReachable(n.id) ? "todo" : "lock";
     }
 
     const NW = 210, NH = 46;
@@ -2056,13 +2057,14 @@
     /* 底特律式卡片：横条 + 右端斜切尾 + 左侧状态块 + 右下百分比 */
     function nodeShape(n) {
       const st = stateOf(n);
-      const isCur = st === "cur", isDone = st === "done", isEnd = n.kind === "end";
+      const isCur = st === "cur", isDone = st === "done", isEnd = n.kind === "end", isLock = st === "lock";
       const x = n.x - NW / 2, y = n.y - NH / 2;
 
       let gid, bd, icBg, icFg, icMark, txtCol, op;
       if (isEnd)       { gid = "gEnd";  bd = "#f2bccb"; icBg = "#5c1c33"; icFg = "#ffdce5"; icMark = "◆"; txtCol = "#ffffff"; op = 1; }
       else if (isCur)  { gid = "gCur";  bd = "#ffe3a0"; icBg = "#e2ac2e"; icFg = "#3a2a05"; icMark = "▶"; txtCol = "#ffffff"; op = 1; }
       else if (isDone) { gid = "gDone"; bd = "#9ccbe6"; icBg = "#2b7f96"; icFg = "#d6f4f8"; icMark = "✓"; txtCol = "#ffffff"; op = 1; }
+      else if (isLock) { gid = "gTodo"; bd = "#6f747a"; icBg = "#5a5f66"; icFg = "#9aa0a6"; icMark = "🔒"; txtCol = "#8c9298"; op = 0.62; }
       else             { gid = "gTodo"; bd = "#b3b8bd"; icBg = "#aeb3b8"; icFg = "#f4f5f6"; icMark = "·"; txtCol = "#5f666b"; op = 0.9; }
 
       /* 锁着的隐藏结局：看得见「还有一张卡」，但看不出是什么 */
@@ -2081,7 +2083,7 @@
 
       const d = `M ${x + 8} ${y} H ${x + NW - 18} L ${x + NW} ${n.y} L ${x + NW - 18} ${y + NH} H ${x + 8} L ${x} ${y + NH - 8} V ${y + 8} Z`;
 
-      let g = `<g class="vn-node vn-${st}" data-id="${n.id}" style="cursor:pointer;opacity:${op}" onclick="VN.open('${n.id}')">
+      let g = `<g class="vn-node vn-${st}" data-id="${n.id}" style="cursor:${isLock ? "default" : "pointer"};opacity:${op}" onclick="VN.open('${n.id}')">
         <path d="${d}" fill="url(#${gid})" stroke="${bd}" stroke-width="1.6" filter="url(#nShadow)"/>
         <path d="M ${x + 2} ${y + 2} H ${x + 38} V ${y + NH - 2} H ${x + 2} Z" fill="${icBg}"/>
         <text x="${x + 20}" y="${n.y + 4}" text-anchor="middle" font-size="11" fill="${icFg}">${icMark}</text>`;
@@ -2383,12 +2385,34 @@
   }
 
   /* ================= 核心动作 ================= */
+  /* 一个节点能否进入：起点 open 永远可进；其余节点必须已有某个前驱（next 或 choices.to）走过。
+     初始 VN.path 为空时，只有「启程 · 七友相送」亮着；走完一个节点，它的后继才解锁。 */
+  function vnReachable(id) {
+    if (id === "open" || id === "player") return true;
+    const walked = new Set(VN.path);
+    if (VN.current) walked.add(VN.current);
+    for (const n of VN_MAIN) {
+      let hit = false;
+      if (n.next === id) hit = true;
+      else if ((n.choices || []).some(c => c.to === id)) hit = true;
+      if (hit && walked.has(n.id)) return true;
+    }
+    return false;
+  }
+
   function vnOpen(id) {
     const n = vnNode(id);
     if (!n || String(id).endsWith("_ev")) return;
-    /* 隐藏结局：条件没到也能点开看（流程图上的卡是给评委随手点的，拦一下像坏了）；
-       但只算「预览」——不写结局、不进路径，卡片上仍留未点亮标记 */
-    const preview = !!n.locked && !vnChoiceOpen({ need: n.locked });
+    /* 未解锁的节点不能进入：初始只有「启程 · 七友相送」是亮的，走一步、亮一步 */
+    if (!vnReachable(id)) {
+      vnTip("这一站还没走到 · 从「启程 · 七友相送」出发，一路走、一路点亮，走到这里自然能进。");
+      return;
+    }
+    /* 隐藏结局：额外满足它的门槛（支线 + 问话合计三次）才放行 */
+    if (n.locked && !vnChoiceOpen({ need: n.locked })) {
+      vnTip("这一页还空着。等你真的跟它们说过话，它自己会亮。");
+      return;
+    }
     /* 首次进开场：先问家乡（玩家不是透明人） */
     if (id === "open" && !VN.player.hometown && !VN.playerAsked) {
       VN.playerAsked = true;
@@ -2400,11 +2424,11 @@
       return;
     }
     VN.current = id;
-    VN.lastNode = preview ? VN.lastNode : id;
+    VN.lastNode = id;
     VN.cam = null;
     VN.sideMode = null;
-    if (n.ending && !preview) { VN.endings[n.ending] = true; vnSave(); }
-    if (!preview && !VN.path.includes(id)) VN.path.push(id);
+    if (n.ending) { VN.endings[n.ending] = true; vnSave(); }
+    if (!VN.path.includes(id)) VN.path.push(id);
     VN.view = "node";
     VN.nodeLines = n.lines.slice();
     /* 支线做完再结缘，会多一句回响 */
@@ -2415,8 +2439,6 @@
     }
     VN.nodeCursor = 1;
     vnSave(); vnPaint();
-    /* 预览态：让玩家知道「看得见 ≠ 点亮了」，并给出点亮它的条件 */
-    if (preview) vnTip("这一页还没点亮 · 你可以先看。想让它真的亮起来：支线 + 问它一句，合计三次。");
   }
 
   /* 家乡站专属质问：走到自己家门口，才发现最陌生的是自己人 */
