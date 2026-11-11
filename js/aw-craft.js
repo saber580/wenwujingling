@@ -491,10 +491,9 @@
     try { localStorage.removeItem("aw_craft_off"); } catch (e) {}
     apply(true);
     bindHome();
-    try {
-      if (!sessionStorage.getItem("aw_craft_seen")) { toast("✨ 微交互已启用 · 主页七组，卡牌页三组"); }
-      sessionStorage.setItem("aw_craft_seen", "1");
-    } catch (e) {}
+    /* 原先这里会弹「✨ 微交互已启用 · 主页七组，卡牌页三组」的调试提示，
+       面向评委的正式站点不该出现内部计数，故只保留标记、不再提示。 */
+    try { sessionStorage.setItem("aw_craft_seen", "1"); } catch (e) {}
     setInterval(function () {
       if (enabled) { scanReveal(); if (isArc() && !ARC.mounted) arcMount(); }
     }, 1500);

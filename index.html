@@ -672,7 +672,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
         <div class="fl-k"><b>双扇</b>悬停 · 点选</div>
         <div>
           <div class="fl-t" id="flRoTitle">上扇 · 初始七友<em>下扇 · 镇馆七珍</em></div>
-          <p class="fl-d" id="flRoDesc">把十四件文物排成两把扇子:上面是随时能陪你的初始七友,下面是从十三站里挑出的七件国宝。点一张牌,读它的故事。</p>
+          <p class="fl-d" id="flRoDesc">把十四件文物排成两把扇子:上面是随时能陪你的初始七友,下面是从二十二站里挑出的七件国宝。点一张牌,读它的故事。</p>
         </div>
       </div>
       <p class="fl-hint">跟随指针微倾 · 点选读档 · ← → 换牌 · Esc 收起</p>
@@ -1091,7 +1091,7 @@ body.bg-paint .bg-art-paper{opacity:.08!important}
     if (!st) { try { st = window.WJMCP && WJMCP.status ? WJMCP.status() : null; } catch (e) {} }
     var ok = !!(st && st.connected);
     var txt = ok ? ('MCP 已握手 · ' + (st.toolCount || 0) + ' 工具 · v4.0-full')
-                 : '页面内工具层 · 可离线自检';
+                 : 'AI 工具层已就绪 · 可离线自检';
     ['wjTechPillText', 'aqTechText'].forEach(function (id) {
       var e = document.getElementById(id); if (e) e.textContent = txt;
     });

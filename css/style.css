@@ -2595,6 +2595,11 @@ body.flyleaf-on #intro{display:none!important}
 .wj-tech-pill.off i,.aq-techbar.off i{background:#b9a58c}
 .wj-tech-pill b{font-weight:600;color:#a82613;border-left:1px solid #ecd6b8;padding-left:6px}
 .wj-tech-pill:hover{border-color:#c2361d}
+/* 默认只显示「圆点 + AI 深度自检」这一小段，避免整条压在页面正文上；
+   悬停再展开 MCP 握手状态（评委要看细节时鼠标一放即可看到） */
+.wj-tech-pill span{display:none}
+.wj-tech-pill:hover span{display:inline}
+.wj-tech-pill:hover b{border-left:0;padding-left:0}
 .aq-techbar{display:flex;align-items:center;gap:6px;margin:0 12px 2px;padding:5px 9px;border:1px solid #ecd6b8;border-radius:9px;background:#fff8ec;color:#8a4a22;font-size:11px;text-decoration:none;flex:none}
 .aq-techbar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .aq-techbar b{font-weight:600;color:#a82613;white-space:nowrap}

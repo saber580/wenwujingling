@@ -420,7 +420,8 @@ body:not([data-page="home"]) .ident-drop{
 }
 
 /* 图鉴卡：正文收口 + 角上朱印 */
-body:not([data-page="home"]) .codex-card{position:relative;overflow:hidden}
+/* 底部多留 24px：💬 聊天钮固定在 right:6/bottom:6，原 padding 12px 时正好压住正文最后一行 */
+body:not([data-page="home"]) .codex-card{position:relative;overflow:hidden;padding-bottom:36px}
 body:not([data-page="home"]) .codex-card:not(.legend)::after{
   content:"藏";position:absolute;top:8px;right:8px;z-index:2;
   width:24px;height:24px;line-height:24px;text-align:center;
