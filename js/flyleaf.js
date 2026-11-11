@@ -133,7 +133,7 @@
   function resetReadout() {
     readout.classList.remove("on");
     roTitle.innerHTML = "上扇 · 初始七友<em>下扇 · 镇馆七珍</em>";
-    roDesc.textContent = "把十四件文物排成两把扇子:上面是随时能陪你的初始七友,下面是从十三站里挑出的七件国宝。点一张牌,读它的故事。";
+    roDesc.textContent = "把十四件文物排成两把扇子:上面是随时能陪你的初始七友,下面是从二十二站里挑出的七件国宝。点一张牌,读它的故事。";
   }
 
   function dust() {

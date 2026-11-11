@@ -270,8 +270,8 @@ function viewHome() {
             <button class="btn ghost" onclick="location.hash='#/codex'">📖 翻一翻文物图鉴</button>
           </div>
           <ul class="hero-facts">
-            <li title="${all.length} 只可捕捉 + ${LEGENDS.length} 只燕赵名片"><b>${all.length + LEGENDS.length}</b><span>文物精灵</span></li>
-            <li><b>${STATIONS.length}</b><span>打卡站点</span></li>
+            <li title="${all.length} 只可捕捉；另有 ${LEGENDS.length} 只燕赵名片独立成册"><b>${all.length}</b><span>文物精灵</span></li>
+            <li title="另有 1 个隐藏站点「第零站 · 华夏」，集齐全部精灵后开启"><b>${STATIONS.filter(function (s) { return !s.secret; }).length}</b><span>打卡站点</span></li>
             <li><b>${Object.keys(ATTRIBUTES.primary).length + Object.keys(ATTRIBUTES.secondary).length}</b><span>材质 · 用途属性</span></li>
           </ul>
         </div>
@@ -286,7 +286,7 @@ function viewHome() {
       <div>
         <span class="eyebrow">01 — EXPLORE</span>
         <h2>一眼逛完文物精灵</h2>
-        <p class="sec-sub">我的精灵是已经醒来的伙伴 · 文物图鉴收着全部 ${all.length + LEGENDS.length} 只 · 博物馆与文创里,还有更多河北的故事;AI 茶话会、文物赋彩,让文物陪你玩起来。</p>
+        <p class="sec-sub">我的精灵是已经醒来的伙伴 · 文物图鉴收着全部 ${all.length} 只 · 博物馆与文创里,还有更多河北的故事;AI 茶话会、文物赋彩,让文物陪你玩起来。</p>
       </div>
     </div>
     <div class="home-cats">
@@ -1214,7 +1214,7 @@ function teaMeta(s) {
     mat: ATTRIBUTES.primary[s.primary].name
   };
 }
-/* 可上桌的精灵:已捕获的 74 只正传精灵(不含「我点亮的文物」与只展不捉的名片) */
+/* 可上桌的精灵:已捕获的正传精灵（当前 104 只）(不含「我点亮的文物」与只展不捉的名片) */
 function teaPool() {
   return Object.values(SPIRITS).filter(s => !s.custom && isCaptured(s.id)).sort((a, b) => teaDyn(a.era).rank - teaDyn(b.era).rank);
 }
@@ -4087,7 +4087,7 @@ function identFlowHTML(d) {
     : "模型没给出可用的名字";
   const s2 = (c && c.hit)
     ? `对上站内档案「${c.spirit.name}」${c.spirit.no ? "（" + c.spirit.no + "）" : ""}`
-    : "站内 74 只精灵里没有对应档案";
+    : `站内 ${Object.values(SPIRITS).filter(function (s) { return !s.custom; }).length} 只精灵里没有对应档案`;
   const s3 = (c && c.hit)
     ? (c.conflicts.length ? c.conflicts.join("；") : "年代、材质两项都与档案一致")
     : "没有可对照的字段，这一步跳过";
@@ -4183,7 +4183,7 @@ function identWakeHTML(dname) {
   const w = identWakeFind(dname);
   if (!w) return `<div class="iwake miss">
       <b>🧭 暂未收录进图鉴</b>
-      <span>它还没对上站内的 74 只文物精灵——可以拿这张照片走「📷 打卡拍照」,交给 AI 幻化成你的私人 Q 版精灵(带专属图鉴编码)。</span>
+      <span>它还没对上站内的 ${Object.values(SPIRITS).filter(function (s) { return !s.custom; }).length} 只文物精灵——可以拿这张照片走「📷 打卡拍照」,交给 AI 幻化成你的私人 Q 版精灵(带专属图鉴编码)。</span>
       <button type="button" class="btn ghost" onclick="identWakeCraft()">✨ 就用这张照片幻化它</button>
     </div>`;
   const pa = ATTRIBUTES.primary[w.primary], sa = ATTRIBUTES.secondary[w.secondary];
@@ -4650,7 +4650,7 @@ function viewCodex() {
   return `
     <div class="page-head">
       <h2>我的文物图鉴</h2>
-      <p>共收集 ${list.length} / ${std.length} 只文物精灵(全站共 ${std.length + LEGENDS.length} 只)。${wakes.length ? `另有 ${wakes.length} 只「我点亮的文物」在下方栏目。` : ""}另有 ${LEGENDS.length} 只「燕赵名片」只展不捉,但同样记在全站 ${std.length + LEGENDS.length} 只的名册里。</p>
+      <p>共收集 ${list.length} / ${std.length} 只文物精灵。${wakes.length ? `另有 ${wakes.length} 只「我点亮的文物」在下方栏目。` : ""}另设 ${LEGENDS.length} 只「燕赵名片」只展不捉,不占收集名额。</p>
     </div>
     ${list.length === 0 ? `<div class="empty">还没有收集到精灵,去首页打卡吧 📷</div>` : `
     <div class="codex-grid">
@@ -5888,7 +5888,7 @@ function aqAnswer(raw) {
     const total = spirits + LEGENDS.length;
     const attrs = Object.keys(ATTRIBUTES.primary).length + Object.keys(ATTRIBUTES.secondary).length;
     const got = captured.filter(id => !isCustom(id)).length;
-    return { text: "📊 小答的账本:全站共有 <b>" + total + "</b> 件文物精灵——<b>" + spirits + "</b> 只可捕捉,另有 " + LEGENDS.length + " 只「燕赵名片」只展不捉;打卡站点 <b>" + STATIONS.length + "</b> 个(含隐藏的第零站 · 华夏),属性 <b>" + attrs + "</b> 种。你现在已经收下了 <b>" + got + "</b> 只,继续加油!" };
+    return { text: "📊 小答的账本:全站共有 <b>" + spirits + "</b> 只文物精灵,另设 " + LEGENDS.length + " 只「燕赵名片」只展不捉;打卡站点 <b>" + (STATIONS.filter(function (s) { return !s.secret; }).length) + "</b> 个(另有隐藏的第零站 · 华夏),属性 <b>" + attrs + "</b> 种。你现在已经收下了 <b>" + got + "</b> 只,继续加油!" };
   }
   for (const h of AQ_HELP) if (h.k.some(k => n.indexOf(k) >= 0)) return { text: h.a };
   return { text: "这个问题我暂时答不上来~🥲 换个问法试试;也可以问我:「怎么打卡唤醒文物」「带我去看铁狮子」「一共有多少精灵」;想练手就说「<b>考考我</b>」!", chips: true, miss: true };

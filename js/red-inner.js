@@ -38,7 +38,7 @@
     if (page === "spirit") {
       box.innerHTML = '<a href="#/codex">文物图鉴</a><i>／</i><b>精灵档案</b>';
     } else {
-      box.innerHTML = '<a href="#/">燕赵十三站</a><i>／</i><b>站内文物</b>';
+      box.innerHTML = '<a href="#/">燕赵二十二站</a><i>／</i><b>站内文物</b>';
     }
     app.insertBefore(box, first);
   }

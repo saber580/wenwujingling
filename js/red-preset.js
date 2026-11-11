@@ -154,6 +154,8 @@
     const all = allSpirits();
     const mine = mineList();
     const done = doneStationCount();
+    /* 隐藏站（第零站 · 华夏）不计入对外展示的站点总数，与技术文档口径保持一致 */
+    const stShown = STATIONS.filter(function (st) { return !st.secret; }).length;
     const pct = all.length ? Math.min(100, Math.round(mine.length / all.length * 100)) : 0;
     const avatars = mine.slice(0, 7).map(function (s) {
       return '<a class="rh-ava" href="#/spirit/' + esc(s.id) + '" title="' + esc(s.name) + '">' +
@@ -222,7 +224,7 @@
         <div class="rh-eyebrow">燕 赵 拾 遗 · HEBEI RELIC SOUL</div>
         <h1 class="rh-title">文物精灵<span class="rh-title-seal" aria-hidden="true">冀</span></h1>
         <div class="rh-en">A HERITAGE OF CHINA</div>
-        <p class="rh-sub">${all.length} 只文物精灵,${STATIONS.length} 站燕赵风华。<br class="rh-br">拖拽牌阵,听它们讲自己的故事。</p>
+        <p class="rh-sub">${all.length} 只文物精灵,${stShown} 站燕赵风华。<br class="rh-br">拖拽牌阵,听它们讲自己的故事。</p>
 
         <div class="rh-tabs" role="tablist" aria-label="牌阵分组">
           <button type="button" class="active" data-rh-deck="a" role="tab" aria-selected="true">初始七友 <i>07</i></button>
@@ -266,7 +268,7 @@
           <div class="rh-stat">
             <div class="rh-stat-num"><b>${mine.length}</b><span>/ ${all.length} 已唤醒</span></div>
             <div class="rh-bar"><i style="width:${pct}%"></i></div>
-            <p>已点亮 <b>${done}</b> / ${STATIONS.length} 站 · 还有 ${Math.max(0, all.length - mine.length)} 只精灵等你唤醒</p>
+            <p>已点亮 <b>${done}</b> / ${stShown} 站 · 还有 ${Math.max(0, all.length - mine.length)} 只精灵等你唤醒</p>
             <button type="button" class="rh-text-link" onclick="openPhoto()">📷 去打卡唤醒 →</button>
           </div>
         </div>
@@ -276,13 +278,13 @@
         <div class="rh-sec-head">
           <div>
             <span class="rh-kicker">02 · EXPLORE</span>
-            <h2>一张地图,走完十三站</h2>
+            <h2>一张地图,走完二十二站</h2>
             <p>从沧州的铁狮子,到满城汉墓的长信宫灯;从张家口的红山玉龙,到国博的后母戊鼎。每点亮一站,就多一段燕赵故事。</p>
           </div>
         </div>
         <div class="rh-explore-grid">
           <div class="rh-map-card" id="home-map">
-            <div class="rh-card-head"><b>河北地图</b><span>已点亮 ${done} / ${STATIONS.length} 站</span></div>
+            <div class="rh-card-head"><b>河北地图</b><span>已点亮 ${done} / ${stShown} 站</span></div>
             <div class="rh-map">
               <img src="装饰/河北地图.webp" alt="河北地图">
               <div class="rh-marks">${marks}</div>
@@ -290,7 +292,7 @@
             <div class="rh-map-foot">点一枚站点标记,直达那一站 →</div>
           </div>
           <div class="rh-stations" id="home-stations">
-            <div class="rh-card-head"><b>打卡站点</b><span>${STATIONS.length} 站 · 按年代走</span></div>
+            <div class="rh-card-head"><b>打卡站点</b><span>${stShown} 站 · 按年代走</span></div>
             <div class="rh-station-list">${stationRows}</div>
           </div>
         </div>
