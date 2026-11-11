@@ -7,7 +7,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(os.path.dirname(ROOT), "relic-site.tar.gz")
 
 DIRS = ["css", "js", "精灵", "背景", "音频", "装饰", "属性图标", "文物",
-        "AI 赋彩", "打卡海报", "心仪卡"]
+        "AI 赋彩", "打卡海报", "心仪卡",
+        # 以下目录同样被页面/脚本引用，漏打包会导致线上缺图缺音：
+        # audio（271 处引用，小答语音）、shiyilu（65 处，拾遗录）、
+        # 文物溯源（纹样库）、成就（成就册底图）、展望（结语页插图）
+        "audio", "shiyilu", "文物溯源", "成就", "展望"]
 FILES = ["index.html", "server.py", "install.sh", "部署到服务器.md"]
 SKIP_EXT = {".log", ".bak", ".tmp", ".tmp.mp3"}
 

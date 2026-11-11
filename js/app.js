@@ -299,7 +299,7 @@ function viewHome() {
       <div class="cat-card" onclick="location.hash='#/codex'">
         <img class="cat-corner" src="装饰/夔龙角.webp" alt="">
         <div class="cat-t">文物图鉴</div>
-        <div class="cat-d">收藏进度 <b>${all.filter(s => isCaptured(s.id)).length}</b> / ${all.length} 只 · 全站 ${all.length + LEGENDS.length} 只</div>
+        <div class="cat-d">收藏进度 <b>${all.filter(s => isCaptured(s.id)).length}</b> / ${all.length} 只</div>
         <div class="cat-avatars"><span class="more">编号 HB-001 ~ HB-074(含 2 只燕赵名片)</span></div>
       </div>
       <div class="cat-card cat-tea${mine.length >= 3 ? "" : " lock"}" onclick="location.hash='${mine.length >= 3 ? "#/tea" : "#/codex"}'">
@@ -4668,7 +4668,7 @@ function viewCodex() {
       <div>
         <span class="eyebrow">HEBEI LEGENDS</span>
         <h2>燕赵名片</h2>
-        <p class="sec-sub">🔒 河北的红舞狮与镇馆神兽也在图鉴里安了家:可以围观、可以看故事,但<b>不可捕捉、不计入</b>上面的收集进度;它们同样记在全站 <b>${std.length + LEGENDS.length}</b> 只的名册里</p>
+        <p class="sec-sub">🔒 河北的红舞狮与镇馆神兽也在图鉴里安了家:可以围观、可以看故事,但<b>不可捕捉、不计入</b>上面的收集进度;它们不计入上面的收集进度</p>
       </div>
     </div>
     <div class="codex-grid">
@@ -5885,7 +5885,6 @@ function aqAnswer(raw) {
   }
   if (/多少|几只|几个|一共|统计|共有|总数|全站/.test(n)) {
     const spirits = Object.keys(SPIRITS).filter(id => !isCustom(id)).length;
-    const total = spirits + LEGENDS.length;
     const attrs = Object.keys(ATTRIBUTES.primary).length + Object.keys(ATTRIBUTES.secondary).length;
     const got = captured.filter(id => !isCustom(id)).length;
     return { text: "📊 小答的账本:全站共有 <b>" + spirits + "</b> 只文物精灵,另设 " + LEGENDS.length + " 只「燕赵名片」只展不捉;打卡站点 <b>" + (STATIONS.filter(function (s) { return !s.secret; }).length) + "</b> 个(另有隐藏的第零站 · 华夏),属性 <b>" + attrs + "</b> 种。你现在已经收下了 <b>" + got + "</b> 只,继续加油!" };
