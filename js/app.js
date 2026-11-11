@@ -460,7 +460,7 @@ function viewMuseums() {
   return `
     <div class="page-head">
       <h2>🏛 从燕赵到全国的博物馆</h2>
-      <p>沿着${STATIONS.length}站打卡的足迹,从河北的燕赵故地一路走到全国十大馆。资料以各馆官方公开信息为准。</p>
+      <p>沿着 ${STATIONS.filter(function (s) { return !s.secret; }).length} 站打卡的足迹，从河北的燕赵故地一路走到全国十大馆。资料以各馆官方公开信息为准。</p>
     </div>
     <div class="museum-list">
       ${MUSEUMS.map((m, i) => `
@@ -486,7 +486,7 @@ function viewCreative() {
   return `
     <div class="page-head">
       <h2>🎁 文物文创灵感</h2>
-      <p>从馆藏文物出发的小创意,让文物走进日常。</p>
+      <p>从馆藏文物出发的小创意，让文物走进日常。</p>
     </div>
     <div class="creative-note">💡 ${CREATIVE_NOTE}</div>
     <div class="creative-grid">
@@ -509,7 +509,7 @@ function viewBiz() {
   return `
     <div class="page-head">
       <h2>🤝 落地与合作</h2>
-      <p>三条更现实的走法,和一笔算得清的成本。</p>
+      <p>三条更现实的走法，和一笔算得清的成本。</p>
     </div>
     <div class="bz-note">
       <b>先说明:</b>本站是高校学生团队的参赛原型,目前没有签约客户。下面的价格与规模是按公开资料和同类项目推算的<b>参考区间</b>,
@@ -870,7 +870,7 @@ function viewRestore() {
   return `
     <div class="page-head">
       <h2>🧩 文物修复</h2>
-      <p>随机抽选一件 Q 版文物精灵,自动「破损模拟」成拼图碎块——点选或拖拽,把碎片换回原位、让文物重光。三档难度(16 / 32 / 64 块),可一键导出「完整参考图」与「可裁切拼图块」图纸,打印剪下即可线下拼玩。</p>
+      <p>随机抽选一件 Q 版文物精灵，自动「破损模拟」成拼图碎块——点选或拖拽，把碎片换回原位、让文物重光。三档难度（16 / 32 / 64 块），可一键导出「完整参考图」与「可裁切拼图块」图纸，打印剪下即可线下拼玩。</p>
     </div>
     <div class="rs-ai-strip">
       <span class="rs-chip"><b>AI</b> 随机抽选</span>
@@ -2157,7 +2157,7 @@ function viewShiyilu() {
   return `
     <div class="page-head">
       <h2>🖌 文物拟人漫画</h2>
-      <p>把文物<b>交给 AI 拟人化</b>,画成会抱怨、会认命的打工人——上一秒还是镇馆之宝,下一秒就在工位上摸鱼。点书架上的<b>书脊</b>把书抽出来,再点封面翻开,一页页读它的小故事。</p>
+      <p>把文物<b>交给 AI 拟人化</b>，画成会抱怨、会认命的打工人——上一秒还是镇馆之宝，下一秒就在工位上摸鱼。点书架上的<b>书脊</b>把书抽出来，再点封面翻开，一页页读它的小故事。</p>
     </div>
 
     <section class="sa-shelf">
@@ -2447,7 +2447,7 @@ function viewPoster() {
   return `
     <div class="page-head">
       <h2>🤳 AI 打卡海报</h2>
-      <p>在博物馆现场拍下你与文物的合影,一键合成国风 Q 版主题打卡海报:文物名称与图鉴编号、精灵立绘、一句冷知识、年代与馆藏博物馆,再落上项目二维码——扫码直达图鉴页,继续打卡探索燕赵文物精灵。</p>
+      <p>在博物馆现场拍下你与文物的合影，一键合成国风 Q 版主题打卡海报：文物名称与图鉴编号、精灵立绘、一句冷知识、年代与馆藏博物馆，再落上项目二维码——扫码直达图鉴页，继续打卡探索燕赵文物精灵。</p>
     </div>
     <div class="poster-note">🔒 演示版在本机浏览器完成合成:照片不上传、不联网;上线后可接入云端 AI,得到更「写实 / Q版」的融合效果。</div>
 
@@ -2827,7 +2827,7 @@ function viewDye() {
   return `
     <div class="page-head">
       <h2>🎨 文物赋彩</h2>
-      <p>闭馆后的神秘画室:${n} 幅 Q 版文物都褪成了黑白稿。蘸一支矿物色,亲手把颜色还给它们——轻点填一整块、按住涂一笔、涂错了拿橡皮擦掉;它本来长什么样,旁边一直摆着。</p>
+      <p>闭馆后的神秘画室：${n} 幅 Q 版文物都褪成了黑白稿。蘸一支矿物色，亲手把颜色还给它们——轻点填一整块、按住涂一笔、涂错了拿橡皮擦掉；它本来长什么样，旁边一直摆着。</p>
     </div>
     <div class="tea-howto">
       <b>🖌 怎么玩(真彩画板 · 自己上色)</b>
@@ -3362,7 +3362,7 @@ function viewIdent() {
   return `
     <div class="page-head">
       <h2>🔍 AI 文物识别</h2>
-      <p>对着一件中国文物拍照上传:先「修」——去划痕裂纹、补细碎缺口、恢复原色、超分放大,按住中间滑块对比修复前后;再「认」——把照片交给云端 AI,报出它的名字、年代、材质、出处与来历,同时给四项本机判断:器型 / 纹样 / 年代 / 材质。</p>
+      <p>对着一件中国文物拍照上传：先「修」——去划痕裂纹、补细碎缺口、恢复原色、超分放大，按住中间滑块对比修复前后；再「认」——把照片交给云端 AI，报出它的名字、年代、材质、出处与来历，同时给四项本机判断：器型 / 纹样 / 年代 / 材质。</p>
     </div>
     <div class="tea-howto">
       <b>🧭 怎么玩(拍一张 · 两件事)</b>
@@ -4650,7 +4650,7 @@ function viewCodex() {
   return `
     <div class="page-head">
       <h2>我的文物图鉴</h2>
-      <p>共收集 ${list.length} / ${std.length} 只文物精灵。${wakes.length ? `另有 ${wakes.length} 只「我点亮的文物」在下方栏目。` : ""}另设 ${LEGENDS.length} 只「燕赵名片」只展不捉,不占收集名额。</p>
+      <p>共收集 ${list.length} / ${std.length} 只文物精灵。${wakes.length ? `另有 ${wakes.length} 只「我点亮的文物」在下方栏目。` : ""}另设 ${LEGENDS.length} 只「燕赵名片」只展不捉，不占收集名额。</p>
     </div>
     ${list.length === 0 ? `<div class="empty">还没有收集到精灵,去首页打卡吧 📷</div>` : `
     <div class="codex-grid">
