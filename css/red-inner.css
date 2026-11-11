@@ -106,6 +106,8 @@ body:not([data-page="home"]) .page-head p{
   max-width:760px;margin:12px auto 0;
   font-size:13px;line-height:1.9;color:var(--ri-ink-2);
   letter-spacing:.4px;
+  /* 末行只剩一两个字时自动回收，避免出现孤字占一行 */
+  text-wrap:pretty;
 }
 body:not([data-page="home"]) .page-head p b{color:var(--ri-red);font-weight:700}
 

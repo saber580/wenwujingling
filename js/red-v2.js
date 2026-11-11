@@ -36,7 +36,8 @@
   const AI_TOOLS = [
     { no: "01", big: "壹", em: "📸", title: "AI 打卡海报", desc: "把精灵与博物馆，做成一张可以分享的海报。", href: "#/poster" },
     { no: "02", big: "贰", em: "🍵", title: "AI 精灵茶话会", desc: "挑 3~6 只精灵，跨时空聊一场。", href: "#/tea" },
-    { no: "03", big: "叁", em: "🔍", title: "AI 文物识别", desc: "拍一张照片，报出名字、年代与来历。", href: "#/ident" }
+    { no: "03", big: "叁", em: "🔍", title: "AI 文物识别", desc: "拍一张照片，报出名字、年代与来历。", href: "#/ident" },
+    { no: "04", big: "肆", em: "📞", title: "AI 活态苏醒", desc: "接起电话，听文物用本朝口吻讲故事。", href: "#/alive" }
   ];
 
   const EDU_TOOLS = [

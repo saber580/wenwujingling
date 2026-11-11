@@ -214,7 +214,10 @@
   .rh-map-foot{font-size:10.5px}
 
   /* ---------------- 8 · AI 文物奇境 / 文物新玩法 / 图鉴 / 尾屏 ---------------- */
-  .rh-tools{grid-template-columns:1fr 1fr;gap:10px}
+  /* 手机上统一两列：桌面/平板给 AI 区定的四列在这里必须让位，
+     否则每张只剩 70px 宽、被拉成竖条 */
+  .rh-tools,
+  .rh-ai:not(.rh-ai-edu) .rh-tools{grid-template-columns:1fr 1fr;gap:10px}
   .rh-tool{padding:14px 13px;border-radius:11px}
   .rh-tool b{font-size:14.5px;letter-spacing:.6px}
   .rh-tool small{font-size:11px;line-height:1.75}

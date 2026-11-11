@@ -31,6 +31,9 @@ FILES = [
     "js/kb-rag.js",
     "js/flyleaf.js",
     "js/red-preset.js",
+    "js/red-v2.js",
+    "css/red-v2.css",
+    "css/mtab-cutout.css",
 ]
 
 

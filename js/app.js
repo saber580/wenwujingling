@@ -2401,7 +2401,7 @@ function viewTea() {
   return `
     <div class="page-head">
       <h2>🍵 AI 精灵茶话会</h2>
-      <p>闭馆之后,把几只文物精灵请到一桌:读它们的年代、出土地和知识库,生成一段跨时空的对话小故事——看看后周的铁狮子,和战国中山国的小伙伴,隔着千年聊些什么。联网登录后,每一幕由云端 AI 现场写词;断网自动切回本机台词库,怎么都不会冷场。</p>
+      <p>闭馆之后，把几只文物精灵请到一桌：读它们的年代、出土地与知识库，生成一段跨时空的对话小故事——看看后周的铁狮子，和战国中山国的小伙伴，隔着千年都聊些什么。联网时由云端 AI 现场写词，断网自动切回本机台词库，怎么都不会冷场。</p>
     </div>
     ${relicClockHTML()}
     <div class="tea-cloudchip${teaChipState().cls}" id="tea-cloud-chip">${teaChipState().html}</div>

@@ -1147,6 +1147,9 @@ body.rh-anim .rh-sec.rh-in,body.rh-anim .rh-ai.rh-in,body.rh-anim .rh-final.rh-i
   .rh-moon-side{display:none}
   .rh-stamp{width:34px;height:40px;font-size:15px}
   .rh-tools{grid-template-columns:repeat(3,1fr)}
+  /* AI 区是 4 张卡（三列会留一个孤儿、两列会拉成扁条），维持四列；
+     玩法区是 6 张，三列正好两行 */
+  .rh-ai:not(.rh-ai-edu) .rh-tools{grid-template-columns:repeat(4,1fr);gap:10px}
   .rh-tool:nth-child(2n){transform:none}
   .rh-tool:nth-child(2n):hover{transform:translateY(-7px)}
   .rh-mine-body{grid-template-columns:1fr}
