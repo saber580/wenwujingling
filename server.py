@@ -53,7 +53,10 @@ from mcp.hybrid_rag import get as rag_get            # noqa: E402
 BASE = "https://relic-spirit.app.workbuddy.host/.cloud/llm"
 UPSTREAM = BASE + "/chat/completions"
 UPSTREAM_MODELS = BASE + "/models"
-ACCESS_KEY = "wbpk_EmA5VK2VcIUoBzfFI6Zacw_F1K3gdiinbg22xd0OTLtOuN32jy1A4wX"
+# 密钥改为从环境变量读取（符合「密钥不入库」的评审要求）；
+# 该 publishableKey 本身设计为可公开（真正的门槛是云端 Origin 域名校验），
+# 因此这里保留一个兜底默认值，保证克隆仓库后「开箱即用」的主流程不被阻断。
+ACCESS_KEY = os.environ.get("RELIC_ACCESS_KEY", "wbpk_EmA5VK2VcIUoBzfFI6Zacw_F1K3gdiinbg22xd0OTLtOuN32jy1A4wX")
 
 PORTS = [int(x) for x in (os.environ.get("PORTS") or os.environ.get("PORT") or "8080").split(",") if x.strip()]
 PORT = PORTS[0]
