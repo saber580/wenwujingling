@@ -3412,6 +3412,15 @@ function identInit() {
   identBindSlider();
   if (IDENT.ready && IDENT.wk) identShow(IDENT.resultHTML);
   identCloudPing();   // 探测本机小桥,更新页面上的云端状态提示
+  identOfflineWarm(); // 后台预热端侧模板库,等用户真的传图时模型已就绪
+}
+
+/* 端侧模型预热:第一次进识宝页就开始,失败不打扰用户 */
+function identOfflineWarm(force) {
+  if (!window.OFFLINE_IDENT || typeof window.OFFLINE_IDENT.warmTemplates !== "function") return null;
+  if (!force && IDENT.offlineWarm) return IDENT.offlineWarm;
+  IDENT.offlineWarm = Promise.resolve(window.OFFLINE_IDENT.warmTemplates()).catch(function () { return null; });
+  return IDENT.offlineWarm;
 }
 function identPick(input) {
   const file = input.files && input.files[0];
@@ -3483,11 +3492,21 @@ async function identFlow(dataURL) {
   /* —— 端侧剪影识别(Hu 不变矩形状匹配,离线可用) —— */
   let silhouette = null;
   try {
-    if (window.OFFLINE_IDENT && typeof window.OFFLINE_IDENT.identify === "function") {
+    if (window.OFFLINE_IDENT) {
+      /* 端侧模型没就绪时，最多等 4 秒把模板库建好；宁慢不猜错 */
+      const ready = IDENT.offlineWarm && window.OFFLINE_IDENT.backend
+        && window.OFFLINE_IDENT.backend().modelReady;
+      if (!ready) {
+        const warm = identOfflineWarm() || Promise.resolve(null);
+        await Promise.race([warm, sleepMs(4000)]);
+      }
       const sk = document.createElement("canvas");
       sk.width = w0; sk.height = h0;
       sk.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(orig), w0, h0), 0, 0);
-      silhouette = window.OFFLINE_IDENT.identify(sk);
+      /* 优先走 WebGPU（灰度+Sobel 在 GPU 上算），不支持时内部自动降级 CPU */
+      silhouette = (typeof window.OFFLINE_IDENT.identifyAsync === "function")
+        ? await window.OFFLINE_IDENT.identifyAsync(sk)
+        : window.OFFLINE_IDENT.identify(sk);
     }
   } catch (e) { silhouette = null; }
   const html = identResultHTML(feats, pRank, sRank, matches, form, pat, silhouette);
@@ -4455,11 +4474,24 @@ function silhouetteCardHTML(sil) {
   const rows = sil.top.map(t =>
     `<div class="sil-row"><span class="sil-name">${t.name}</span><i><s style="width:${Math.round(t.score * 100)}%"></s></i><em>${Math.round(t.score * 100)}%</em></div>`
   ).join("");
+  /* 置信度说明：间隔比高 → 端侧直接给结论；间隔比低 → 明说「拿不准」，交给云端定名 */
+  const conf = (typeof sil.confidence === "number") ? sil.confidence : null;
+  const backend = sil.backend === "webgpu" ? "WebGPU 加速" : "CPU";
+  const verdict = !sil.modelReady
+    ? `<p class="sil-hint">端侧模板库还在构建（${sil.templateCount || 0} 件），本结果仅供参考，<b>以云端识别为准</b>。</p>`
+    : (conf === null ? ""
+      : (sil.abstain
+          ? `<p class="sil-hint">端侧置信度 ${Math.round(conf * 100)}%，前几名咬得很紧——不硬猜，<b>交给云端定名</b>。</p>`
+          : `<p class="sil-hint">端侧置信度 ${Math.round(conf * 100)}%，可直接采用。</p>`));
+  const trainNote = sil.modelReady
+    ? `已用 ${sil.templateCount} 件立绘在浏览器里现场训练度量学习分类头`
+    : (sil.templateCount ? `比对 ${sil.templateCount} 件站内剪影` : "模板按需生成");
   return `
     <div class="ident-match ident-silhouette">
       <b>🧩 端侧剪影识别 <span class="sil-badge">离线可用 · 不联网</span></b>
-      <p class="sil-desc">本机用 Hu 不变矩对文物剪影做形状匹配（旋转/缩放不敏感），${sil.templateCount ? "比对 " + sil.templateCount + " 件站内剪影" : "模板按需生成"}。断网也能跑，是浏览器端 AI 推理的体现。</p>
+      <p class="sil-desc">本机把文物轮廓提成剪影，用 Hu 不变矩 + 网格占空 + 径向签名共 34 维特征做形状匹配（旋转/缩放不敏感），${trainNote}。${backend} 推理，断网也能跑。</p>
       <div class="sil-list">${rows}</div>
+      ${verdict}
     </div>
   `;
 }
