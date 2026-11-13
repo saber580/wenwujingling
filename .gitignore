@@ -86,3 +86,12 @@ tools/_seek_*.py
 tools/_find_starter.py
 tools/_dump_st.js
 tools/_verify_*.py
+
+# ---------- 10. 2026-11-13 文档排版收尾 ----------
+# 文档排版排查的中间截图目录（脚本本身仍入库）
+tools/_shots/
+tools/_audit_shots/
+# 早期用 Word COM 的 .ps1 导出脚本：ExecutionPolicy 下跑不通，已由 tools/export_techdoc_pdf.py 取代
+tools/_export_pdf*.ps1
+# 一次性文档补丁脚本（改动已落到 docx，保留生成器与导出器即可）
+tools/_fix_v19_*.py
