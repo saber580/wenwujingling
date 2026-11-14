@@ -145,6 +145,12 @@ function loadCaptured() {
 }
 let captured = loadCaptured();
 const isCaptured = id => captured.includes(id);
+/* 捕捉历史栈:按时间顺序记录每一次捕捉(含初始精灵之外的),供「回退上一次捕捉」逐个撤销 */
+const LOG_KEY = (typeof SAVE_ID !== "undefined" && SAVE_ID) ? "wwjl_capture_log_v1::" + SAVE_ID : "wwjl_capture_log_v1";
+let captureLog = [];
+function loadCaptureLog() { try { captureLog = JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch (e) { captureLog = []; } }
+function saveCaptureLog() { try { localStorage.setItem(LOG_KEY, JSON.stringify(captureLog)); } catch (e) {} }
+loadCaptureLog();
 /* 「第零站 · 华夏」:隐藏站点,集齐其余站点全部精灵后才开启捕捉 */
 function huaxiaStation() { return STATIONS.find(s => s.id === "huaxia"); }
 function stationDone(st) { return st.spiritIds.every(isCaptured); }
@@ -152,7 +158,27 @@ function huaxiaProgress() { return STATIONS.filter(s => s.id !== "huaxia" && sta
 function huaxiaUnlocked() { return huaxiaProgress() >= STATIONS.length - 1; }
 function spiritLocked(id) { const hx = huaxiaStation(); return !!hx && !huaxiaUnlocked() && hx.spiritIds.includes(id); }
 function addCaptured(id) {
-  if (!isCaptured(id)) { captured.push(id); saveCaptured(); }
+  if (!isCaptured(id)) {
+    captured.push(id);
+    const s = SPIRITS[id];
+    // 只记录非初始精灵,回退按钮才能回到「初始三/五只」的干净状态;初始精灵不该被回退掉
+    if (!(s && s.starter)) captureLog.push({ id: id, name: s ? s.name : id });
+    saveCaptured();
+    saveCaptureLog();
+  }
+}
+/* 回退上一次捕捉:撤销最近一次非初始精灵的捕捉记录(逐次回退,不是一键全清) */
+function undoCapture() {
+  const last = captureLog[captureLog.length - 1];
+  if (!last) { alert("没有可回退的捕捉记录。\n\n图鉴里的精灵要么是初始自带,要么已经被回退干净了。"); return; }
+  const s = SPIRITS[last.id];
+  const nm = s ? s.name : last.id;
+  if (!confirm(`回退上一次捕捉吗?\n\n将从图鉴移除「${nm}」,其余进度不受影响。`)) return;
+  captureLog.pop();
+  captured = captured.filter(x => x !== last.id);
+  saveCaptured();
+  saveCaptureLog();
+  render();
 }
 function saveCaptured() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(captured)); } catch (e) {} }
 /* 清空进度(图鉴页底部按钮):回到只有初始精灵的状态,方便比赛演示前复位 */
@@ -160,6 +186,8 @@ function resetProgress() {
   if (!confirm("确定要清空捕捉进度、回到初始状态吗?\n\n已捕捉的精灵、以及「拍照唤醒」的新文物都会消失,此操作不可撤销。")) return;
   captured = Object.values(SPIRITS).filter(s => s.starter).map(s => s.id);
   saveCaptured();
+  captureLog = [];
+  saveCaptureLog();
   CUSTOMS.forEach(c => { delete SPIRITS[c.id]; });
   CUSTOMS = [];
   saveCustoms();
@@ -4738,8 +4766,9 @@ function viewCodex() {
     </div>` : ""}
     ${hasProgress ? `
     <div class="codex-foot">
+      <button class="btn ghost" onclick="undoCapture()">↩ 回退上一次捕捉</button>
       <button class="btn ghost" onclick="resetProgress()">清空进度 · 回到初始状态</button>
-      <p class="muted">比赛演示前可在这里复位:只清空本版本的进度(含「我点亮的文物」),另一份(正式版 / 测试版)不受影响。</p>
+      <p class="muted">回退:逐个撤销最近捕捉的精灵(初始自带的不受影响)。清空:比赛演示前一键复位到初始状态。</p>
     </div>` : ""}
   `;
 }

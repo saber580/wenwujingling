@@ -1343,8 +1343,9 @@ body[data-bg="a"],body[data-bg="b"],body[data-bg="c"],body[data-bg="d"],body[dat
   .home-sep{margin:26px 0 -6px}
 }
 
-/* ---- 图鉴页 · 清空进度(比赛演示前复位) ---- */
+/* ---- 图鉴页 · 回退 / 清空进度(比赛演示前复位) ---- */
 .codex-foot{margin:32px 0 6px;text-align:center}
+.codex-foot .btn{margin:0 6px}
 .codex-foot .muted{display:block;margin-top:10px;line-height:1.7}
 
 /* ================= AI 打卡海报页(其他 · AI打卡海报) ================= */
