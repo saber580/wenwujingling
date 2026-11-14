@@ -22,6 +22,14 @@ if not HOST or not PASS:
     print("请先设置环境变量：SSH_HOST / SSH_PASS（不要写死在代码里）")
     sys.exit(1)
 
+# 血泪教训：在 Git Bash 里 `REMOTE_DIR=/opt/relic python ...` 会被 MSYS 自动转成
+# C:/Users/.../PortableGit/opt/relic。于是 sftp.put 往服务器上一条不存在的路径写，
+# 后面的 md5 也拿这条错路径比对自己，双向都"通过"，线上却一个字没变。
+# 默认值不经过 shell，不会被转换——所以这个变量压根不要传；真传错了就在这里拦下。
+if not RDIR.startswith("/") or ":" in RDIR:
+    sys.exit("REMOTE_DIR 被 Git Bash 转成了 Windows 路径：%s\n"
+             "不要传 REMOTE_DIR，用脚本里的默认值 /opt/relic。" % RDIR)
+
 files = sys.argv[1:]
 if not files:
     sys.exit("用法: python tools/_push_files.py <相对路径> ...")
