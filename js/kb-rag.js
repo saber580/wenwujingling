@@ -154,7 +154,10 @@
      表现就是「滑两下停一下」。现在只标脏,下一次 search() 自己建;
      另外挑一个真空闲的时间预热一次,滑动中就跳过,交给 search 兜底。 */
   function rebuild() {
-    DOCS = [];
+    /* 原地清空、不换数组：KB._docs 是对外暴露的同一个引用，
+       重建时如果 DOCS = [] 换了新数组，外面拿到的永远是首次构建的那 208 段。
+       对照实测页要拿「这件文物自己的档案」当尺子，正好踩到这里。 */
+    DOCS.length = 0;
     POST = Object.create(null);
     DF = Object.create(null);
     AVG_LEN = 0;
@@ -225,9 +228,44 @@
   var SERVICE_Q = /打卡|签到|精灵|图鉴|玩法|界面|按钮|登录|注册|账号|密码|绑定|下载|安装|设置|怎么用|怎么玩|多少只|多少件|一共有|你是谁|你叫什么|你是什么|介绍.{0,2}你|你能做什么/;
   var MIN_GROUND = 8;              /* 低于这个分，判为「跟站内档案没关系」，宁可不给证据 */
 
+  /* ---------------- 点名实体校验 ----------------
+     问句用引号点了一件档案里根本没有的器物时，检索仍会因为「铜鎏金」「熏炉」
+     这些词命中「铜鎏金凤凰脊兽」——把别人的资料安到它头上，比不回答更糟。
+     所以先看引号里点的是谁：站内查无此物，就当作没证据，让上层老实说「档案里没有」。
+     只认带引号的写法（「」『』《》""），普通叙述句不拦，避免误伤「天圆地方」这类常识词。 */
+  var QUOTED = /[「『《“"]([^」』》”"]{2,20})[」』》”"]/g;
+  function namedSpans(q) {
+    var out = [], m, s = String(q || "");
+    QUOTED.lastIndex = 0;
+    while ((m = QUOTED.exec(s))) out.push(m[1].trim());
+    return out.filter(Boolean);
+  }
+  function hasRelic(name) {
+    var n = String(name || "").replace(/\s/g, "");
+    if (!n) return false;
+    if (typeof SPIRITS === "undefined" || !SPIRITS) return true;   /* 数据还没到，不敢下结论 */
+    for (var id in SPIRITS) {
+      var s = SPIRITS[id];
+      if (!s) continue;
+      var pool = [s.name, s.alias, s.relicName].filter(Boolean).join("|").replace(/\s/g, "");
+      if (pool.indexOf(n) >= 0) return true;
+      var nm = String(s.name || "").replace(/\s/g, "");
+      if (nm && n.indexOf(nm) >= 0) return true;    /* 「长信宫灯有多大」：名字被包在整句里 */
+    }
+    return false;
+  }
+  /* 返回引号里点名的第一件「档案里没有」的器物；没有就返回空串 */
+  function unknownRelic(q) {
+    var spans = namedSpans(q);
+    for (var i = 0; i < spans.length; i++) if (!hasRelic(spans[i])) return spans[i];
+    return "";
+  }
+
   function shouldGround(q) {
-    if (SERVICE_Q.test(String(q || ""))) return false;
-    var r = search(q, 1);
+    var s = String(q || "");
+    if (SERVICE_Q.test(s)) return false;
+    if (unknownRelic(s)) return false;
+    var r = search(s, 1);
     return r.length > 0 && r[0].score >= MIN_GROUND;
   }
 
@@ -947,6 +985,9 @@
     searchSpirits: searchSpirits,
     evidence: evidence,
     shouldGround: shouldGround,
+    namedSpans: namedSpans,
+    hasRelic: hasRelic,
+    unknownRelic: unknownRelic,
     check: check,
     verifyQuestion: verifyQuestion,
     gradeOpen: gradeOpen,

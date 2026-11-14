@@ -173,7 +173,7 @@ function render() {
   const [page, param] = hash.split("/");
   document.body.dataset.page = page || "home";   // 供背景/样式按页面微调(如首页背景更透亮)
   // 高亮顶部栏目(首页→我的精灵 / 图鉴 / 其他 / AI 栏目)
-  const navKey = page === "" ? "mine" : (page === "codex" ? "codex" : (page === "poster" || page === "tea" || page === "ident" || page === "trace" || page === "alive" || page === "mystery" || page === "vision" || page === "studio" ? "poster" : (page === "restore" || page === "dye" || page === "shiyilu" || page === "guide" || page === "heart" ? "enlight" : (page === "museums" || page === "creative" || page === "biz" ? "more" : ""))));
+  const navKey = page === "" ? "mine" : (page === "codex" ? "codex" : (page === "poster" || page === "tea" || page === "ident" || page === "trace" || page === "alive" || page === "mystery" || page === "vision" || page === "studio" || page === "eval" || page === "arena" ? "poster" : (page === "restore" || page === "dye" || page === "shiyilu" || page === "guide" || page === "heart" ? "enlight" : (page === "museums" || page === "creative" || page === "biz" ? "more" : ""))));
   $$(".topnav .nav-item").forEach(a => a.classList.toggle("active", a.dataset.nav === navKey));
   /* 图鉴 / 精灵详情 / 茶话会要用档案包(data-deep.js)里的自述、问答与来历。
      用户手快先点进来时档案可能还在路上,这里等它一下;失败就照常渲染,绝不死循环。 */
@@ -199,6 +199,7 @@ function render() {
   else if (page === "shiyilu") app.innerHTML = viewShiyilu();
   else if (page === "ident") app.innerHTML = viewIdent();
   else if (page === "eval") app.innerHTML = viewEval();
+  else if (page === "arena") app.innerHTML = viewArena();
   else if (page === "vision") app.innerHTML = viewVision();
   else if (page === "studio") app.innerHTML = viewStudio();
   else app.innerHTML = viewHome();
@@ -206,6 +207,7 @@ function render() {
   if (page === "dye") setTimeout(dyeInit, 40);              // 渲染后铺好黑白画纸(等图片解码完再允许上色)
   if (page === "ident") setTimeout(identInit, 40);          // 渲染后绑好对比滑块,接续上一次的修复与识别结果
   if (page === "eval") setTimeout(evalInitPage, 30);        // 渲染后立刻跑一遍金标集,把指标填进卡片
+  if (page === "arena") setTimeout(arenaInit, 30);          // 对照实测:绑输入框回车,题库与口径已在视图里
   if (page === "vision") setTimeout(vsInit, 30);          // 展望页：定默认清晰度、绑封面播放键
   if (page === "studio") setTimeout(studioInit, 30);
   if (page === "tea") setTimeout(teaInitView, 40);
@@ -7629,6 +7631,11 @@ function viewEval() {
       <h2>📊 AI 评测台</h2>
       <p>站内的 AI 不只是「调了个模型」：回答前先查档案，回答后再回头核对；识别结果与站内档案对账；AI 出的题要过校验才给玩家。这一页把这几层做成 ${meta.total} 条金标用例，点一下就能重跑，跑出通过率、耗时和失败清单。</p>
     </div>
+    <a class="ar-banner" href="#/arena">
+      <span>⚔️</span>
+      <b>通过率之外还得看出差别：同一个问题，裸模型和文物精灵并排答一遍</b>
+      <i>去对照实测 →</i>
+    </a>
     <div class="eval-bar">
       <button type="button" class="btn gold" onclick="evalRunNow()">▶ 重跑评测</button>
       <button type="button" class="btn ghost" onclick="evalExport()">⬇ 导出 JSON 报告</button>

@@ -95,3 +95,6 @@ tools/_audit_shots/
 tools/_export_pdf*.ps1
 # 一次性文档补丁脚本按顺序入库，用于复现 v1.19 交付版的最终形态
 # （_upd_techdoc_v19.py → _fix_v19_sites.py → _fix_v19_413.py → _fix_v19_dates.py）
+
+# ---------- 11. 对照实测页的排版截图 ----------
+网站/_shots/
