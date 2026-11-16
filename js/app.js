@@ -145,6 +145,39 @@ function loadCaptured() {
 }
 let captured = loadCaptured();
 const isCaptured = id => captured.includes(id);
+/* 识别到站内已有的文物时,不塞进收藏,而是当场弹出一个「图鉴卡片」:
+   里面就是它在图鉴里的样子,但压成剪影、贴着「未捕捉」——要收它,得自己去那一站挑战。 */
+function codexPop(id) {
+  const s = SPIRITS[id];
+  if (!s) return;
+  const got = isCaptured(id);
+  const st = STATIONS.find(function (x) { return (x.spiritIds || []).indexOf(id) >= 0; });
+  const stName = st ? st.name.replace(/^第.+站\s*·\s*/, "") : "";
+  const pa = ATTRIBUTES.primary[s.primary], sa = ATTRIBUTES.secondary[s.secondary];
+  overlay(`
+    <button class="close" onclick="closeOverlay()">✕</button>
+    <div class="cg-pop-head">📖 文物图鉴</div>
+    <div class="cg-pop${got ? " got" : " todo"}">
+      <div class="cg-pic">
+        <img src="${spritePath(id)}" alt="${s.name}"${got ? "" : ' class="cg-sil"'}>
+        ${got ? '<i class="cg-flag got">✓ 已捕捉</i>' : '<i class="cg-flag">未捕捉</i>'}
+      </div>
+      <div class="cg-name">《${s.name}》${s.alias ? `<span class="cg-alias">· ${s.alias}</span>` : ""}</div>
+      <div class="cg-meta">${s.era ? s.era + " · " : ""}${pa ? pa.name : ""}${sa ? " / " + sa.name : ""}</div>
+      ${st ? `<div class="cg-station">🏛 「${stName}」这一站</div>` : ""}
+      <div class="cg-badges">${attrBadge("primary", s.primary)}${attrBadge("secondary", s.secondary)}</div>
+      <div class="hist">${s.history || ""}</div>
+      ${got
+        ? `<p class="cg-tip ok">✅ 它已经住进你的图鉴了,随时可以翻回来看看它。</p>`
+        : `<p class="cg-tip">它早就在图鉴的这一格里,只是<b>还没被你捕捉</b>——去它所在的那一站,答对题、把它打到残血,才算真正的收下。</p>`}
+      <div class="cg-actions">
+        ${got ? `<button class="btn" onclick="closeOverlay();location.hash='#/spirit/${id}'">看看它的档案</button>`
+              : (st ? `<button class="btn gold" onclick="closeOverlay();location.hash='#/station/${st.id}'">去「${stName}」挑战捕捉 →</button>` : "")}
+        <button class="btn ghost" onclick="closeOverlay()">${got ? "好嘞" : "知道了"}</button>
+      </div>
+    </div>
+  `);
+}
 /* 捕捉历史栈:按时间顺序记录每一次捕捉(含初始精灵之外的),供「回退上一次捕捉」逐个撤销 */
 const LOG_KEY = (typeof SAVE_ID !== "undefined" && SAVE_ID) ? "wwjl_capture_log_v1::" + SAVE_ID : "wwjl_capture_log_v1";
 let captureLog = [];
@@ -3595,7 +3628,7 @@ function identStepsDone() {
 }
 function identReset() {
   IDENT.ready = false; IDENT.wk = null; IDENT.up = null; IDENT.resultHTML = "";
-  IDENT.cloudIMG = null; IDENT.cloudData = null; IDENT.cloudErr = ""; IDENT.cloudBusy = false;
+  IDENT.cloudIMG = null; IDENT.cloudData = null; IDENT.cloudErr = ""; IDENT.cloudBusy = false; IDENT.autoJump = null;
   const stage = $("#ident-stage"); if (stage) stage.hidden = true;
   const drop = $("#ident-drop"); if (drop) drop.hidden = false;
 }
@@ -4021,7 +4054,7 @@ async function identCloudRetry() {
 async function identCloudRun() {
   const mine = IDENT.cloudIMG;
   if (!mine) return;
-  IDENT.cloudBusy = true; IDENT.cloudErr = ""; IDENT.cloudData = null;
+  IDENT.cloudBusy = true; IDENT.cloudErr = ""; IDENT.cloudData = null; IDENT.autoJump = null;
   identCloudRender();
   try {
     if (identCloudMode() === "bridge") {
@@ -4051,6 +4084,20 @@ async function identCloudRun() {
   IDENT.cloudBusy = false;
   IDENT.review = null;
   identCloudRender();
+  /* 认出的是图鉴里已有、但你还没捕到的那一只:稍等一下让人看清「认出来了」,
+     然后直接把「图鉴卡片」弹出来——它在里面是未捕捉的样子,想收得自己去那一站挑战。 */
+  if (IDENT.cloudData && IDENT.cloudData.name) {
+    const hitW = identWakeFind(IDENT.cloudData.name);
+    if (hitW && !isCaptured(hitW.id) && IDENT.autoJump !== hitW.id) {
+      const jumpId = hitW.id, jumpImg = IDENT.cloudIMG;
+      IDENT.autoJump = jumpId;
+      setTimeout(function () {
+        if (IDENT.cloudIMG !== jumpImg) return;                    // 期间换了照片 / 重识别
+        if ((location.hash || "").indexOf("ident") < 0) return;    // 人已经离开识别页
+        codexPop(jumpId);
+      }, 1500);
+    }
+  }
   /* 第五步：换一路模型，只拿档案文本再核一遍名字 / 年代 / 材质。
      放在渲染之后异步做，因为多一次调用要多等几秒，不该挡住第一眼的识别结果。 */
   if (IDENT.cloudData && IDENT.cloudData.name) {
@@ -4227,46 +4274,41 @@ function identWakeFind(name) {
   }
   return null;
 }
-/* 唤醒卡:云端结果下方的「认出来 → 唤醒成精灵」面板(未收录 / 可唤醒 / 已在图鉴 三态) */
+/* 唤醒卡:云端结果下方的「认出来 → 去图鉴见它」面板(未收录 / 已在图鉴但未捕获 / 已捕获 三态)
+   设计要点:识别到站内已有的精灵时,不直接塞给你,而是把你带到图鉴,
+   让它以「还没捕捉」的样子站在你面前——想收它,得自己去那一站挑战。 */
 function identWakeHTML(dname) {
   const w = identWakeFind(dname);
   if (!w) return `<div class="iwake miss">
-      <b>🧭 暂未收录进图鉴</b>
-      <span>它还没对上站内的 ${Object.values(SPIRITS).filter(function (s) { return !s.custom; }).length} 只文物精灵——可以拿这张照片走「📷 打卡拍照」,交给 AI 幻化成你的私人 Q 版精灵(带专属图鉴编码)。</span>
-      <button type="button" class="btn ghost" onclick="identWakeCraft()">✨ 就用这张照片幻化它</button>
+      <b>🧭 它对不上图鉴里的 ${Object.values(SPIRITS).filter(function (s) { return !s.custom; }).length} 只文物精灵</b>
+      <span>没关系——拿这张照片,让 AI 把它画成一只和你图鉴里同画风的 Q 版精灵,再给它一个专属图鉴编码,收进「我点亮的文物」。</span>
+      <button type="button" class="btn gold" onclick="identWakeCraft()">✨ 生成专属 Q 版精灵 · 领图鉴编码</button>
     </div>`;
   const pa = ATTRIBUTES.primary[w.primary], sa = ATTRIBUTES.secondary[w.secondary];
+  const got = isCaptured(w.id);
+  const st = STATIONS.find(function (x) { return (x.spiritIds || []).indexOf(w.id) >= 0; });
   if (IDENT.wakeBusy) return `<div class="iwake busy" id="ident-wake">
       <img src="${spritePath(w.id)}" alt="${w.name}">
       <div class="iw-info"><b>⚡ 正在唤醒《${w.name}》…</b><span>它穿过展柜,正朝你走来</span>
       <div class="wake-progress"><i id="wakeBar" style="width:14%"></i></div></div>
     </div>`;
-  const got = isCaptured(w.id);
-  return `<div class="iwake${got ? " got" : ""}" id="ident-wake">
+  if (got) return `<div class="iwake got" id="ident-wake">
       <img src="${spritePath(w.id)}" alt="${w.name}">
       <div class="iw-info">
-        <b>${IDENT.wakeDone === w.id ? "🎉 唤醒成功,已住进图鉴!" : (got ? "✅ 它早已在你身边" : "⚡ 认出来了——唤醒成精灵!")}</b>
+        <b>✅ 它早已在你身边</b>
         <span><b class="iw-name">${w.name}</b>${w.alias ? " · 又称「" + w.alias + "」" : ""}${w.era ? " · " + w.era : ""}${pa ? " · " + pa.name + " / " + sa.name : ""}</span>
       </div>
-      ${got
-        ? `<button type="button" class="btn ghost" onclick="location.hash='#/codex'">📖 去图鉴看看</button>`
-        : `<button type="button" class="btn gold" onclick="identWakeGo()">⚡ 唤醒它</button>`}
+      <button type="button" class="btn ghost" onclick="codexPop('${w.id}')">📖 看看它在图鉴里</button>
     </div>`;
-}
-/* 一键唤醒:照片里认出的文物直接登记进图鉴 */
-function identWakeGo() {
-  if (!IDENT.cloudData || IDENT.wakeBusy) return;
-  const w = identWakeFind(IDENT.cloudData.name);
-  if (!w || isCaptured(w.id)) return;
-  IDENT.wakeBusy = true;
-  identCloudRender();
-  setTimeout(() => { const b = $("#wakeBar"); if (b) b.style.width = "96%"; }, 80);
-  setTimeout(() => {
-    addCaptured(w.id);
-    IDENT.wakeBusy = false;
-    IDENT.wakeDone = w.id;
-    identCloudRender();
-  }, 1500);
+  return `<div class="iwake found" id="ident-wake">
+      <img src="${spritePath(w.id)}" alt="${w.name}" class="iw-sil">
+      <div class="iw-info">
+        <b>⚡ 认出来了——《${w.name}》</b>
+        <span><b class="iw-name">${w.name}</b>${w.alias ? " · 又称「" + w.alias + "」" : ""}${w.era ? " · " + w.era : ""}${pa ? " · " + pa.name + " / " + sa.name : ""}</span>
+        <span class="iw-hint">它在你图鉴里${st ? "「" + st.name.replace(/^第.+站\s*·\s*/, "") + "」这一站" : "的某一站"}等你,但<b>还没被你捕捉</b>——图鉴卡片这就弹给你看。</span>
+      </div>
+      <button type="button" class="btn gold" onclick="codexPop('${w.id}')">📖 看看它在图鉴里</button>
+    </div>`;
 }
 /* 未收录的文物:用同一张照片走「打卡拍照」做精灵卡,领专属图鉴编码 */
 function identWakeCraft() {
@@ -4978,7 +5020,7 @@ function onPhoto(input) {
   reader.readAsDataURL(file);
 }
 async function photoFlow(dataURL, desc) {
-  photoState = { photo: dataURL };
+  photoState = { photo: dataURL, desc: desc || "" };
   overlay(`
     <button class="close" onclick="closeOverlay()">✕</button>
     <h3>🎨 正在幻化精灵…</h3>
@@ -5165,10 +5207,21 @@ async function aiImagineZhipu(dataURL, desc, key) {
   return null;
 }
 /* ③ 网页直连方舟 Seedream 图生图(照片 + 现有精灵立绘当画风参考,配了 ark- 钥匙才走这里) */
+/* 画风参考立绘按材质挑:同材质的现有精灵当第二张图,画出来才跟图鉴里那一排是一个模子 */
+const STYLE_REF_BY_MAT = {
+  bronze: "tielion", ceramic: "qinghuaci", jade: "yuzhui", gold: "jinqi",
+  lacquer: "tielion", textile: "qinghuaci", wood: "qinghuaci",
+  painting: "qinghuaci", stone: "tielion", glass: "qinghuaci"
+};
+let aiStyleRefId = "";
 async function aiImagineArk(dataURL, desc, key) {
   let photo = "";
   try { photo = await dataUrlShrink(dataURL, 1024, .85); } catch (e) { photo = dataURL || ""; }
-  if (!aiStyleRefP) aiStyleRefP = dataUrlShrink("精灵/tielion.webp", 640, .85).catch(() => "");
+  const refId = STYLE_REF_BY_MAT[craftDefaults(desc).primary] || "tielion";
+  if (!aiStyleRefP || aiStyleRefId !== refId) {
+    aiStyleRefId = refId;
+    aiStyleRefP = dataUrlShrink("精灵/" + refId + ".webp", 640, .85).catch(function () { return ""; });
+  }
   const ref = await aiStyleRefP;
   let bad = false;   /* 明确不可用(401/403/404)才停用;纯网络抖动下次还可再试 */
   const tryOne = async (prompt, image) => {
@@ -5278,10 +5331,36 @@ async function localStylize(photoSrc) {
   posterRoundRect(ac, 16, 40, 688, 640, 24); ac.stroke();
   return { img: cv.toDataURL("image/jpeg", .93), art: art.toDataURL("image/jpeg", .9), src: "local", no: no };
 }
+/* 从识别结果里拈出名字 / 材质,给「幻化这张照片」的表单做默认值——少让人打字,
+   点开就差不多是对的,只差确认。 */
+function craftDefaults(desc) {
+  const out = { name: "", primary: "ceramic", secondary: "household" };
+  const text = String(desc || "");
+  const nameM = text.match(/名称[:：]\s*([^;；]+)/);
+  if (nameM) {
+    const nm = nameM[1].trim().replace(/[《》「」【】]/g, "");
+    if (nm && !/^未识别到?文物$/.test(nm)) out.name = nm.slice(0, 12);
+  }
+  const matM = text.match(/材质[:：]\s*([^;；]+)/);
+  const joined = (matM ? matM[1] : "") + " " + text;
+  /* 材质 → 主属性。青铜排最前:「鎏金铜炉」这类按铜器归类更合馆里的说法 */
+  if (/青铜|铜镜|铜|鼎|簋|尊|彝|爵|卣|壶|钟|剑|戈|矛/.test(joined)) out.primary = "bronze";
+  else if (/金|银|鎏金|错金|错银/.test(joined)) out.primary = "gold";
+  else if (/玉|玛瑙|翡翠|璧|琮|圭|璋/.test(joined)) out.primary = "jade";
+  else if (/石|碑|造像|石窟|砖|刻经/.test(joined)) out.primary = "stone";
+  else if (/瓷|陶|釉|窑|三彩/.test(joined)) out.primary = "ceramic";
+  else if (/漆|髹/.test(joined)) out.primary = "lacquer";
+  else if (/丝|锦|绣|绢|帛|罗|纱/.test(joined)) out.primary = "textile";
+  else if (/竹|木|牙|角|雕|简/.test(joined)) out.primary = "wood";
+  else if (/画|书|卷|帖|经文/.test(joined)) out.primary = "painting";
+  else if (/玻璃|琉璃/.test(joined)) out.primary = "glass";
+  return out;
+}
 function wakeFormStep() {
   const st = photoState;
   if (!st || !st.art) { openPhoto(); return; }
   const no = st.no || nextCustomNo();
+  const def = craftDefaults(st.desc);
   const pOpts = Object.entries(ATTRIBUTES.primary).map(([k, a]) => `<option value="${k}">${a.name}</option>`).join("");
   const sOpts = Object.entries(ATTRIBUTES.secondary).map(([k, a]) => `<option value="${k}">${a.name}</option>`).join("");
   overlay(`
@@ -5293,7 +5372,7 @@ function wakeFormStep() {
         <div class="muted" style="margin-bottom:4px">${st.src === "ai" ? ("✦ AI 手绘 Q 版立绘(" + (st.engine === "zhipu" ? "智谱 CogView · 免费" : st.engine === "ark" ? "方舟 Seedream" : "云端") + (st.temp ? " · 临时链接" : "") + ")") : "✦ 本机国风艺术化(离线兜底)"}</div>
         <div class="wake-no">🔖 图鉴编码:<b>${no}</b><br><span class="muted">领取后永久保留,做海报时直接可选</span></div>
         <label>给它起个名字
-          <input id="wakeName" maxlength="12" placeholder="例:青铜小神兽">
+          <input id="wakeName" maxlength="12" value="${aiCfgEsc(def.name)}" placeholder="例:青铜小神兽">
         </label>
         <label>主属性(材质)
           <select id="wakeP">${pOpts}</select>
@@ -5312,8 +5391,8 @@ function wakeFormStep() {
     </div>
   `, true);
   const pSel = $("#wakeP"), sSel = $("#wakeS");
-  if (pSel) pSel.value = "ceramic";
-  if (sSel) sSel.value = "household";
+  if (pSel) pSel.value = def.primary;
+  if (sSel) sSel.value = def.secondary;
 }
 function wakeConfirm() {
   if (!photoState || !photoState.art) { openPhoto(); return; }

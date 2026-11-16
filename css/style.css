@@ -700,6 +700,11 @@ h1,h2,h3{margin:0}
 .iwake.miss b{display:block;color:#7a5a1e;font-size:14px;margin-bottom:4px}
 .iwake.miss span{display:block;color:var(--ink-2);font-size:12.5px;line-height:1.8;margin-bottom:8px}
 .iwake.busy .wake-progress{margin:8px 0 0}
+/* 认出来的那只「还没捕捉」:立绘压成剪影,配一行提示,把人往图鉴 / 站点引 */
+.iwake.found{background:linear-gradient(150deg,#fff9e9,#f7ecd2);border-color:#d9b877}
+.iwake>img.iw-sil{filter:grayscale(1) brightness(.42) contrast(1.05);opacity:.85;background:#f4f0e4}
+.iwake .iw-info .iw-hint{color:#8a7a5c}
+.iwake .iw-info .iw-hint b{color:#a03a26}
 .ident-local-dim{opacity:.72}
 @media (max-width:860px){.ident-grid{grid-template-columns:1fr}}
 .tea-picks-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:16px 0 10px;flex-wrap:wrap}
@@ -1347,6 +1352,32 @@ body[data-bg="a"],body[data-bg="b"],body[data-bg="c"],body[data-bg="d"],body[dat
 .codex-foot{margin:32px 0 6px;text-align:center}
 .codex-foot .btn{margin:0 6px}
 .codex-foot .muted{display:block;margin-top:10px;line-height:1.7}
+/* ---- 识别后弹出的「图鉴卡片」:就是它在图鉴里的那一格,未捕捉时压成剪影 ---- */
+.cg-pop-head{font-size:12.5px;letter-spacing:.10em;color:#a0763c;margin:2px 0 12px}
+.cg-pop{text-align:center}
+.cg-pop .cg-pic{position:relative;width:172px;height:172px;margin:0 auto 12px;border-radius:18px;
+  background:#fff;border:1px solid #efe3c9;display:grid;place-items:center;overflow:hidden;
+  box-shadow:0 8px 22px rgba(160,120,50,.12)}
+.cg-pop.todo .cg-pic{border-color:#dcbb84;background:#f8f4e8}
+.cg-pop .cg-pic img{width:100%;height:100%;object-fit:contain}
+.cg-pop .cg-pic img.cg-sil{filter:grayscale(1) brightness(.46) contrast(.95);opacity:.92}
+.cg-pop .cg-flag{position:absolute;left:0;right:0;bottom:0;font-style:normal;font-size:11.5px;
+  letter-spacing:.16em;color:#fff;background:rgba(122,86,40,.86);padding:4px 0}
+.cg-pop .cg-flag.got{background:rgba(46,125,50,.88)}
+.cg-pop .cg-name{font-size:19px;color:#6b3f18;margin-bottom:5px}
+.cg-pop .cg-alias{font-size:13px;font-weight:400;color:#96795a}
+.cg-pop .cg-meta{font-size:12.5px;color:#8a7a5c;margin-bottom:3px}
+.cg-pop .cg-station{font-size:12.5px;color:#8a7a5c;margin-bottom:8px}
+.cg-pop .cg-badges{display:flex;gap:8px;justify-content:center;margin-bottom:10px}
+.cg-pop .cg-badges:empty{display:none}
+.cg-pop .hist{text-align:left;font-size:13px;line-height:1.85;color:var(--ink-2);
+  background:rgba(255,255,255,.55);border-radius:10px;padding:10px 12px;margin-bottom:10px;
+  display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.cg-pop .cg-tip{font-size:13px;line-height:1.85;color:#7a6a50;margin:0 0 14px;text-align:left}
+.cg-pop .cg-tip b{color:#a03a26}
+.cg-pop .cg-tip.ok{color:#2e7d32}
+.cg-pop .cg-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+@media (max-width:420px){.cg-pop .cg-pic{width:142px;height:142px}.cg-pop .cg-actions .btn{flex:1}}
 
 /* ================= AI 打卡海报页(其他 · AI打卡海报) ================= */
 .hidden{display:none!important}
