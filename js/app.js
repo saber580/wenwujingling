@@ -4998,6 +4998,8 @@ const loadImgUrl = src => new Promise((resolve, reject) => {
 
 function openPhoto() {
   photoState = null;
+  try { identOfflineWarm(); } catch (e) {}   /* 顺手把剪影模板库预热起来，选照片这几秒正好用上 */
+  try { qHashTable(); } catch (e) {}          /* 同时算好 104 张图的指纹，用来查“是不是站内那张” */
   overlay(`
     <button class="close" onclick="closeOverlay()">✕</button>
     <h3>📷 打卡拍照 · 唤醒新文物</h3>
@@ -5008,7 +5010,7 @@ function openPhoto() {
       <div class="muted" style="margin-top:6px">(手机可直接调起相机;AI 幻化时照片会提交云端图像模型一次,失败则完全本机处理)</div>
     </label>
     <div class="photo-steps"><span>① 拍照</span><span>② AI 幻化 Q 版</span><span>③ 领图鉴编码</span><span>④ 海报可选</span></div>
-    <div class="poster-note" style="margin-top:12px">✦ AI 幻化:照片交给云端 AI 画成 Q 版立绘(智谱 CogView · 全场免费;开着小桥更快更稳),约 10~20 秒;未联网 / 未配置时自动改用本机国风艺术化(约 1 秒,不上传)。</div>
+    <div class="poster-note" style="margin-top:12px">✦ 这道工序只给<b>站外文物</b>用——图鉴里已有的 104 只不会被重复建档，一认出是站内的，就直接把它的图鉴卡片弹给你。<br>✦ 幻化：照片交给云端 AI 画成 Q 版立绘(智谱 CogView · 免费，约 10~20 秒)；连不上云端时，本机直接合成一只同画风的 Q 版器物精灵(约 0.2 秒，不上传)——出来的都是精灵，不是你那张原照片。</div>
   `, true);
 }
 function onPhoto(input) {
@@ -5019,14 +5021,148 @@ function onPhoto(input) {
   reader.onload = () => photoFlow(reader.result);
   reader.readAsDataURL(file);
 }
+/* 站内已有的 104 只，不许再「生成」一只——这是硬闸。
+   拍照唤醒原本是给站外文物准备的：站内精灵早就在图鉴里占着号，再造一只就成了重复品。
+   三条路全堵：清点照片(端侧识别) / 表单里填了名字 / 点领取那一刻。 */
+function qDupeNotice(w, why) {
+  if (!w) return;
+  const m = posterMeta(w.id) || {};
+  const st = STATIONS.find(function (x) { return (x.spiritIds || []).indexOf(w.id) >= 0; });
+  const sName = st ? st.name.replace(/^第.+站\s*·\s*/, "") : "";
+  const got = isCaptured(w.id);
+  overlay(`
+    <button class="close" onclick="closeOverlay()">✕</button>
+    <h3>📖 这只已经在图鉴里了</h3>
+    <div class="wake-preview">
+      <img src="${spritePath(w.id)}" alt="${w.name}">
+      <div class="wake-side">
+        <div class="wake-no">🔖 图鉴编码：<b>${m.no || "—"}</b><br><span class="muted">站内精灵，编号早就定好了</span></div>
+        <p class="muted" style="margin:10px 0 0;line-height:1.95">
+          ${why ? why + "<br>" : ""}它是图鉴里的《${w.name}》${w.alias ? " · 又称「" + w.alias + "」" : ""}${w.era ? " · " + w.era : ""}。
+          ${got ? "你已经捕捉过它了，回图鉴就能翻到。" : "你还没捕捉它——" + (sName ? "去「" + sName + "」那一站挑战" : "去它所在的那一站挑战") + "，就能把它收进图鉴。"}
+        </p>
+        <p class="muted">图鉴里的 104 只不用再生成；只有站外、档案里没有的文物，才走「幻化 · 领图鉴编码」。</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn gold" onclick="closeOverlay();codexPop('${w.id}')">📖 在图鉴里看它</button>
+      <button class="btn ghost" onclick="closeOverlay()">知道了</button>
+    </div>
+  `, true);
+}
+/* 照片进幻化之前先清点一遍：desc 里带的名字、端侧剪影识别，任一命中站内就拦下 */
+async function qGuardPhoto(dataURL, desc) {
+  const nmM = String(desc || "").match(/名称[:：]\s*([^;；]+)/);
+  const nm = nmM ? nmM[1].trim() : "";
+  if (nm) {
+    const w = identWakeFind(nm);
+    if (w) { qDupeNotice(w, "照片识别出来的名字是《" + nm + "》。"); return true; }
+  }
+  /* ① 先问最硬的一条：这张是不是就是咱们网页里那 104 张图之一。
+     感知哈希(dHash)比对，同一张图哪怕被截图、缩放、压过，距离也极小；
+     实拍照片距离会很大，不会误判。 */
+  let tbl = null;
+  try {
+    const im0 = await loadImgUrl(dataURL);
+    tbl = await withTimeout(qHashTable(), 3000);
+    if (tbl && tbl.length) {
+      const h0 = qHashOfImg(im0);
+      let best = "", bd = 99;
+      tbl.forEach(function (p) { const d2 = qHashDist(h0, p[1]); if (d2 < bd) { bd = d2; best = p[0]; } });
+      if (best && bd <= 8 && SPIRITS[best] && !SPIRITS[best].custom) {
+        qDupeNotice(SPIRITS[best], "这张就是站内《" + SPIRITS[best].name + "》的图（图鉴比对一致）。");
+        return true;
+      }
+    }
+  } catch (e) {}
+  /* ② 端侧剪影识别再找一遍“像图鉴里的哪一只”。
+     它认得好，但实拍照片容易把别的东西也认高，所以这里只记成「疑似」，不硬拦——
+     硬拦错了比漏掉更难受：明明拍的是新东西，却被说“已经有了”。 */
+  try {
+    if (window.OFFLINE_IDENT && OFFLINE_IDENT.identifyAsync) {
+      if (OFFLINE_IDENT.templateCount && OFFLINE_IDENT.templateCount() === 0) {
+        await withTimeout(identOfflineWarm(), 2500);
+      }
+      if (OFFLINE_IDENT.templateCount && OFFLINE_IDENT.templateCount() > 0) {
+        const im = await loadImgUrl(dataURL);
+        const N = 256, cv = document.createElement("canvas");
+        cv.width = N; cv.height = N;
+        cv.getContext("2d").drawImage(im, 0, 0, N, N);
+        const r = await OFFLINE_IDENT.identifyAsync(cv, { abstain: .22 });
+        const t1 = r && r.ok && r.top && r.top[0];
+        const t2 = r && r.ok && r.top && r.top[1];
+        if (t1 && SPIRITS[t1.sid] && !SPIRITS[t1.sid].custom) {
+          window.__qGuess = SPIRITS[t1.sid].name;   /* 认不准也留个名字，用来挑器型 */
+          const ratio = t1.score / Math.max(0.01, (t2 ? t2.score : 0));
+          /* 剪影像还不够，颜色也得像：陶罐和绿釉陶猪剪影相近，但一个棕一个绿。
+             不比颜色会出现“罐子被判成猪”这种明显错的提示。 */
+          let dcol = 999;
+          try {
+            const ref = tbl && tbl.length ? tbl.find(function (p) { return p[0] === t1.sid; }) : null;
+            if (ref && ref[2]) {
+              const pIn = qPalette(im).main, pR = ref[2];
+              dcol = Math.sqrt(Math.pow(pIn[0] - pR[0], 2) + Math.pow(pIn[1] - pR[1], 2) + Math.pow(pIn[2] - pR[2], 2));
+            }
+          } catch (e) {}
+          if (t1.score >= .55 && ratio >= 3 && dcol <= 58) {
+            window.__qSuspect = { id: t1.sid, score: Math.round(t1.score * 100) };
+          }
+        }
+      }
+    }
+  } catch (e) {}
+  return false;
+}
+/* 感知哈希：立绘缩到 9×8 灰度，逐行比相邻像素明暗 → 64 位指纹。
+   同一张图被截图/缩放/重新编码后距离通常 ≤ 8，实拍照片基本 > 25。 */
+function qHashOfImg(im) {
+  const W = 9, H = 8, cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const c = cv.getContext("2d", { willReadFrequently: true });
+  c.drawImage(im, 0, 0, W, H);
+  const d = c.getImageData(0, 0, W, H).data, g = [];
+  for (let i = 0; i < W * H; i++) g.push(d[i * 4] * .299 + d[i * 4 + 1] * .587 + d[i * 4 + 2] * .114);
+  const bits = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W - 1; x++) bits.push(g[y * W + x] > g[y * W + x + 1] ? 1 : 0);
+  return bits;
+}
+function qHashDist(a, b) {
+  let n = 0;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) n++;
+  return n;
+}
+let qHashP = null;
+function qHashTable() {
+  if (qHashP) return qHashP;
+  qHashP = (async () => {
+    const ids = Object.keys(SPIRITS).filter(function (id) { return !SPIRITS[id].custom; });
+    const out = [];
+    let i = 0;
+    const worker = async () => {
+      while (i < ids.length) {
+        const id = ids[i++];
+        try {
+          const im = await loadImgUrl(spritePath(id));
+          out.push([id, qHashOfImg(im), qPalette(im).main]);
+        } catch (e) {}
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
+    return out;
+  })();
+  return qHashP;
+}
 async function photoFlow(dataURL, desc) {
+  window.__qGuess = "";
+  window.__qSuspect = null;
+  if (await qGuardPhoto(dataURL, desc)) return;
   photoState = { photo: dataURL, desc: desc || "" };
   overlay(`
     <button class="close" onclick="closeOverlay()">✕</button>
     <h3>🎨 正在幻化精灵…</h3>
     <img src="${dataURL}" alt="文物照片" style="width:150px;border-radius:14px;display:block;margin:10px auto;border:1px solid #e6d8b8">
     <div class="wake-progress"><i id="wakeBar"></i></div>
-    <p class="muted" id="wakeTip" style="text-align:center">✦ AI 手绘 Q 版立绘约 10~20 秒;连不上云端会自动改用本机国风卡(约 1 秒)</p>
+    <p class="muted" id="wakeTip" style="text-align:center">✦ AI 手绘 Q 版立绘约 10~20 秒;连不上云端就在本机画一只(约 0.2 秒)</p>
   `, true);
   let pct = 6;
   const timer = setInterval(() => {
@@ -5036,6 +5172,8 @@ async function photoFlow(dataURL, desc) {
   let art = null;
   try { art = await withTimeout(aiImagine(dataURL, desc), 45000); } catch (e) { art = null; }
   if (!art) { try { art = await withTimeout(aiStylize(dataURL), 20000); } catch (e) { art = null; } }
+  /* 没云端钥匙时，真的画一只 Q 版器物拟人，而不是给原照片套滤镜 */
+  if (!art) { try { art = await withTimeout(qSpirit(dataURL, desc, window.__qGuess), 12000); } catch (e) { art = null; } }
   if (!art) { try { art = await localStylize(dataURL); } catch (e) { art = null; } }
   await sleepMs(500);
   clearInterval(timer);
@@ -5270,6 +5408,281 @@ async function aiImagine(dataURL, desc) {
     return await aiImagineArk(dataURL, desc, key);
   } catch (e) { return null; }
 }
+/* ===== 本机 Q 版精灵合成 =====
+   没有云端钥匙 / 断网时，过去只能给照片套一层宣纸滤镜——出来还是照片，不是精灵。
+   这里改成真的画一只：照片只用来取色和取纹样，形体是 Q 版器物——
+   鼓腹器身 + 闭眼笑脸 + 小脚 + 祥云 + 宣纸底，跟图鉴里那排立绘同一套语言。
+   全程 canvas，不上传，720×720 约 200ms。 */
+const Q_FORMS = [
+  { k: "beast", re: /狮|虎|龙|神兽|牛|马|象|羊|鹿|龟|凤|鸟|兽|犬|豕|猪|蟾|鱼|螺/ },
+  { k: "figure", re: /俑|人像|佛|菩萨|僧|伎乐|武士|供养|陶人|力士/ },
+  { k: "ding", re: /鼎|炉|簋|鬲|甗|爵|尊|彝|卣|盉|豆|簠|鍑/ },
+  { k: "coin", re: /钱|币|铢|宝钞|银锭|金锭|牌/ },
+  { k: "vase", re: /瓶|瓷|釉|窑|壶|樽|觚/ },
+  { k: "jar", re: /罐|坛|瓮|缸|盆|盂|钵|碗|盘|盒|洗|缶|瓿/ }
+];
+const Q_PROF = {
+  jar: [0.40, 0.44, 0.72, 0.94, 1.00, 0.98, 0.86, 0.70, 0.58],
+  vase: [0.30, 0.26, 0.22, 0.34, 0.62, 0.88, 0.96, 0.80, 0.46],
+  ding: [0.62, 0.70, 0.84, 0.96, 0.98, 0.94, 0.86, 0.80, 0.74]
+};
+function qFormOf(desc, name) {
+  const t = String(desc || "") + " " + String(name || "");
+  for (let i = 0; i < Q_FORMS.length; i++) if (Q_FORMS[i].re.test(t)) return Q_FORMS[i].k;
+  return "jar";
+}
+/* 照片配色：丢掉纯白墙面与死黑，按饱和度×明度取最有「器物感」的那一撮 */
+function qPalette(im) {
+  const N = 64;
+  const cv = document.createElement("canvas"); cv.width = N; cv.height = N;
+  const c = cv.getContext("2d", { willReadFrequently: true });
+  c.drawImage(im, 0, 0, N, N);
+  const d = c.getImageData(0, 0, N, N).data;
+  const hits = [];
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    const v = mx / 255, s = mx ? (mx - mn) / mx : 0;
+    if (v < .10) continue;
+    if (v > .93 && s < .24) continue;
+    if (s < .08 && v > .70) continue;
+    hits.push([r, g, b, s * v]);
+  }
+  const avg = arr => {
+    if (!arr.length) return [156, 124, 92];
+    let r = 0, g = 0, b = 0;
+    arr.forEach(p => { r += p[0]; g += p[1]; b += p[2]; });
+    return [Math.round(r / arr.length), Math.round(g / arr.length), Math.round(b / arr.length)];
+  };
+  const sorted = hits.slice().sort((a, b) => b[3] - a[3]);
+  const main = avg(sorted.slice(0, Math.max(24, Math.round(sorted.length * .3))));
+  const body = avg(hits);
+  return { main: main, body: body };
+}
+const qClamp = x => Math.max(0, Math.min(255, Math.round(x)));
+const qRGB = a => "rgb(" + qClamp(a[0]) + "," + qClamp(a[1]) + "," + qClamp(a[2]) + ")";
+const qMix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+function qProfile(form) {
+  const P = Q_PROF[form] || Q_PROF.jar, n = P.length - 1, out = [];
+  for (let i = 0; i <= 36; i++) {
+    const t = i / 36 * n, i0 = Math.min(n - 1, Math.floor(t)), f = t - i0;
+    out.push(P[i0] + (P[i0 + 1] - P[i0]) * f);
+  }
+  return out;
+}
+function qTrace(ctx, cx, top, w, h, prof) {
+  const n = prof.length - 1;
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const x = cx - w * prof[i] / 2, y = top + h * (i / n);
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  for (let i = n; i >= 0; i--) ctx.lineTo(cx + w * prof[i] / 2, top + h * (i / n));
+  ctx.closePath();
+}
+function qCloud(ctx, x, y, s, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, s * .34, Math.PI * .5, Math.PI * 1.5);
+  ctx.arc(x + s * .40, y - s * .18, s * .30, Math.PI * 1.05, Math.PI * 1.95);
+  ctx.arc(x + s * .76, y, s * .26, Math.PI * 1.5, Math.PI * .5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+async function qSpirit(photoSrc, desc, name) {
+  const S = 720, CX = 360;
+  const im = await loadImgUrl(photoSrc);
+  const pal = qPalette(im);
+  const form = qFormOf(desc, name);
+  const base = qMix(pal.main, [255, 244, 222], .18);
+  const deep = qMix(base, [44, 28, 16], .46);
+  const lite = qMix(base, [255, 250, 236], .52);
+  const ink = "rgba(58,38,22,.82)";
+
+  const cv = document.createElement("canvas"); cv.width = S; cv.height = S;
+  const ctx = cv.getContext("2d");
+
+  /* 1 宣纸底 */
+  ctx.fillStyle = "#fbf4e3"; ctx.fillRect(0, 0, S, S);
+  let paper = null;
+  try { paper = await loadImgUrl("装饰/宣纸纹.webp"); } catch (e) {}
+  if (paper) { ctx.globalAlpha = .5; for (let y = 0; y < S; y += 256) for (let x = 0; x < S; x += 256) ctx.drawImage(paper, x, y); ctx.globalAlpha = 1; }
+
+  /* 2 中心柔光 */
+  const halo = ctx.createRadialGradient(CX, 360, 40, CX, 380, 340);
+  halo.addColorStop(0, "rgba(255,250,232,.95)");
+  halo.addColorStop(.62, "rgba(255,246,224,.35)");
+  halo.addColorStop(1, "rgba(255,242,214,0)");
+  ctx.fillStyle = halo; ctx.fillRect(0, 0, S, S);
+
+  /* 3 背景祥云（同色系，低透明度，别抢主体） */
+  qCloud(ctx, 150, 210, 150, qRGB(qMix(base, [255, 255, 255], .62).concat(0.5)));
+  qCloud(ctx, 580, 300, 120, qRGB(qMix(base, [255, 255, 255], .7).concat(0.4)));
+  qCloud(ctx, 120, 470, 110, qRGB(qMix(base, [255, 255, 255], .66).concat(0.35)));
+
+  /* 4 地面投影 */
+  ctx.save();
+  ctx.globalAlpha = .18; ctx.fillStyle = "#6b4a26";
+  ctx.beginPath(); ctx.ellipse(CX, 584, 148, 24, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  /* 器身的尺寸先定下来：脚要贴着它的底长 */
+  const BW = form === "vase" ? 286 : form === "beast" || form === "figure" ? 300 : 320;
+  const BH = form === "vase" ? 372 : form === "beast" || form === "figure" ? 330 : 348;
+  const TOP = form === "vase" ? 186 : 214;
+  const prof = qProfile(form === "beast" || form === "figure" || form === "coin" ? "jar" : form);
+  const FOOT_Y = TOP + BH - 6;
+  const sole = qMix(deep, base, .34);
+
+  /* 5 小脚（先画，压在器身底下）——短、圆、带墨线，别做成两块石头 */
+  const feet = (form === "beast" || form === "figure")
+    ? [[-72, FOOT_Y, 34, 21], [72, FOOT_Y, 34, 21], [-118, FOOT_Y - 8, 26, 18], [118, FOOT_Y - 8, 26, 18]]
+    : [[-54, FOOT_Y, 38, 22], [54, FOOT_Y, 38, 22]];
+  ctx.save();
+  feet.forEach(f => {
+    const g = ctx.createLinearGradient(0, f[1] - f[3], 0, f[1] + f[3]);
+    g.addColorStop(0, qRGB(qMix(base, [255, 255, 255], .34)));
+    g.addColorStop(1, qRGB(sole));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(CX + f[0], f[1], f[2], f[3], 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = ink; ctx.lineWidth = 3.2; ctx.stroke();
+  });
+  ctx.restore();
+
+  /* 6 器身 */
+  /* 6a 描边层：略大一圈的深色影子 */
+  ctx.save();
+  qTrace(ctx, CX, TOP - 5, BW + 13, BH + 10, prof);
+  ctx.fillStyle = deep; ctx.fill();
+  ctx.restore();
+
+  /* 6b 主色 + 明暗 */
+  qTrace(ctx, CX, TOP, BW, BH, prof);
+  const bg2 = ctx.createLinearGradient(CX - BW / 2, TOP, CX + BW / 2, TOP + BH);
+  bg2.addColorStop(0, qRGB(lite));
+  bg2.addColorStop(.42, qRGB(base));
+  bg2.addColorStop(1, qRGB(deep));
+  ctx.fillStyle = bg2; ctx.fill();
+
+  /* 6c 照片纹理（水墨化后压低透明度贴进器身，颜色和肌理留着它的来处） */
+  const eyeY = TOP + BH * (form === "beast" || form === "figure" ? .34 : .36);
+  try {
+    ctx.save();
+    qTrace(ctx, CX, TOP, BW, BH, prof); ctx.clip();
+    const T = 420, tex = document.createElement("canvas"); tex.width = T; tex.height = T;
+    const tc = tex.getContext("2d", { willReadFrequently: true });
+    tc.drawImage(im, 0, 0, T, T);
+    try { const idt = tc.getImageData(0, 0, T, T); inkWashPixels(idt, T, T); tc.putImageData(idt, 0, 0); } catch (e) {}
+    ctx.globalAlpha = .26; ctx.globalCompositeOperation = "soft-light";
+    ctx.drawImage(tex, 0, 0, T, T, CX - BW / 2, TOP, BW, BH);
+    /* 脸那一块把照片纹样压下去：不然原物的五官会和卡通脸叠成两张脸 */
+    ctx.globalCompositeOperation = "source-over";
+    const soft = ctx.createRadialGradient(CX, eyeY, 6, CX, eyeY, BW * .58);
+    soft.addColorStop(0, "rgba(251,244,227,.93)");
+    soft.addColorStop(.55, "rgba(251,244,227,.64)");
+    soft.addColorStop(1, "rgba(251,244,227,0)");
+    ctx.globalAlpha = 1; ctx.fillStyle = soft;
+    ctx.fillRect(CX - BW, TOP, BW * 2, BH);
+    ctx.restore();
+  } catch (e) {}
+
+  /* 6d 左上高光 + 口沿 */
+  ctx.save();
+  qTrace(ctx, CX, TOP, BW, BH, prof); ctx.clip();
+  const hl = ctx.createRadialGradient(CX - BW * .28, TOP + BH * .18, 8, CX - BW * .28, TOP + BH * .18, BW * .62);
+  hl.addColorStop(0, "rgba(255,255,255,.42)");
+  hl.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = hl; ctx.fillRect(CX - BW, TOP - 40, BW * 2, BH + 80);
+  ctx.restore();
+  ctx.beginPath();
+  ctx.ellipse(CX, TOP + 4, BW * prof[0] / 2, 13, 0, 0, Math.PI * 2);
+  ctx.fillStyle = qRGB(qMix(deep, [0, 0, 0], .18)); ctx.fill();
+  ctx.strokeStyle = ink; ctx.lineWidth = 3; ctx.stroke();
+
+  /* 6e 轮廓墨线 */
+  qTrace(ctx, CX, TOP, BW, BH, prof);
+  ctx.strokeStyle = ink; ctx.lineWidth = 4.5; ctx.lineJoin = "round"; ctx.stroke();
+
+  /* 6f 器物上的一道弦纹 / 兽形的一对耳朵 */
+  if (form === "beast" || form === "figure") {
+    const earY = TOP + 26;
+    [[-1, 0], [1, 0]].forEach(d => {
+      ctx.beginPath();
+      ctx.moveTo(CX + d[0] * BW * .30, earY - 4);
+      ctx.quadraticCurveTo(CX + d[0] * BW * .40, earY - 62, CX + d[0] * BW * .12, earY - 46);
+      ctx.quadraticCurveTo(CX + d[0] * BW * .18, earY - 14, CX + d[0] * BW * .30, earY - 4);
+      ctx.closePath();
+      ctx.fillStyle = qRGB(base); ctx.fill();
+      ctx.strokeStyle = ink; ctx.lineWidth = 4; ctx.stroke();
+    });
+  } else if (form === "coin") {
+    ctx.strokeStyle = qRGB(qMix(deep, [0, 0, 0], .2)); ctx.lineWidth = 5;
+    ctx.strokeRect(CX - 40, TOP + BH * .5 - 40, 80, 80);
+  } else {
+    ctx.save();
+    ctx.strokeStyle = qRGB(qMix(base, [255, 246, 220], .48));
+    ctx.lineWidth = 7; ctx.globalAlpha = .9;
+    [0.64, 0.77].forEach(t => {
+      const y = TOP + BH * t;
+      const idx = Math.round(t * (prof.length - 1));
+      const w2 = BW * prof[idx] / 2 * .82;
+      ctx.beginPath();
+      ctx.moveTo(CX - w2, y);
+      ctx.quadraticCurveTo(CX, y + 16, CX + w2, y);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  /* 7 拟人：闭眼笑脸 + 腮红 */
+  const eyeD = BW * .17;
+  ctx.save();
+  ctx.strokeStyle = "#3a2a1c"; ctx.lineWidth = 8; ctx.lineCap = "round";
+  [-1, 1].forEach(d => {
+    ctx.beginPath();
+    ctx.moveTo(CX + d * eyeD - 17, eyeY);
+    ctx.quadraticCurveTo(CX + d * eyeD, eyeY - 17, CX + d * eyeD + 17, eyeY);
+    ctx.stroke();
+  });
+  /* 腮红 */
+  ctx.globalAlpha = .26; ctx.fillStyle = "#c9553c";
+  [-1, 1].forEach(d => {
+    ctx.beginPath(); ctx.ellipse(CX + d * eyeD - d * 8, eyeY + 40, 22, 13, 0, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  /* 小嘴 */
+  ctx.strokeStyle = "rgba(58,42,28,.75)"; ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(CX - 13, eyeY + 54);
+  ctx.quadraticCurveTo(CX, eyeY + 68, CX + 13, eyeY + 54);
+  ctx.stroke();
+  ctx.restore();
+
+  /* 8 印章 */
+  try {
+    const seal = await loadImgUrl("装饰/印章.webp");
+    ctx.globalAlpha = .9; ctx.drawImage(seal, S - 132, 26, 92, 92); ctx.globalAlpha = 1;
+  } catch (e) {}
+
+  /* 9 题字 */
+  ctx.textAlign = "left"; ctx.fillStyle = "#8e3220";
+  ctx.font = posterFont(30, "bold");
+  ctx.fillText("文物精灵 · 打卡唤醒", 42, 62);
+  const no = nextCustomNo();
+  ctx.fillStyle = "#a8391f"; ctx.font = posterFont(26, "bold");
+  ctx.fillText("图鉴编号 " + no, 42, S - 34);
+  ctx.textAlign = "right"; ctx.fillStyle = "#8a6d3b"; ctx.font = posterFont(21);
+  ctx.fillText("本机 Q 版精灵", S - 42, S - 34);
+
+  /* 干净方图：图鉴立绘 / 头像用（无题字无外框） */
+  const art = document.createElement("canvas"); art.width = 720; art.height = 720;
+  const ac = art.getContext("2d");
+  ac.drawImage(cv, 0, 0);
+  ac.fillStyle = "#fbf4e3"; ac.fillRect(0, 0, 720, 66); ac.fillRect(0, 690, 720, 30);
+  return { img: cv.toDataURL("image/jpeg", .93), art: art.toDataURL("image/jpeg", .92), src: "localq", no: no };
+}
 async function localStylize(photoSrc) {
   const im = await loadImgUrl(photoSrc);
   const S = 900, PX = 90, PY = 112, PW = 720, PH = 664;
@@ -5363,17 +5776,20 @@ function wakeFormStep() {
   const def = craftDefaults(st.desc);
   const pOpts = Object.entries(ATTRIBUTES.primary).map(([k, a]) => `<option value="${k}">${a.name}</option>`).join("");
   const sOpts = Object.entries(ATTRIBUTES.secondary).map(([k, a]) => `<option value="${k}">${a.name}</option>`).join("");
+  const sus = (window.__qSuspect && SPIRITS[window.__qSuspect.id]) ? SPIRITS[window.__qSuspect.id] : null;
   overlay(`
     <button class="close" onclick="closeOverlay()">✕</button>
     <h3>🎨 幻化完成 · 领取图鉴编码</h3>
     <div class="wake-preview">
       <img src="${st.preview || st.art}" alt="Q 版立绘预览">
       <div class="wake-side">
-        <div class="muted" style="margin-bottom:4px">${st.src === "ai" ? ("✦ AI 手绘 Q 版立绘(" + (st.engine === "zhipu" ? "智谱 CogView · 免费" : st.engine === "ark" ? "方舟 Seedream" : "云端") + (st.temp ? " · 临时链接" : "") + ")") : "✦ 本机国风艺术化(离线兜底)"}</div>
+        <div class="muted" style="margin-bottom:4px">${st.src === "ai" ? ("✦ AI 手绘 Q 版立绘(" + (st.engine === "zhipu" ? "智谱 CogView · 免费" : st.engine === "ark" ? "方舟 Seedream" : "云端") + (st.temp ? " · 临时链接" : "") + ")") : "✦ 本机 Q 版精灵(离线合成,不上传)"}</div>
         <div class="wake-no">🔖 图鉴编码:<b>${no}</b><br><span class="muted">领取后永久保留,做海报时直接可选</span></div>
         <label>给它起个名字
           <input id="wakeName" maxlength="12" value="${aiCfgEsc(def.name)}" placeholder="例:青铜小神兽">
         </label>
+        <div id="wakeDup" class="muted" style="display:none;color:#a8391f;line-height:1.8"></div>
+        ${sus ? `<div class="muted" style="color:#a8661f;line-height:1.8;margin:2px 0 6px">🔍 本机剪影看它像图鉴里的《${aiCfgEsc(sus.name)}》（${window.__qSuspect.score}%）。如果就是它，别建新号——<a href="javascript:void(0)" onclick="closeOverlay();codexPop('${sus.id}')" style="color:#a8391f;text-decoration:underline">去图鉴看它</a></div>` : ""}
         <label>主属性(材质)
           <select id="wakeP">${pOpts}</select>
         </label>
@@ -5393,11 +5809,32 @@ function wakeFormStep() {
   const pSel = $("#wakeP"), sSel = $("#wakeS");
   if (pSel) pSel.value = def.primary;
   if (sSel) sSel.value = def.secondary;
+  /* 名字边打边查：一旦撞上图鉴里的某一只，当场说清楚，别等点完「领取」才拦 */
+  const nmEl = $("#wakeName"), tip = $("#wakeDup"), okBtn = $(".actions .btn.gold");
+  const check = function () {
+    if (!nmEl || !tip) return;
+    const hit = identWakeFind(nmEl.value.trim());
+    if (hit) {
+      const st2 = STATIONS.find(function (x) { return (x.spiritIds || []).indexOf(hit.id) >= 0; });
+      tip.style.display = "block";
+      tip.innerHTML = "⚠️ 图鉴里已经有《" + aiCfgEsc(hit.name) + "》(" + ((posterMeta(hit.id) || {}).no || "—") + ")，"
+        + (isCaptured(hit.id) ? "你已经捕捉过它了。" : "去" + (st2 ? "「" + aiCfgEsc(st2.name.replace(/^第.+站\s*·\s*/, "")) + "」" : "它所在的") + "那一站挑战就能收。")
+        + " 站内 104 只不重复建档。";
+      if (okBtn) { okBtn.disabled = true; okBtn.textContent = "📖 它在图鉴里，不用再建一只"; }
+    } else {
+      tip.style.display = "none"; tip.innerHTML = "";
+      if (okBtn) { okBtn.disabled = false; okBtn.textContent = "🔖 领取图鉴编码,唤醒它!"; }
+    }
+  };
+  if (nmEl) { nmEl.addEventListener("input", check); check(); }
 }
 function wakeConfirm() {
   if (!photoState || !photoState.art) { openPhoto(); return; }
   const st = photoState;
   const name = (($("#wakeName") && $("#wakeName").value) || "").trim() || "神秘文物";
+  /* 最后一道闸：名字对上站内 104 只，就不许新增——它早就占着号了 */
+  const dup = identWakeFind(name);
+  if (dup) { photoState = null; qDupeNotice(dup, "你填的名字是《" + name + "》。"); return; }
   const p = ($("#wakeP") && $("#wakeP").value) || "ceramic";
   const s2 = ($("#wakeS") && $("#wakeS").value) || "household";
   const words = (($("#wakeWords") && $("#wakeWords").value) || "").trim();

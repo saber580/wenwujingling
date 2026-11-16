@@ -269,7 +269,6 @@
             <div class="rh-stat-num"><b>${mine.length}</b><span>/ ${all.length} 已唤醒</span></div>
             <div class="rh-bar"><i style="width:${pct}%"></i></div>
             <p>已点亮 <b>${done}</b> / ${stShown} 站 · 还有 ${Math.max(0, all.length - mine.length)} 只精灵等你唤醒</p>
-            <button type="button" class="rh-text-link" onclick="openPhoto()">📷 去打卡唤醒 →</button>
           </div>
         </div>
       </section>

@@ -428,7 +428,6 @@
             <div class="rh-meter-num"><b>${mine.length}</b><span>/ ${total} 已唤醒</span></div>
             <div class="rh-track"><i style="width:${pct}%"></i></div>
             <p>已点亮 <b>${done}</b> / ${stTotal} 站 · 还有 ${Math.max(0, total - mine.length)} 只精灵等你唤醒</p>
-            <button type="button" class="rh-link-btn" onclick="openPhoto()">📷 去打卡唤醒 →</button>
           </div>
         </div>
       </section>
