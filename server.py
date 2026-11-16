@@ -58,6 +58,12 @@ UPSTREAM_MODELS = BASE + "/models"
 # 因此这里保留一个兜底默认值，保证克隆仓库后「开箱即用」的主流程不被阻断。
 ACCESS_KEY = os.environ.get("RELIC_ACCESS_KEY", "wbpk_EmA5VK2VcIUoBzfFI6Zacw_F1K3gdiinbg22xd0OTLtOuN32jy1A4wX")
 
+# ---- 豆包（火山方舟）图像模型：Q 版精灵由它出图 ----
+# 钥匙只从环境变量读（systemd 里 Environment=ARK_API_KEY=...），不进仓库、不下发浏览器。
+# 没配钥匙时 /api/imagine 返回 503，前端自动退回本机合成，页面不会坏。
+ARK_IMG_URL = os.environ.get("ARK_IMG_URL", "https://ark.cn-beijing.volces.com/api/v3/images/generations")
+ARK_IMG_MODEL = os.environ.get("ARK_IMG_MODEL", "doubao-seedream-5-0-flash-260915")
+
 PORTS = [int(x) for x in (os.environ.get("PORTS") or os.environ.get("PORT") or "8080").split(",") if x.strip()]
 PORT = PORTS[0]
 
@@ -273,6 +279,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(404, {"ok": False, "error": "没有这个 MCP 端点"})
         if path == "/api/llm":
             return self._proxy_llm()
+        if path == "/api/imagine":
+            return self._imagine()
         if path == "/api/tts":
             return self._tts()
         if path == "/api/rag":
@@ -283,6 +291,62 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json(400, {"ok": False, "error": "请求体不是 JSON"})
             return self._rag(req)
         return self._json(404, {"ok": False, "error": "没有这个接口"})
+
+    # ---------- Q 版精灵出图：豆包 Seedream 图生图，钥匙只在服务端 ----------
+    def _imagine(self):
+        key = (os.environ.get("ARK_API_KEY") or "").strip()
+        if not key:
+            # 没配钥匙不算错：前端收到 503 会退回本机 canvas 合成，照样出精灵
+            return self._json(503, {"ok": False, "error": "豆包未配置（服务器缺 ARK_API_KEY）"})
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+            req = json.loads(self.rfile.read(n).decode("utf-8")) if n else {}
+        except Exception:
+            return self._json(400, {"ok": False, "error": "请求体不是 JSON"})
+        prompt = str(req.get("prompt") or "").strip()
+        if not prompt:
+            return self._json(400, {"ok": False, "error": "prompt 为空"})
+        # 两张图：第一张是用户拍的文物，第二张是现有精灵立绘（画风参考）
+        images = [v for v in (req.get("image"), req.get("ref")) if v]
+        body = {
+            "model": ARK_IMG_MODEL,
+            "prompt": prompt[:2000],
+            "response_format": "b64_json",
+            "watermark": False,
+            "size": str(req.get("size") or "1024x1024"),
+        }
+        if images:
+            body["image"] = images if len(images) > 1 else images[0]
+        rq = urllib.request.Request(ARK_IMG_URL, data=json.dumps(body).encode(), method="POST")
+        rq.add_header("Content-Type", "application/json")
+        rq.add_header("Authorization", "Bearer " + key)
+        try:
+            resp = urllib.request.urlopen(rq, timeout=150)
+            j = json.loads(resp.read().decode("utf-8", "ignore"))
+        except urllib.error.HTTPError as e:
+            detail = ""
+            try:
+                detail = e.read().decode("utf-8", "ignore")[:300]
+            except Exception:
+                pass
+            sys.stderr.write("  [imagine] HTTP %s %s\n" % (e.code, detail[:120]))
+            return self._json(e.code, {"ok": False, "error": "豆包拒绝了这次请求（HTTP %s）" % e.code, "detail": detail})
+        except Exception as e:
+            sys.stderr.write("  [imagine] %s\n" % str(e)[:160])
+            return self._json(502, {"ok": False, "error": "连不上豆包：%s" % str(e)[:120]})
+        it = {}
+        try:
+            it = (j.get("data") or [{}])[0] or {}
+        except Exception:
+            it = {}
+        img = ""
+        if it.get("b64_json"):
+            img = "data:image/png;base64," + it["b64_json"]
+        elif it.get("url"):
+            img = it["url"]
+        if not img:
+            return self._json(502, {"ok": False, "error": "豆包没有返回图片", "detail": json.dumps(j, ensure_ascii=False)[:300]})
+        return self._json(200, {"ok": True, "image": img, "engine": "ark-seedream"})
 
     # ---------- 双路召回：给前端与 Agent 用的直连接口 ----------
     def _rag(self, req):

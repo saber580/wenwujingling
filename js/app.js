@@ -5024,7 +5024,156 @@ function onPhoto(input) {
 /* 站内已有的 104 只，不许再「生成」一只——这是硬闸。
    拍照唤醒原本是给站外文物准备的：站内精灵早就在图鉴里占着号，再造一只就成了重复品。
    三条路全堵：清点照片(端侧识别) / 表单里填了名字 / 点领取那一刻。 */
-function qDupeNotice(w, why) {
+/* ---------- AI 认文物：走服务端 /api/llm 转发（钥匙只在服务器，浏览器不持） ----------
+   关键不在「能不能看图」，而在「能不能认成图鉴里的那一个」：
+   把现有 104 只的名字一起交给模型当候选，闭集里有的它必须原样照抄，
+   于是「是不是站内已有」就不用靠模糊匹配去猜。
+   任何失败（离线 / 额度 / 超时 / 非 JSON）都返回 null，流程退回本机那套，不拦人。 */
+const AI_IDENT_MODEL = "glm-5.3-flash";
+const AI_IDENT_PRIMARY = ["bronze", "ceramic", "jade", "gold", "stone", "lacquer", "textile", "wood", "painting", "glass"];
+let aiRosterP = null;
+function aiRoster() {
+  if (aiRosterP) return aiRosterP;
+  const seen = {}, arr = [];
+  Object.keys(SPIRITS).forEach(function (id) {
+    const s = SPIRITS[id];
+    if (!s || s.custom || !s.name) return;
+    if (seen[s.name]) return;
+    seen[s.name] = 1;
+    arr.push(s.name);
+  });
+  aiRosterP = arr.join("、");
+  return aiRosterP;
+}
+async function aiIdentifyVision(dataURL) {
+  let small = dataURL;
+  try { small = await dataUrlShrink(dataURL, 760, .82); } catch (e) {}
+  const prompt = [
+    "你在帮一个「文博打卡」小程序认文物。看图，按「先看、再判」两步作答，只输出一行 JSON，不要解释、不要代码块。",
+    "",
+    "第一步「看」：look 里写你眼睛实际看到的——材质（铁/青铜/白玉/陶瓷/木质…）、造型、单体还是成套、有没有铭文或底座、体量感。",
+    "第二步「判」：它是不是下面清单里的某一件？只有当你有把握认出它就是那件著名文物时，才填 match。",
+    "",
+    "【图鉴已有清单】",
+    aiRoster(),
+    "",
+    "【输出】",
+    '{"look":"","name":"","match":"","era":"如 唐/北宋/西汉","material":"如 铁/青铜/青瓷/汉白玉","primary":"' + AI_IDENT_PRIMARY.join("/") + ' 里选一个","confidence":0,"real":true}',
+    "",
+    "【硬规则】",
+    "1. match 非空 ⇒ name 必须与 match 里的原名一字不差。",
+    "2. match 为空 ⇒ name 不许从清单里挑一个凑数，要用你自己看到的说法。",
+    "3. 材质以眼睛为准，不许与 name 自相矛盾（说白玉就不能同时说是铁铸）。",
+    "4. real 为 false 表示图里不是文物（风景、人、宠物、食物、截图界面、表情包）。",
+    "5. confidence 是你真觉得「这就是清单里那件」的把握，0~100；拿不准就写低。"
+  ].join("\n");
+  const body = {
+    model: AI_IDENT_MODEL, stream: true, temperature: 0,
+    messages: [{
+      role: "user", content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: small } }
+      ]
+    }]
+  };
+  let resp;
+  try {
+    resp = await fetch("/api/llm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  } catch (e) { return null; }
+  if (!resp || !resp.ok) return null;
+  let txt = "";
+  try {
+    if (resp.body && resp.body.getReader) {
+      const rd = resp.body.getReader(), dec = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const st = await rd.read();
+        if (st.done) break;
+        buf += dec.decode(st.value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop();
+        lines.forEach(function (ln) {
+          ln = ln.trim();
+          if (ln.indexOf("data:") !== 0) return;
+          const p = ln.slice(5).trim();
+          if (!p || p === "[DONE]") return;
+          try {
+            const o = JSON.parse(p);
+            const ch = o && o.choices && o.choices[0];
+            const d = ch && (ch.delta || ch.message);
+            if (d && typeof d.content === "string") txt += d.content;
+          } catch (e) { /* 半截 JSON，跳过 */ }
+        });
+      }
+    } else {
+      txt = await resp.text();
+    }
+  } catch (e) { return null; }
+  const m = txt.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  let j = null;
+  try { j = JSON.parse(m[0]); } catch (e) { return null; }
+  if (!j || !j.name) return null;
+  const cut = (s, n) => String(s || "").trim().replace(/^["'《「【]|["'》」】]$/g, "").slice(0, n);
+  return {
+    name: cut(j.name, 24),
+    match: cut(j.match, 24),
+    look: cut(j.look, 120),
+    era: cut(j.era, 16),
+    material: cut(j.material, 16),
+    primary: AI_IDENT_PRIMARY.indexOf(String(j.primary || "")) >= 0 ? j.primary : "",
+    confidence: Math.max(0, Math.min(100, Math.round(Number(j.confidence) || 0))),
+    real: j.real !== false
+  };
+}
+/* 把认出来的结果拼成 photoFlow 原本吃的那种 desc 文本：
+   craftDefaults 与 qFormOf 都是从这段正则里取名字、材质、器型的，喂对了它们就准了 */
+function aiDescText(ai, fallback) {
+  if (!ai || ai.real === false) return fallback || "";
+  const bits = [];
+  if (ai.name) bits.push("名称：" + ai.name);
+  if (ai.era) bits.push("年代：" + ai.era);
+  if (ai.material) bits.push("材质：" + ai.material);
+  return bits.length ? bits.join("；") : (fallback || "");
+}
+/* AI 说「铁铸坐狮」时，站内压根没有这个名字，但档案里有《沧州铁狮子》。
+   光靠字符串相似度对不上，得按「物种词 + 材质词」这一层去比：
+   铁 + 狮 命中沧州铁狮子；只对上「狮」的《白玉蹲狮》排在后面。
+   只用来给候选、让用户点一下确认，不自动替他决定。 */
+const Q_SPECIES = ["狮", "鼎", "瓶", "灯", "钟", "镜", "俑", "佛", "菩萨", "塔", "炉", "碗", "罐", "壶",
+  "钱", "币", "璧", "琮", "剑", "戈", "衣", "画", "卷", "碑", "像", "尊", "爵", "簋", "鬲", "盘",
+  "洗", "盒", "枕", "砚", "印", "玺", "鼓", "磬", "车", "马", "牛", "龙", "凤", "鸟", "龟", "蟾", "缸", "瓮"];
+const Q_MATERIAL = ["铁", "铜", "青铜", "金", "银", "玉", "陶", "瓷", "釉", "漆", "丝", "绢", "锦",
+  "木", "石", "纸", "砖", "瓦", "琉璃", "珐琅", "牙", "骨"];
+function qWordSet(text) {
+  const t = String(text || ""), sp = {}, mt = {};
+  Q_SPECIES.forEach(function (k) { if (t.indexOf(k) >= 0) sp[k] = 1; });
+  Q_MATERIAL.forEach(function (k) { if (t.indexOf(k) >= 0) mt[k] = 1; });
+  return { sp: sp, mt: mt };
+}
+function codexSuggest(ai, k) {
+  if (!ai || ai.real === false) return [];
+  const pool = [ai.name, ai.look, ai.material].filter(Boolean).join(" ");
+  const P = qWordSet(pool);
+  const cands = Object.values(SPIRITS).filter(function (s) { return s && !s.custom && s.name; });
+  const out = [];
+  cands.forEach(function (s) {
+    const C = qWordSet([s.name, s.alias || "", (ATTRIBUTES.primary[s.primary] || {}).name || ""].join(" "));
+    let sc = 0;
+    Object.keys(P.sp).forEach(function (x) { if (C.sp[x]) sc += 2; });   /* 物种对得上最值钱 */
+    Object.keys(P.mt).forEach(function (x) { if (C.mt[x]) sc += 1; });
+    if (sc >= 3) out.push([sc, s]);
+  });
+  out.sort(function (a, b) { return b[0] - a[0]; });
+  return out.slice(0, k || 3).map(function (x) { return x[1]; });
+}
+function qDupResume() {
+  const fn = window.__qDupResume;
+  window.__qDupResume = null;
+  closeOverlay();
+  if (typeof fn === "function") setTimeout(fn, 80);
+}
+function qDupeNotice(w, why, soft) {
   if (!w) return;
   const m = posterMeta(w.id) || {};
   const st = STATIONS.find(function (x) { return (x.spiritIds || []).indexOf(w.id) >= 0; });
@@ -5046,7 +5195,9 @@ function qDupeNotice(w, why) {
     </div>
     <div class="actions">
       <button class="btn gold" onclick="closeOverlay();codexPop('${w.id}')">📖 在图鉴里看它</button>
-      <button class="btn ghost" onclick="closeOverlay()">知道了</button>
+      ${soft
+        ? `<button class="btn ghost" onclick="qDupResume()">认错了，我要给它建新档</button>`
+        : `<button class="btn ghost" onclick="closeOverlay()">知道了</button>`}
     </div>
   `, true);
 }
@@ -5152,15 +5303,64 @@ function qHashTable() {
   })();
   return qHashP;
 }
+/* 拍照打卡第一步：先让 AI 认清「这是哪一件」。
+   认出是图鉴里那 104 只之一 → 弹图鉴卡（未捕捉态），不给它编新号；
+   认不出 / 站外文物 → 进入第二步，画一只新的。 */
 async function photoFlow(dataURL, desc) {
   window.__qGuess = "";
   window.__qSuspect = null;
+  window.__qDupResume = null;
   if (await qGuardPhoto(dataURL, desc)) return;
   photoState = { photo: dataURL, desc: desc || "" };
   overlay(`
     <button class="close" onclick="closeOverlay()">✕</button>
+    <h3>🔎 正在辨认这件文物…</h3>
+    <img src="${dataURL}" alt="文物照片" style="width:150px;border-radius:14px;display:block;margin:10px auto;border:1px solid #e6d8b8">
+    <div class="wake-progress"><i id="wakeBar"></i></div>
+    <p class="muted" id="wakeTip" style="text-align:center">AI 正在看清它是哪一件、是不是图鉴里已有的那一只</p>
+  `, true);
+  let pct = 5;
+  const timer = setInterval(() => {
+    pct = Math.min(86, pct + 1.4 + Math.random() * 2.4);
+    const b = $("#wakeBar"); if (b) b.style.width = pct + "%";
+  }, 200);
+  let ai = null;
+  try { ai = await withTimeout(aiIdentifyVision(dataURL), 16000); } catch (e) { ai = null; }
+  clearInterval(timer);
+  const bar = $("#wakeBar"); if (bar) bar.style.width = "100%";
+  /* 命中图鉴现有的 104 只：
+     ① AI 自己填了 match（就是清单里这件）——最硬；
+     ② 只说了名字，但够自信；
+     ③ 名字对不上，可按「物种+材质」召回只剩独一只——也值得直接弹出来问一句。
+     都是软拦，认错了能一键退回来继续画。 */
+  if (ai && ai.real !== false) {
+    let hit = identWakeFind(ai.match) || (ai.confidence >= 45 ? identWakeFind(ai.name) : null);
+    if (!hit) {
+      try {
+        const sg = codexSuggest(ai, 3).filter(function (w) { return !isCaptured(w.id); });
+        if (sg.length === 1) hit = sg[0];
+      } catch (e) {}
+    }
+    if (hit) {
+      window.__qDupResume = function () { photoFlowGo(dataURL, desc, ai); };
+      qDupeNotice(hit, "AI 认出它是《" + ai.name + "》" +
+        (ai.era ? " · " + ai.era : "") + (ai.material ? " · " + ai.material : "") +
+        "，置信度 " + ai.confidence + "%。", true);
+      return;
+    }
+    window.__qGuess = ai.name;   /* 没命中也是它的名字，画的时候按它挑器型 */
+  }
+  photoFlowGo(dataURL, desc, ai);
+}
+/* 第二步：画。AI 的认名用来定器型 / 材质 / 默认名字，比只用正则猜准得多。 */
+async function photoFlowGo(dataURL, desc, ai) {
+  const d2 = aiDescText(ai, desc);
+  photoState = { photo: dataURL, desc: d2, ai: ai || null };
+  overlay(`
+    <button class="close" onclick="closeOverlay()">✕</button>
     <h3>🎨 正在幻化精灵…</h3>
     <img src="${dataURL}" alt="文物照片" style="width:150px;border-radius:14px;display:block;margin:10px auto;border:1px solid #e6d8b8">
+    ${ai && ai.real !== false ? `<p class="muted" style="text-align:center;margin:2px 0 8px">AI 认得是 <b>${aiCfgEsc(ai.name)}</b>${ai.era ? " · " + aiCfgEsc(ai.era) : ""}${ai.material ? " · " + aiCfgEsc(ai.material) : ""}</p>` : ""}
     <div class="wake-progress"><i id="wakeBar"></i></div>
     <p class="muted" id="wakeTip" style="text-align:center">✦ AI 手绘 Q 版立绘约 10~20 秒;连不上云端就在本机画一只(约 0.2 秒)</p>
   `, true);
@@ -5396,13 +5596,45 @@ async function aiImagineArk(dataURL, desc, key) {
   if (bad) aiImagineOff = true;
   return null;
 }
-/* 总入口:小桥优先(存档最稳)→ 直连(智谱免费 / 方舟 Seedream)→ 返回 null 交给本机兜底 */
+/* ① 走服务端 /api/imagine：豆包钥匙只在服务器，访客（含评委）不用配任何东西。
+   这条是人人都能出真 Q 版的通道；服务器没配钥匙时返回 503，自动退回本机合成。 */
+let aiProxyOff = false;
+async function aiImagineProxy(dataURL, desc) {
+  if (aiProxyOff) return null;
+  let photo = "", ref = "";
+  try { photo = await dataUrlShrink(dataURL, 1024, .85); } catch (e) { photo = dataURL || ""; }
+  if (!photo) return null;
+  try {
+    const refId = STYLE_REF_BY_MAT[craftDefaults(desc).primary] || "tielion";
+    ref = await dataUrlShrink("精灵/" + refId + ".webp", 640, .85);
+  } catch (e) { ref = ""; }
+  const prompt = IDENT_IMG_PROMPT + (desc ? "。文物资料:" + desc : "");
+  let res;
+  try {
+    res = await fetch("/api/imagine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: photo, ref: ref || "", prompt: prompt })
+    });
+  } catch (e) { return null; }
+  if (res.status === 503) { aiProxyOff = true; return null; }   /* 没配钥匙，本轮别再试 */
+  if (!res.ok) return null;
+  let j = null;
+  try { j = await res.json(); } catch (e) { return null; }
+  if (!j || !j.ok || !j.image) return null;
+  let img = j.image;
+  try { img = await dataUrlShrink(img, 1024, .92); } catch (e) {}
+  return { img: img, src: "ai", engine: "ark" };
+}
+/* 总入口:服务端出图(人人可用)→ 小桥 → 本地钥匙直连 → 返回 null 交给本机兜底 */
 async function aiImagine(dataURL, desc) {
   if (aiImagineOff) return null;
+  const viaProxy = await aiImagineProxy(dataURL, desc);
+  if (viaProxy) return viaProxy;
   const viaBridge = await aiImagineBridge(dataURL, desc);
   if (viaBridge) return viaBridge;
   const key = (typeof identDirectKey === "function") ? identDirectKey() : "";
-  if (!key) { aiImagineOff = true; return null; }
+  if (!key) return null;
   try {
     if (identKeyKind(key) === "zhipu") return await aiImagineZhipu(dataURL, desc, key);
     return await aiImagineArk(dataURL, desc, key);
@@ -5746,7 +5978,7 @@ async function localStylize(photoSrc) {
 }
 /* 从识别结果里拈出名字 / 材质,给「幻化这张照片」的表单做默认值——少让人打字,
    点开就差不多是对的,只差确认。 */
-function craftDefaults(desc) {
+function craftDefaults(desc, ai) {
   const out = { name: "", primary: "ceramic", secondary: "household" };
   const text = String(desc || "");
   const nameM = text.match(/名称[:：]\s*([^;；]+)/);
@@ -5767,16 +5999,33 @@ function craftDefaults(desc) {
   else if (/竹|木|牙|角|雕|简/.test(joined)) out.primary = "wood";
   else if (/画|书|卷|帖|经文/.test(joined)) out.primary = "painting";
   else if (/玻璃|琉璃/.test(joined)) out.primary = "glass";
+  /* AI 认出来的名字与材质，比正则更准，放最后覆盖 */
+  if (ai && ai.real !== false) {
+    if (ai.primary) out.primary = ai.primary;
+    if (ai.name) out.name = String(ai.name).replace(/[《》「」【】]/g, "").slice(0, 12);
+  }
   return out;
 }
 function wakeFormStep() {
   const st = photoState;
   if (!st || !st.art) { openPhoto(); return; }
   const no = st.no || nextCustomNo();
-  const def = craftDefaults(st.desc);
+  const def = craftDefaults(st.desc, st.ai);
   const pOpts = Object.entries(ATTRIBUTES.primary).map(([k, a]) => `<option value="${k}">${a.name}</option>`).join("");
   const sOpts = Object.entries(ATTRIBUTES.secondary).map(([k, a]) => `<option value="${k}">${a.name}</option>`).join("");
   const sus = (window.__qSuspect && SPIRITS[window.__qSuspect.id]) ? SPIRITS[window.__qSuspect.id] : null;
+  /* 按「物种词 + 材质词」从图鉴里捞几个像的，摆在最上面让人一眼认出：
+     AI 说不出《沧州铁狮子》这个全名，但说得出「铁铸坐狮」，这一层就够对上。 */
+  let sug = [];
+  try { sug = codexSuggest(st.ai, 3).filter(function (w) { return !isCaptured(w.id); }); } catch (e) { sug = []; }
+  const sugHTML = sug.length ? `<div style="background:#fbf3e2;border:1px solid #e8d6ae;border-radius:12px;padding:9px 11px;margin:2px 0 8px">
+          <div class="muted" style="color:#8a6420;line-height:1.75;margin-bottom:7px">🔎 图鉴里有这几只看着像它。如果是同一件，点开就能在图鉴里看到，别建新号。</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${sug.map(function (w) {
+              return `<a href="javascript:void(0)" onclick="closeOverlay();codexPop('${w.id}')" style="display:flex;align-items:center;gap:6px;background:#fffaf0;border:1px solid #e6d4ac;border-radius:10px;padding:3px 10px 3px 3px;text-decoration:none;color:#5b4325"><img src="${spritePath(w.id)}" alt="" style="width:36px;height:36px;object-fit:contain"><span style="font-size:13px;line-height:1.2">${aiCfgEsc(w.name)}</span></a>`;
+            }).join("")}
+          </div>
+        </div>` : "";
   overlay(`
     <button class="close" onclick="closeOverlay()">✕</button>
     <h3>🎨 幻化完成 · 领取图鉴编码</h3>
@@ -5784,7 +6033,9 @@ function wakeFormStep() {
       <img src="${st.preview || st.art}" alt="Q 版立绘预览">
       <div class="wake-side">
         <div class="muted" style="margin-bottom:4px">${st.src === "ai" ? ("✦ AI 手绘 Q 版立绘(" + (st.engine === "zhipu" ? "智谱 CogView · 免费" : st.engine === "ark" ? "方舟 Seedream" : "云端") + (st.temp ? " · 临时链接" : "") + ")") : "✦ 本机 Q 版精灵(离线合成,不上传)"}</div>
+        ${st.ai && st.ai.real !== false ? `<div class="muted" style="margin-bottom:4px;color:#7a5a2e;line-height:1.8">🔎 AI 认得是《${aiCfgEsc(st.ai.name)}》${st.ai.era ? " · " + aiCfgEsc(st.ai.era) : ""}${st.ai.material ? " · " + aiCfgEsc(st.ai.material) : ""}<span style="color:#a8661f">（置信度 ${st.ai.confidence}%）</span></div>` : ""}
         <div class="wake-no">🔖 图鉴编码:<b>${no}</b><br><span class="muted">领取后永久保留,做海报时直接可选</span></div>
+        ${sugHTML}
         <label>给它起个名字
           <input id="wakeName" maxlength="12" value="${aiCfgEsc(def.name)}" placeholder="例:青铜小神兽">
         </label>
