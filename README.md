@@ -169,7 +169,6 @@
 ```
 文物精灵/
 ├── index.html              # 站点主入口（电脑端 + 手机端共用）
-├── 精灵文物主.html          # 备用入口（内容与主入口同步）
 ├── server.py               # 本地静态服务器 + /api 转发 + MCP 端点 + Range 分段
 ├── tts_service.py          # 现场语音合成（与预生成音频同一声线）
 ├── mcp/                    # 真 MCP Server
