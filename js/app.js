@@ -2583,6 +2583,36 @@ function posterMarkDirty() {
   const st = $("#posterStatus"), c = $("#posterCanvas");
   if (st && c && !c.classList.contains("hidden")) st.textContent = "🔄 已调整,点「一键生成海报」重新合成";
 }
+/* Q 版风格：把用户拍的合影交给豆包，生成同风格 Q 版人物/精灵，再放进海报。
+   走服务端 /api/imagine（钥匙在服务器，评委无需配置）；失败则返回 null，退回本机滤镜。 */
+let posterChibiCache = {};
+async function posterChibiPhoto(photoSrc) {
+  if (!photoSrc) return null;
+  if (posterChibiCache[photoSrc]) return posterChibiCache[photoSrc];
+  let photo = "";
+  try { photo = await dataUrlShrink(photoSrc, 1024, .88); }
+  catch (e) { photo = photoSrc || ""; }
+  if (!photo) return null;
+  const prompt = "把这张照片里的人与文物，画成可爱的 Q 版卡通形象：Q版头身比例（大头小身）、圆润夸张造型、大大的闪亮眼睛、拟人微笑、短短手脚、厚涂国风插画质感、柔和色彩、清晰描边、纯米白背景、人物与文物都完整入画。画面里只有卡通角色，不要写实照片、不要黑白、不要文字、不要水印";
+  let res;
+  try {
+    res = await fetch("/api/imagine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: photo, prompt: prompt })
+    });
+  } catch (e) { return null; }
+  if (!res.ok) return null;
+  let j = null;
+  try { j = await res.json(); } catch (e) { return null; }
+  if (!j || !j.ok || !j.image) return null;
+  let img = j.image;
+  if (!/^data:image\//.test(img)) {
+    try { img = await dataUrlShrink(img, 1024, .92); } catch (e) { return null; }
+  }
+  posterChibiCache[photoSrc] = img;
+  return img;
+}
 function posterPickPhoto(input) {
   const f = input && input.files && input.files[0];
   if (!f) return;
@@ -2606,22 +2636,40 @@ function posterGenerate() {
     if (drop) { drop.classList.remove("shake"); void drop.offsetWidth; drop.classList.add("shake"); }
     return;
   }
-  if (status) status.textContent = "🎨 AI 正在合成…(照片不出本机)";
   if (btn) { btn.disabled = true; btn.textContent = "合成中…"; }
   const id = posterSpiritId();
-  setTimeout(() => {
-    posterCompose(id).then(() => {
-      const c = $("#posterCanvas"), ph = $("#posterPlaceholder"), dl = $("#posterDownloadBtn");
-      if (c) c.classList.remove("hidden");
-      if (ph) ph.classList.add("hidden");
-      if (dl) dl.classList.remove("hidden");
-      if (status) status.textContent = "✅ 合成完成!长按图片或点「保存海报」收藏";
-      if (btn) { btn.disabled = false; btn.textContent = "✨ 一键生成海报"; }
-    }).catch(err => {
-      if (status) status.textContent = "合成失败:" + ((err && err.message) || err);
-      if (btn) { btn.disabled = false; btn.textContent = "✨ 一键生成海报"; }
-    });
-  }, 1100);
+  // Q 版风格：先让豆包把照片转成 Q 版人物/精灵，成功则用它替换原照片
+  if (PST.style === "chibi") {
+    if (status) status.textContent = "🎨 豆包正在把照片变成 Q 版…(约 10~20 秒)";
+    posterChibiPhoto(PST.photo).then(qimg => {
+      if (qimg) {
+        if (!PST.photoRaw) PST.photoRaw = PST.photo;   // 记住原图，切回写实还能用
+        PST.photo = qimg;
+      } else if (status) {
+        status.textContent = "⚠️ Q 版生成失败，用本机滤镜合成";
+      }
+      runCompose();
+    }).catch(() => { if (status) status.textContent = "⚠️ Q 版生成失败，用本机滤镜合成"; runCompose(); });
+  } else {
+    if (PST.photoRaw && PST.style === "realistic") PST.photo = PST.photoRaw;  // 切回写实用原图
+    runCompose();
+  }
+  function runCompose() {
+    if (status) status.textContent = "🎨 AI 正在合成…(照片不出本机)";
+    setTimeout(() => {
+      posterCompose(id).then(() => {
+        const c = $("#posterCanvas"), ph = $("#posterPlaceholder"), dl = $("#posterDownloadBtn");
+        if (c) c.classList.remove("hidden");
+        if (ph) ph.classList.add("hidden");
+        if (dl) dl.classList.remove("hidden");
+        if (status) status.textContent = "✅ 合成完成!长按图片或点「保存海报」收藏";
+        if (btn) { btn.disabled = false; btn.textContent = "✨ 一键生成海报"; }
+      }).catch(err => {
+        if (status) status.textContent = "合成失败:" + ((err && err.message) || err);
+        if (btn) { btn.disabled = false; btn.textContent = "✨ 一键生成海报"; }
+      });
+    }, 1100);
+  }
 }
 function posterDownload() {
   const c = $("#posterCanvas");
@@ -5705,18 +5753,26 @@ async function aiImagineProxy(dataURL, desc) {
   return { img: img, src: "ai", engine: engine, temp: !/^data:image\//.test(img) };
 }
 /* 总入口:服务端出图(人人可用)→ 小桥 → 本地钥匙直连 → 返回 null 交给本机兜底 */
+let aiImagineCache = {};
 async function aiImagine(dataURL, desc) {
   if (aiImagineOff) return null;
+  /* 同一张照片 + 同一描述，直接用上次的成品，别重复烧钱调豆包 */
+  const ck = (dataURL && dataURL.slice(-64)) + "|" + String(desc || "");
+  if (aiImagineCache[ck]) return aiImagineCache[ck];
+  let out = null;
   const viaProxy = await aiImagineProxy(dataURL, desc);
-  if (viaProxy) return viaProxy;
-  const viaBridge = await aiImagineBridge(dataURL, desc);
-  if (viaBridge) return viaBridge;
-  const key = (typeof identDirectKey === "function") ? identDirectKey() : "";
-  if (!key) return null;
-  try {
-    if (identKeyKind(key) === "zhipu") return await aiImagineZhipu(dataURL, desc, key);
-    return await aiImagineArk(dataURL, desc, key);
-  } catch (e) { return null; }
+  if (viaProxy) out = viaProxy;
+  if (!out) { const viaBridge = await aiImagineBridge(dataURL, desc); if (viaBridge) out = viaBridge; }
+  if (!out) {
+    const key = (typeof identDirectKey === "function") ? identDirectKey() : "";
+    if (key) {
+      try {
+        out = (identKeyKind(key) === "zhipu") ? await aiImagineZhipu(dataURL, desc, key) : await aiImagineArk(dataURL, desc, key);
+      } catch (e) { out = null; }
+    }
+  }
+  if (out) aiImagineCache[ck] = out;
+  return out;
 }
 /* ===== 本机 Q 版精灵合成 =====
    没有云端钥匙 / 断网时，过去只能给照片套一层宣纸滤镜——出来还是照片，不是精灵。

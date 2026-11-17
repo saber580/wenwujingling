@@ -67,7 +67,7 @@ ACCESS_KEY = os.environ.get("RELIC_ACCESS_KEY", "wbpk_EmA5VK2VcIUoBzfFI6Zacw_F1K
 ZHIPU_IMG_URL = os.environ.get("ZHIPU_IMG_URL", "https://open.bigmodel.cn/api/paas/v4/images/generations")
 ZHIPU_IMG_MODEL = os.environ.get("ZHIPU_IMG_MODEL", "cogview-3-flash")
 ARK_IMG_URL = os.environ.get("ARK_IMG_URL", "https://ark.cn-beijing.volces.com/api/v3/images/generations")
-ARK_IMG_MODEL = os.environ.get("ARK_IMG_MODEL", "doubao-seedream-5-5-261028")
+ARK_IMG_MODEL = os.environ.get("ARK_IMG_MODEL", "doubao-seedream-5-0-flash-260915")
 
 PORTS = [int(x) for x in (os.environ.get("PORTS") or os.environ.get("PORT") or "8080").split(",") if x.strip()]
 PORT = PORTS[0]
