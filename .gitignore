@@ -101,3 +101,13 @@ tools/_export_pdf*.ps1
 
 # 内部交接文档，不进公开仓库（含运维细节）
 HANDOFF.md
+
+# ---------- 9. 运维与内部交接（公开仓库禁止出现服务器信息） ----------
+.workbuddy/
+HANDOFF.md
+部署到服务器.md
+docs/省赛评分复测报告.md
+tools/_*.py
+tools/check_*.py
+tools/check_*.js
+继承卡*.md
