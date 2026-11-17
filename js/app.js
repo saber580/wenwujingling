@@ -8631,6 +8631,11 @@ function viewEval() {
       <b>通过率之外还得看出差别：同一个问题，裸模型和文物精灵并排答一遍</b>
       <i>去对照实测 →</i>
     </a>
+    <a class="ar-banner" href="docs/AI%E6%B7%B1%E5%BA%A6%E8%87%AA%E6%A3%80.html?auto=1" target="_blank" rel="noopener">
+      <span>🔬</span>
+      <b>想看 AI 技术深度的硬证据？MCP 握手、工具层、RAG 溯源与安全门控，一键自检跑给评委看</b>
+      <i>去 AI 深度自检 →</i>
+    </a>
     <div class="eval-bar">
       <button type="button" class="btn gold" onclick="evalRunNow()">▶ 重跑评测</button>
       <button type="button" class="btn ghost" onclick="evalExport()">⬇ 导出 JSON 报告</button>
