@@ -2593,7 +2593,7 @@ async function posterChibiPhoto(photoSrc) {
   try { photo = await dataUrlShrink(photoSrc, 1024, .88); }
   catch (e) { photo = photoSrc || ""; }
   if (!photo) return null;
-  const prompt = "把这张照片里的人与文物，画成可爱的 Q 版卡通形象：Q版头身比例（大头小身）、圆润夸张造型、大大的闪亮眼睛、拟人微笑、短短手脚、厚涂国风插画质感、柔和色彩、清晰描边、纯米白背景、人物与文物都完整入画。画面里只有卡通角色，不要写实照片、不要黑白、不要文字、不要水印";
+  const prompt = "把这张照片里的人与文物，画成可爱的 Q 版卡通形象：Q版头身比例（大头小身）、圆润夸张造型、大大的黑色圆眼睛（带白色高光点）、拟人微笑、短短手脚、厚涂国风插画质感、柔和立体光影、纯米白暖色背景、人物与文物都完整入画。画面里只有卡通角色，不要写实照片、不要黑白、不要文字、不要水印";
   let res;
   try {
     res = await fetch("/api/imagine", {
@@ -5366,11 +5366,73 @@ function qHashTable() {
 /* 拍照打卡第一步：先让 AI 认清「这是哪一件」。
    认出是图鉴里那 104 只之一 → 弹图鉴卡（未捕捉态），不给它编新号；
    认不出 / 站外文物 → 进入第二步，画一只新的。 */
+/* 同一件文物反复拍：拿照片的感知哈希去比对「我点亮的文物」里已经建过档的记录。
+   同一张照片（哪怕截图/缩放/轻度压缩）距离 ≤ 8，直接说「已经唤醒过了」，
+   别再烧豆包重新画一只、再发一个新号。跨会话也生效（哈希存在存档里）。 */
+async function qPhotoDup(photoSrc) {
+  try {
+    if (!photoSrc || !CUSTOMS.length) return null;
+    const im = await loadImgUrl(photoSrc);
+    const h0 = qHashOfImg(im);
+    let best = null, bd = 99;
+    CUSTOMS.forEach(function (c) {
+      if (!c || !c.phash) return;
+      const d = qHashDist(h0, c.phash);
+      if (d < bd) { bd = d; best = c; }
+    });
+    /* ≤ 8 基本就是同一张；≤ 12 是同一件换个角度/轻微裁剪，也提示但给「继续」的机会 */
+    if (best && bd <= 12) return { c: best, d: bd, near: bd > 8 };
+  } catch (e) {}
+  return null;
+}
+function qPhotoDupNotice(c, near) {
+  if (!c) return;
+  overlay(`
+    <button class="close" onclick="closeOverlay()">✕</button>
+    <h3>🔁 这件已经唤醒过了</h3>
+    <div class="wake-preview">
+      <img src="${c.img}" alt="${aiCfgEsc(c.name)}">
+      <div class="wake-side">
+        <div class="wake-no">🔖 图鉴编码：<b>${c.no}</b></div>
+        <p class="muted" style="margin:10px 0 0;line-height:1.95">
+          你之前已经拍过${near ? "很像的" : "同一"}这件文物，唤醒成了《${aiCfgEsc(c.name)}》。<br>
+          不用再生成一只、再领一个新号了——去图鉴里就能找到它。
+        </p>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn gold" onclick="closeOverlay();codexPop('${c.id}')">📖 在图鉴里看它</button>
+      ${near
+        ? `<button class="btn ghost" onclick="qPhotoDupResume()">不是同一件，继续建新档</button>`
+        : `<button class="btn ghost" onclick="closeOverlay()">知道了</button>`}
+    </div>
+  `, true);
+}
+function qPhotoDupResume() {
+  const fn = window.__qPhotoDupResume;
+  window.__qPhotoDupResume = null;
+  closeOverlay();
+  if (typeof fn === "function") setTimeout(fn, 80);
+}
 async function photoFlow(dataURL, desc) {
   window.__qGuess = "";
   window.__qSuspect = null;
   window.__qDupResume = null;
+  window.__qPhotoDupResume = null;
   if (await qGuardPhoto(dataURL, desc)) return;
+  /* 照片指纹去重：同一件/同一张之前已经唤醒过，就别再烧钱重新画、重复入图鉴 */
+  try {
+    const d = await qPhotoDup(dataURL);
+    if (d) {
+      window.__qPhotoDupResume = function () { photoFlowIdentify(dataURL, desc); };
+      qPhotoDupNotice(d.c, d.near);
+      return;
+    }
+  } catch (e) {}
+  return photoFlowIdentify(dataURL, desc);
+}
+/* 去重检查通过后，才进入「先 AI 认清是哪一件」的正式流程 */
+async function photoFlowIdentify(dataURL, desc) {
   photoState = { photo: dataURL, desc: desc || "" };
   overlay(`
     <button class="close" onclick="closeOverlay()">✕</button>
@@ -5461,6 +5523,11 @@ function qIdentifyFallbackGo() {
 async function photoFlowGo(dataURL, desc, ai) {
   const d2 = aiDescText(ai, desc);
   photoState = { photo: dataURL, desc: d2, ai: ai || null };
+  /* 提前算好照片指纹，建档时存进存档，之后同一张照片再来就能拦住（跨会话） */
+  try {
+    const im = await loadImgUrl(dataURL);
+    photoState.phash = qHashOfImg(im);
+  } catch (e) { photoState.phash = null; }
   overlay(`
     <button class="close" onclick="closeOverlay()">✕</button>
     <h3>🎨 正在幻化精灵…</h3>
@@ -5551,7 +5618,7 @@ function inkWashPixels(idt, w, h) {
    没钥匙 / 断网 / 失败时返回 null,由本机国风艺术化兜底 */
 const IDENT_ARK_IMG = "https://ark.cn-beijing.volces.com/api/v3/images/generations";
 const IDENT_IMG_MODEL = "doubao-seedream-5-0-flash-260915";
-const IDENT_IMG_PROMPT = "第一张是用户拍摄的文物照片,第二张是本游戏已有精灵的画风参考。请把第一张照片里的文物,画成第二张那种 Q 版卡通精灵立绘:圆润夸张的卡通比例,大眼睛与拟人小表情,厚涂国风插画质感,米白纸底,柔和光影,居中全身,只画文物本身,无人物、无文字、无水印";
+const IDENT_IMG_PROMPT = "第一张是用户拍摄的文物照片,第二张是本游戏统一画风的参考立绘(金器Q版精灵)。请把第一张照片里的文物,画成与第二张同一套画风的 Q 版卡通精灵立绘:器物本身保持可辨认的器型(瓶/壶/鼎/尊等),在器物上直接长出短短的卡通手臂和小脚,圆润夸张的卡通比例,超大的黑色圆眼睛(带白色高光点)和拟人的微笑小表情,脸颊有淡淡腮红,厚涂国风插画质感,柔和立体光影,米白暖色纸底,居中全身,只画文物本身,无人物、无文字、无水印";
 let aiImagineOff = false;   /* 本轮已确认 AI 幻化不可用(无钥匙 / 未开通)→ 不再重复探测 */
 let aiStyleRefP = null;     /* 画风参考立绘(现有精灵)懒加载缓存 */
 function dataUrlShrink(src, maxPx, q) {   /* 等比缩到 maxPx 内并转 JPEG dataURL,控制请求与存储体积 */
@@ -5622,7 +5689,7 @@ async function aiImagineZhipu(dataURL, desc, key) {
   }
   const base = subject || String(desc || "").slice(0, 140);
   if (!base) return null;
-  const prompt = base + "。画成 Q 版游戏精灵立绘:圆润夸张的大头可爱比例,大眼睛与拟人小表情,厚涂国风插画质感,清晰描边,米白纯色背景,居中全身,画面里只有它一个角色,没有人物、没有文字、没有水印";
+  const prompt = base + "。画成 Q 版游戏精灵立绘:器物本身直接长出短短的卡通手臂和小脚,圆润夸张的可爱比例,超大的黑色圆眼睛(带白色高光点)与拟人微笑小表情,厚涂国风插画质感,柔和立体光影,米白暖色背景,居中全身,画面里只有它一个角色,没有人物、没有文字、没有水印";
   let bad = false;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -5650,17 +5717,15 @@ async function aiImagineZhipu(dataURL, desc, key) {
   return null;
 }
 /* ③ 网页直连方舟 Seedream 图生图(照片 + 现有精灵立绘当画风参考,配了 ark- 钥匙才走这里) */
-/* 画风参考立绘按材质挑:同材质的现有精灵当第二张图,画出来才跟图鉴里那一排是一个模子 */
-const STYLE_REF_BY_MAT = {
-  bronze: "tielion", ceramic: "qinghuaci", jade: "yuzhui", gold: "jinqi",
-  lacquer: "tielion", textile: "qinghuaci", wood: "qinghuaci",
-  painting: "qinghuaci", stone: "tielion", glass: "qinghuaci"
-};
+/* 画风参考立绘固定用同一张「金器」精灵：以前按材质各挑一张，结果同一件文物
+   会因 AI 识别出的材质不同被喂给不同参考图，画出好几种互不搭调的风格。
+   现在统一成一张金器立绘，所有站外文物都照这一套画，图鉴里那一排才是一个模子。 */
+const STYLE_REF_ID = "jinqi";   /* 统一画风参考立绘：金器(器物长手脚 + 大圆黑眼 + 米白暖底 + 柔和3D) */
 let aiStyleRefId = "";
 async function aiImagineArk(dataURL, desc, key) {
   let photo = "";
   try { photo = await dataUrlShrink(dataURL, 1024, .85); } catch (e) { photo = dataURL || ""; }
-  const refId = STYLE_REF_BY_MAT[craftDefaults(desc).primary] || "tielion";
+  const refId = STYLE_REF_ID;
   if (!aiStyleRefP || aiStyleRefId !== refId) {
     aiStyleRefId = refId;
     aiStyleRefP = dataUrlShrink("精灵/" + refId + ".webp", 640, .85).catch(function () { return ""; });
@@ -5693,7 +5758,7 @@ async function aiImagineArk(dataURL, desc, key) {
   const plans = [];
   if (photo && ref) plans.push([prompt, [photo, ref]]);
   if (photo) plans.push([prompt, photo]);
-  if (desc) plans.push(["按以下文物资料画一只 Q 版卡通精灵立绘:圆润夸张的卡通比例,大眼睛与拟人小表情,厚涂国风插画质感,米白纸底,居中全身,无文字无水印。文物资料:" + desc, null]);
+  if (desc) plans.push(["按以下文物资料画一只 Q 版卡通精灵立绘:器物本身直接长出短短的卡通手臂和小脚,圆润夸张的卡通比例,超大的黑色圆眼睛(带白色高光点)与拟人微笑小表情,厚涂国风插画质感,柔和立体光影,米白暖色纸底,居中全身,无文字无水印。文物资料:" + desc, null]);
   for (let i = 0; i < plans.length; i++) {
     try { const img = await tryOne(plans[i][0], plans[i][1]); if (img) return { img: img, src: "ai", engine: "ark" }; } catch (e) {}
     if (bad) break;
@@ -5711,8 +5776,7 @@ async function aiImagineProxy(dataURL, desc) {
   try { photo = await dataUrlShrink(dataURL, 1024, .85); } catch (e) { photo = dataURL || ""; }
   if (!photo) return null;
   try {
-    const refId = STYLE_REF_BY_MAT[craftDefaults(desc).primary] || "tielion";
-    ref = await dataUrlShrink("精灵/" + refId + ".webp", 640, .85);
+    ref = await dataUrlShrink("精灵/" + STYLE_REF_ID + ".webp", 640, .85);
   } catch (e) { ref = ""; }
   /* 智谱 CogView 是文生图：先把照片「看」成一段描述塞进 prompt，画出来才像用户拍的那件。
      这一步放在服务端太绕（要再调一次视觉模型），这里直接用 AI 识别那步已经拿到的名字/材质当素材。 */
@@ -5724,9 +5788,9 @@ async function aiImagineProxy(dataURL, desc) {
     }
   } catch (e) {}
   const prompt = (subject
-    ? "画一只可爱的 Q 版卡通精灵角色，它的原型是「" + subject + "」"
+    ? "画一只可爱的 Q 版卡通精灵角色，它的原型是「" + subject + "」，保持文物本身的器型特征"
     : "画一只可爱的 Q 版卡通中国文物精灵角色")
-    + "。风格要求：可爱卡通角色设计，Q版头身比例（大头小身），圆润夸张的造型，大大的闪亮眼睛，拟人的微笑小表情，短短的手脚，厚涂国风插画质感，柔和色彩，清晰描边，纯米白色背景，角色居中，全身完整入画。画面里只有这一个卡通角色，不要画真实文物照片，不要写实风格，不要黑白老照片，不要人物，不要任何文字和水印";
+    + "。风格要求：器物本身直接长出短短的卡通手臂和小脚，圆润夸张的造型，超大的黑色圆眼睛（带白色高光点），拟人的微笑小表情，脸颊有淡淡腮红，厚涂国风插画质感，柔和立体光影，纯米白暖色背景，角色居中，全身完整入画。画面里只有这一个卡通角色，不要画真实文物照片，不要写实风格，不要黑白老照片，不要人物，不要任何文字和水印";
   let res;
   try {
     res = await fetch("/api/imagine", {
@@ -6229,6 +6293,7 @@ function wakeConfirm() {
   const id = "my" + now.getTime().toString(36);
   const c = {
     id, no, name, primary: p, secondary: s2, img: st.art, src: st.src || "local", born: now.getTime(),
+    phash: st.phash || null,
     era: "拍照唤醒 · " + dateStr,
     intro: words || ("我在博物馆拍下它,「文物精灵」把它唤醒成一只新精灵——编号 " + no + "," + name + "。"),
     history: words || ("它由一张打卡照片唤醒," + dateStr + " 来到「文物精灵」,住进图鉴页的「我点亮的文物」栏目(不占我的精灵收集数)。"),
