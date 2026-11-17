@@ -27,6 +27,7 @@
     POST /mcp/messages        旧版 SSE 传输的客户端消息入口
     DELETE /mcp               关闭会话
 """
+import base64
 import json
 import mimetypes
 import os
@@ -58,11 +59,15 @@ UPSTREAM_MODELS = BASE + "/models"
 # 因此这里保留一个兜底默认值，保证克隆仓库后「开箱即用」的主流程不被阻断。
 ACCESS_KEY = os.environ.get("RELIC_ACCESS_KEY", "wbpk_EmA5VK2VcIUoBzfFI6Zacw_F1K3gdiinbg22xd0OTLtOuN32jy1A4wX")
 
-# ---- 豆包（火山方舟）图像模型：Q 版精灵由它出图 ----
-# 钥匙只从环境变量读（systemd 里 Environment=ARK_API_KEY=...），不进仓库、不下发浏览器。
-# 没配钥匙时 /api/imagine 返回 503，前端自动退回本机合成，页面不会坏。
+# ---- Q 版精灵出图：智谱 CogView（默认，免费额度）或豆包 Seedream ----
+# 钥匙只从环境变量读，不进仓库、不下发浏览器。哪个配了 key 就走哪个：
+#   ZHIPU_KEY  → 智谱 open.bigmodel.cn  cogview-3-flash（默认首选，免费额度）
+#   ARK_API_KEY → 火山方舟 doubao-seedream（图生图，支持画风参考图）
+# 都没配时 /api/imagine 返回 503，前端自动退回本机合成，页面不会坏。
+ZHIPU_IMG_URL = os.environ.get("ZHIPU_IMG_URL", "https://open.bigmodel.cn/api/paas/v4/images/generations")
+ZHIPU_IMG_MODEL = os.environ.get("ZHIPU_IMG_MODEL", "cogview-3-flash")
 ARK_IMG_URL = os.environ.get("ARK_IMG_URL", "https://ark.cn-beijing.volces.com/api/v3/images/generations")
-ARK_IMG_MODEL = os.environ.get("ARK_IMG_MODEL", "doubao-seedream-5-0-flash-260915")
+ARK_IMG_MODEL = os.environ.get("ARK_IMG_MODEL", "doubao-seedream-5-5-261028")
 
 PORTS = [int(x) for x in (os.environ.get("PORTS") or os.environ.get("PORT") or "8080").split(",") if x.strip()]
 PORT = PORTS[0]
@@ -292,12 +297,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._rag(req)
         return self._json(404, {"ok": False, "error": "没有这个接口"})
 
-    # ---------- Q 版精灵出图：豆包 Seedream 图生图，钥匙只在服务端 ----------
+    # ---------- Q 版精灵出图：智谱（默认）或豆包，钥匙只在服务端 ----------
     def _imagine(self):
-        key = (os.environ.get("ARK_API_KEY") or "").strip()
-        if not key:
-            # 没配钥匙不算错：前端收到 503 会退回本机 canvas 合成，照样出精灵
-            return self._json(503, {"ok": False, "error": "豆包未配置（服务器缺 ARK_API_KEY）"})
         try:
             n = int(self.headers.get("Content-Length") or 0)
             req = json.loads(self.rfile.read(n).decode("utf-8")) if n else {}
@@ -306,12 +307,96 @@ class Handler(SimpleHTTPRequestHandler):
         prompt = str(req.get("prompt") or "").strip()
         if not prompt:
             return self._json(400, {"ok": False, "error": "prompt 为空"})
-        # 两张图：第一张是用户拍的文物，第二张是现有精灵立绘（画风参考）
+
+        # 选后端：豆包（图生图 + 画风参考，能出同风格 Q 版）优先；智谱只作文生图兜底。
+        # 都没 key 就 503 让前端退回本机合成。
+        akey = (os.environ.get("ARK_API_KEY") or "").strip()
+        zkey = (os.environ.get("ZHIPU_KEY") or "").strip()
+        if akey:
+            return self._imagine_ark(req, prompt, akey)
+        if zkey:
+            return self._imagine_zhipu(req, prompt, zkey)
+        return self._json(503, {"ok": False, "error": "出图未配置（服务器缺 ZHIPU_KEY / ARK_API_KEY）"})
+
+    def _imagine_zhipu(self, req, prompt, key):
+        # 智谱 CogView：只吃文本 prompt，图生图用「图像编辑」接口，这里走文生图最稳
+        body = {
+            "model": ZHIPU_IMG_MODEL,
+            "prompt": prompt[:2000],
+            "size": str(req.get("size") or "1024x1024"),
+        }
+        rq = urllib.request.Request(ZHIPU_IMG_URL, data=json.dumps(body).encode(), method="POST")
+        rq.add_header("Content-Type", "application/json")
+        rq.add_header("Authorization", "Bearer " + key)
+        try:
+            resp = urllib.request.urlopen(rq, timeout=150)
+            j = json.loads(resp.read().decode("utf-8", "ignore"))
+        except urllib.error.HTTPError as e:
+            detail = ""
+            try:
+                detail = e.read().decode("utf-8", "ignore")[:300]
+            except Exception:
+                pass
+            sys.stderr.write("  [imagine:zhipu] HTTP %s %s\n" % (e.code, detail[:120]))
+            return self._json(e.code, {"ok": False, "error": "智谱拒绝了这次请求（HTTP %s）" % e.code, "detail": detail})
+        except Exception as e:
+            sys.stderr.write("  [imagine:zhipu] %s\n" % str(e)[:160])
+            return self._json(502, {"ok": False, "error": "连不上智谱：%s" % str(e)[:120]})
+        it = {}
+        try:
+            it = (j.get("data") or [{}])[0] or {}
+        except Exception:
+            it = {}
+        url = it.get("url") or ""
+        if not url:
+            return self._json(502, {"ok": False, "error": "智谱没有返回图片", "detail": json.dumps(j, ensure_ascii=False)[:300]})
+        # 智谱给的是带水印的临时 URL（约 7 天失效）：服务器把它下载成 base64 永久存档，
+        # 并裁掉底部「AI生成」水印。服务器下载没有浏览器同源限制，也不受 tainted canvas 影响。
+        b64 = self._fetch_img_base64(url)
+        if b64:
+            return self._json(200, {"ok": True, "image": b64, "engine": "zhipu", "temp": False})
+        # 下载失败（网络抖动等）就退回临时 URL，前端仍能显示，但会提示「临时链接」
+        return self._json(200, {"ok": True, "image": url, "engine": "zhipu", "temp": True})
+
+    @staticmethod
+    def _fetch_img_base64(url, cut_bottom=0.08):
+        """把远程图片下载回来，裁掉底部水印，转成 data:image/jpeg;base64。
+        失败返回 None（调用方自行决定是否退回临时 URL）。"""
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            data = urllib.request.urlopen(req, timeout=60).read()
+            if not data:
+                return None
+        except Exception as e:
+            sys.stderr.write("  [imagine] 下载图片失败: %s\n" % str(e)[:120])
+            return None
+        try:
+            from PIL import Image
+            import io
+            im = Image.open(io.BytesIO(data)).convert("RGB")
+            w, h = im.size
+            cut = max(1, int(h * cut_bottom)) if cut_bottom else 0
+            if cut:
+                im = im.crop((0, 0, w, h - cut))
+            # 压到 1024 内，控制体积（进 localStorage 存档，别太大）
+            r = min(1.0, 1024.0 / max(w, h - cut))
+            if r < 1.0:
+                im = im.resize((max(1, int(w * r)), max(1, int((h - cut) * r))), Image.LANCZOS)
+            buf = io.BytesIO()
+            im.save(buf, "JPEG", quality=92)
+            return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+        except Exception as e:
+            sys.stderr.write("  [imagine] 转 base64 失败: %s\n" % str(e)[:120])
+            return None
+
+    def _imagine_ark(self, req, prompt, key):
+        # 豆包 Seedream 图生图：第一张是用户拍的文物（image），第二张是现有精灵立绘（画风参考，ref）。
+        # 用 response_format=url，再下载转 base64 永久存档（跟智谱一致，避免临时链接失效）。
         images = [v for v in (req.get("image"), req.get("ref")) if v]
         body = {
             "model": ARK_IMG_MODEL,
             "prompt": prompt[:2000],
-            "response_format": "b64_json",
+            "response_format": "url",
             "watermark": False,
             "size": str(req.get("size") or "1024x1024"),
         }
@@ -329,24 +414,24 @@ class Handler(SimpleHTTPRequestHandler):
                 detail = e.read().decode("utf-8", "ignore")[:300]
             except Exception:
                 pass
-            sys.stderr.write("  [imagine] HTTP %s %s\n" % (e.code, detail[:120]))
+            sys.stderr.write("  [imagine:ark] HTTP %s %s\n" % (e.code, detail[:120]))
             return self._json(e.code, {"ok": False, "error": "豆包拒绝了这次请求（HTTP %s）" % e.code, "detail": detail})
         except Exception as e:
-            sys.stderr.write("  [imagine] %s\n" % str(e)[:160])
+            sys.stderr.write("  [imagine:ark] %s\n" % str(e)[:160])
             return self._json(502, {"ok": False, "error": "连不上豆包：%s" % str(e)[:120]})
         it = {}
         try:
             it = (j.get("data") or [{}])[0] or {}
         except Exception:
             it = {}
-        img = ""
-        if it.get("b64_json"):
-            img = "data:image/png;base64," + it["b64_json"]
-        elif it.get("url"):
-            img = it["url"]
-        if not img:
+        url = it.get("url") or ""
+        if not url:
             return self._json(502, {"ok": False, "error": "豆包没有返回图片", "detail": json.dumps(j, ensure_ascii=False)[:300]})
-        return self._json(200, {"ok": True, "image": img, "engine": "ark-seedream"})
+        # 豆包 URL 一般也带短时效：下载成 base64 永久存档（豆包无水印，不裁底）
+        b64 = self._fetch_img_base64(url, cut_bottom=0)
+        if b64:
+            return self._json(200, {"ok": True, "image": b64, "engine": "ark-seedream", "temp": False})
+        return self._json(200, {"ok": True, "image": url, "engine": "ark-seedream", "temp": True})
 
     # ---------- 双路召回：给前端与 Agent 用的直连接口 ----------
     def _rag(self, req):

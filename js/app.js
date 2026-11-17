@@ -5061,10 +5061,10 @@ async function aiIdentifyVision(dataURL) {
     '{"look":"","name":"","match":"","era":"如 唐/北宋/西汉","material":"如 铁/青铜/青瓷/汉白玉","primary":"' + AI_IDENT_PRIMARY.join("/") + ' 里选一个","confidence":0,"real":true}',
     "",
     "【硬规则】",
-    "1. match 非空 ⇒ name 必须与 match 里的原名一字不差。",
-    "2. match 为空 ⇒ name 不许从清单里挑一个凑数，要用你自己看到的说法。",
-    "3. 材质以眼睛为准，不许与 name 自相矛盾（说白玉就不能同时说是铁铸）。",
-    "4. real 为 false 表示图里不是文物（风景、人、宠物、食物、截图界面、表情包）。",
+    "1. 先判断图里有没有文物：人物合影、风景、动物宠物、食物、街道、建筑、表情包、纯色块、截图界面等都不是文物。图里没有文物时，name 写「不是文物」，real 必须写 false。",
+    "2. 图里是文物时 real 写 true，match 仅在你有把握认出它就是清单里那件著名文物时才填，且 name 必须与 match 一字不差。",
+    "3. match 为空 ⇒ name 用你自己看到的说法（材质+器型+纹饰），不许从清单里挑一个凑数。",
+    "4. 材质以眼睛为准，不许与 name 自相矛盾（说白玉就不能同时说是铁铸）。",
     "5. confidence 是你真觉得「这就是清单里那件」的把握，0~100；拿不准就写低。"
   ].join("\n");
   const body = {
@@ -5113,17 +5113,29 @@ async function aiIdentifyVision(dataURL) {
   if (!m) return null;
   let j = null;
   try { j = JSON.parse(m[0]); } catch (e) { return null; }
-  if (!j || !j.name) return null;
+  if (!j) return null;
   const cut = (s, n) => String(s || "").trim().replace(/^["'《「【]|["'》」】]$/g, "").slice(0, n);
+  const conf = Math.max(0, Math.min(100, Math.round(Number(j.confidence) || 0)));
+  /* real 判定：模型明确说 false 才算「不是文物」；但缺 real 字段时（模型没按格式回），
+     宁可按「没把握」处理，绝不硬判成文物去生成。 */
+  const real = j.real === true ? true : (j.real === false ? false : null);
+  /* 名字是「未识别/不是文物」这类占位 → 也算「不是文物」。
+     注意：不用 confidence 判「是不是文物」——站外文物模型天然给低分（它只对图鉴里那一只敢给高分），
+     但 look/name/material 是准的。confidence 只用于「是不是图鉴里那一只」的命中判定。 */
+  const nameIsPlaceholder = /^(未识别|不是文物|非文物|无法识别|无法辨认|无文物|none|n\/a)/i.test(String(j.name || ""));
+  /* look 兜底：模型偶尔漏写 real，但 look 里若明说是人/风景/食物等，也判非文物 */
+  const look = cut(j.look, 120);
+  const lookNonRelic = /(合影|人物|几个人|男人|女人|女士|男士|孩子|小孩|婴儿|自拍|风景|山|海|天空|城市|街道|建筑|宠物|猫|狗|鸟(?!纹)|食物|菜|水果|蛋糕|表情|截图|界面|二维码|文档|表格)/.test(look);
   return {
     name: cut(j.name, 24),
     match: cut(j.match, 24),
-    look: cut(j.look, 120),
+    look: look,
     era: cut(j.era, 16),
     material: cut(j.material, 16),
     primary: AI_IDENT_PRIMARY.indexOf(String(j.primary || "")) >= 0 ? j.primary : "",
-    confidence: Math.max(0, Math.min(100, Math.round(Number(j.confidence) || 0))),
-    real: j.real !== false
+    confidence: conf,
+    real: real,
+    weak: real === false || nameIsPlaceholder || lookNonRelic
   };
 }
 /* 把认出来的结果拼成 photoFlow 原本吃的那种 desc 文本：
@@ -5328,12 +5340,33 @@ async function photoFlow(dataURL, desc) {
   try { ai = await withTimeout(aiIdentifyVision(dataURL), 16000); } catch (e) { ai = null; }
   clearInterval(timer);
   const bar = $("#wakeBar"); if (bar) bar.style.width = "100%";
+  /* ① 不是文物 / 没把握：明确提示，不生成。
+     风景/人/宠物/食物/截图/表情包、以及 AI 拿不准的，都走这里。 */
+  if (ai && ai.weak) {
+    const isNotRelic = ai.real === false;
+    overlay(`
+      <button class="close" onclick="closeOverlay()">✕</button>
+      <h3>${isNotRelic ? "🙈 这张好像不是文物" : "🔍 没把握认出它"}</h3>
+      <img src="${dataURL}" alt="照片" style="width:150px;border-radius:14px;display:block;margin:10px auto;border:1px solid #e6d8b8">
+      <p class="muted" style="text-align:center;line-height:1.9">
+        ${isNotRelic
+          ? `AI 看了一圈，觉得图里不是中国文物${ai.name && !/^未|^无|^非/.test(ai.name) ? "（更像是" + aiCfgEsc(ai.name) + "）" : ""}。${ai.look ? "<br>" + aiCfgEsc(ai.look) : ""}<br>「打卡唤醒」只认文物：拍一件青铜器、瓷器、玉器、书画……才能幻化成 Q 版精灵。`
+          : `AI 没能确定它是什么文物${ai.name && !/^未|^无|^非/.test(ai.name) ? "（它猜是《" + aiCfgEsc(ai.name) + "》，但把握只有 " + ai.confidence + "%）" : ""}。<br>换一张更清楚、更完整的文物照片再试，成功率会高很多。`}
+      </p>
+      <div class="actions">
+        <button class="btn ghost" onclick="closeOverlay();openPhoto()">换一张照片</button>
+        <button class="btn ghost" onclick="closeOverlay()">算了</button>
+      </div>
+    `, true);
+    return;
+  }
   /* 命中图鉴现有的 104 只：
      ① AI 自己填了 match（就是清单里这件）——最硬；
      ② 只说了名字，但够自信；
      ③ 名字对不上，可按「物种+材质」召回只剩独一只——也值得直接弹出来问一句。
-     都是软拦，认错了能一键退回来继续画。 */
-  if (ai && ai.real !== false) {
+     都是软拦，认错了能一键退回来继续画。
+     到这一步说明 ai 存在且 weak 为 false（已在上游拦掉非文物/低置信度），real 必为 true。 */
+  if (ai) {
     let hit = identWakeFind(ai.match) || (ai.confidence >= 45 ? identWakeFind(ai.name) : null);
     if (!hit) {
       try {
@@ -5350,7 +5383,31 @@ async function photoFlow(dataURL, desc) {
     }
     window.__qGuess = ai.name;   /* 没命中也是它的名字，画的时候按它挑器型 */
   }
+  /* ② AI 没认出来（离线 / 额度 / 超时）：不硬画，先明确说「没认出来」，让人自己决定。
+     用户若坚持，就继续走本机合成兜底——但这一步必须让人知道 AI 没参与。 */
+  if (!ai) {
+    overlay(`
+      <button class="close" onclick="closeOverlay()">✕</button>
+      <h3>🔍 没认出来这件文物</h3>
+      <img src="${dataURL}" alt="照片" style="width:150px;border-radius:14px;display:block;margin:10px auto;border:1px solid #e6d8b8">
+      <p class="muted" style="text-align:center;line-height:1.9">
+        AI 这次没能看清它（可能网络抖了一下，或额度用完了）。<br>你可以再试一次，或直接继续——本机会离线合成一只 Q 版精灵（画风一致，但不带 AI 识别的名字）。
+      </p>
+      <div class="actions">
+        <button class="btn ghost" onclick="closeOverlay();openPhoto()">换一张重试</button>
+        <button class="btn ghost" onclick="qIdentifyFallbackGo()">继续（本机合成）</button>
+      </div>
+    `, true);
+    window.__qFallbackResume = function () { photoFlowGo(dataURL, desc, null); };
+    return;
+  }
   photoFlowGo(dataURL, desc, ai);
+}
+function qIdentifyFallbackGo() {
+  const fn = window.__qFallbackResume;
+  window.__qFallbackResume = null;
+  closeOverlay();
+  if (typeof fn === "function") setTimeout(fn, 80);
 }
 /* 第二步：画。AI 的认名用来定器型 / 材质 / 默认名字，比只用正则猜准得多。 */
 async function photoFlowGo(dataURL, desc, ai) {
@@ -5596,8 +5653,9 @@ async function aiImagineArk(dataURL, desc, key) {
   if (bad) aiImagineOff = true;
   return null;
 }
-/* ① 走服务端 /api/imagine：豆包钥匙只在服务器，访客（含评委）不用配任何东西。
-   这条是人人都能出真 Q 版的通道；服务器没配钥匙时返回 503，自动退回本机合成。 */
+/* ① 走服务端 /api/imagine：钥匙只在服务器，访客（含评委）不用配任何东西。
+   这条是人人都能出真 Q 版的通道；服务器没配钥匙时返回 503，自动退回本机合成。
+   后端按「智谱优先、豆包兜底」自动分流，前端只看返回的 engine。 */
 let aiProxyOff = false;
 async function aiImagineProxy(dataURL, desc) {
   if (aiProxyOff) return null;
@@ -5608,7 +5666,19 @@ async function aiImagineProxy(dataURL, desc) {
     const refId = STYLE_REF_BY_MAT[craftDefaults(desc).primary] || "tielion";
     ref = await dataUrlShrink("精灵/" + refId + ".webp", 640, .85);
   } catch (e) { ref = ""; }
-  const prompt = IDENT_IMG_PROMPT + (desc ? "。文物资料:" + desc : "");
+  /* 智谱 CogView 是文生图：先把照片「看」成一段描述塞进 prompt，画出来才像用户拍的那件。
+     这一步放在服务端太绕（要再调一次视觉模型），这里直接用 AI 识别那步已经拿到的名字/材质当素材。 */
+  let subject = "";
+  try {
+    const ai = (photoState && photoState.ai) || null;
+    if (ai && ai.real !== false && ai.name) {
+      subject = ai.name + (ai.material ? "，材质" + ai.material : "") + (ai.era ? "，年代" + ai.era : "");
+    }
+  } catch (e) {}
+  const prompt = (subject
+    ? "画一只可爱的 Q 版卡通精灵角色，它的原型是「" + subject + "」"
+    : "画一只可爱的 Q 版卡通中国文物精灵角色")
+    + "。风格要求：可爱卡通角色设计，Q版头身比例（大头小身），圆润夸张的造型，大大的闪亮眼睛，拟人的微笑小表情，短短的手脚，厚涂国风插画质感，柔和色彩，清晰描边，纯米白色背景，角色居中，全身完整入画。画面里只有这一个卡通角色，不要画真实文物照片，不要写实风格，不要黑白老照片，不要人物，不要任何文字和水印";
   let res;
   try {
     res = await fetch("/api/imagine", {
@@ -5622,9 +5692,17 @@ async function aiImagineProxy(dataURL, desc) {
   let j = null;
   try { j = await res.json(); } catch (e) { return null; }
   if (!j || !j.ok || !j.image) return null;
+  const engine = j.engine === "zhipu" ? "zhipu" : "ark";
   let img = j.image;
-  try { img = await dataUrlShrink(img, 1024, .92); } catch (e) {}
-  return { img: img, src: "ai", engine: "ark" };
+  /* 服务端已经把智谱的临时 URL 下载成 base64（永久存档 + 裁了水印）；
+     万一还是临时 URL（服务端下载失败降级），前端再兜底抓一次。 */
+  if (!/^data:image\//.test(img)) {
+    try { img = await dataUrlShrink(img, 1024, .92); }
+    catch (e) { /* 抓不动就保留临时链接，至少能显示 */ }
+  } else {
+    try { img = await dataUrlShrink(img, 1024, .92); } catch (e) {}
+  }
+  return { img: img, src: "ai", engine: engine, temp: !/^data:image\//.test(img) };
 }
 /* 总入口:服务端出图(人人可用)→ 小桥 → 本地钥匙直连 → 返回 null 交给本机兜底 */
 async function aiImagine(dataURL, desc) {
