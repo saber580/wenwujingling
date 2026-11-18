@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # 安装/卸载「文物精灵 · AI 云端小桥」开机自启（HKCU Run 键，不需要管理员权限）
+import os
 import subprocess, sys
 
 EXE = sys.executable.replace("python.exe", "pythonw.exe") if False else sys.executable
-VBS = r"C:\Users\lenovo\Desktop\文物精灵\tools\bridge_autostart.vbs"
+VBS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bridge_autostart.vbs")
 KEY = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run"
 NAME = "WWJL_AI_Bridge"
 

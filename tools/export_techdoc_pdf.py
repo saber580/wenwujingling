@@ -4,13 +4,14 @@
 用法：
     python tools/export_techdoc_pdf.py [docx路径]
 
-不传参数时默认导出桌面的最新交付版。Word COM 导出前必须先删旧 PDF，
+不传参数时默认导出「提交材料」目录里的技术文档 Word 版。Word COM 导出前必须先删旧 PDF，
 否则 Word 会以「只读文件」为由拒绝保存。
 """
 import os
 import sys
 
-DOCX_DEFAULT = r"C:/Users/lenovo/Desktop/文物精灵网站/01-技术文档-文物精灵-v1.19.docx"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOCX_DEFAULT = os.path.normpath(os.path.join(ROOT, os.pardir, "提交材料", "01-技术文档-文物精灵.docx"))
 
 
 def main():
